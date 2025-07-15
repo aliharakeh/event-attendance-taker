@@ -1,0 +1,59 @@
+<resources>
+    <string name="app_name">AttendanceTaker</string>
+
+    <!-- Navigation and Content Descriptions -->
+    <string name="back">Back</string>
+    <string name="add_event">Add Event</string>
+    <string name="add_contact">Add Contact</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="select_date">Select Date</string>
+    <string name="select_time">Select Time</string>
+
+    <!-- AttendanceScreen -->
+    <string name="attendance_tracking">Attendance Tracking</string>
+    <string name="present">Present</string>
+    <string name="absent">Absent</string>
+    <string name="notes_prefix">Notes: </string>
+    <string name="edit_notes">Edit Notes</string>
+    <string name="notes_for_contact">Notes for %1$s</string>
+    <string name="attendance_notes">Attendance Notes</string>
+    <string name="attendance_notes_placeholder">Add any notes about this person\'s attendance...</string>
+
+    <!-- EventsScreen -->
+    <string name="events">Events</string>
+    <string name="take_attendance">Take Attendance</string>
+    <string name="delete_event">Delete Event</string>
+    <string name="delete_event_confirmation">Are you sure you want to delete \"%1$s\"? This action cannot be undone.</string>
+    <string name="add_event_title">Add Event</string>
+    <string name="edit_event_title">Edit Event</string>
+    <string name="event_name">Event Name</string>
+    <string name="description_optional">Description (Optional)</string>
+    <string name="date">Date</string>
+    <string name="time">Time</string>
+
+    <!-- ContactsScreen -->
+    <string name="contacts">Contacts</string>
+    <string name="delete_contact">Delete Contact</string>
+    <string name="delete_contact_confirmation">Are you sure you want to delete \"%1$s\"? This action cannot be undone.</string>
+    <string name="add_contact_title">Add Contact</string>
+    <string name="edit_contact_title">Edit Contact</string>
+    <string name="name">Name</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="whatsapp_message">WhatsApp Message</string>
+    <string name="whatsapp_call">WhatsApp Call</string>
+
+    <!-- Common Actions -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_contacts">Contacts</string>
+    <string name="nav_events">Events</string>
+
+    <!-- Language Toggle -->
+    <string name="language_toggle">Language</string>
+    <string name="switch_language">Switch Language</string>
+    <string name="current_language">Current: %1$s</string>
+</resources>

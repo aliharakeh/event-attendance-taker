@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">مُسجِّل الحضور</string>
+
+    <!-- Navigation and Content Descriptions -->
+    <string name="back">رجوع</string>
+    <string name="add_event">إضافة حدث</string>
+    <string name="add_contact">إضافة جهة اتصال</string>
+    <string name="edit">تعديل</string>
+    <string name="delete">حذف</string>
+    <string name="select_date">اختيار التاريخ</string>
+    <string name="select_time">اختيار الوقت</string>
+
+    <!-- AttendanceScreen -->
+    <string name="attendance_tracking">تتبع الحضور</string>
+    <string name="present">حاضر</string>
+    <string name="absent">غائب</string>
+    <string name="notes_prefix">ملاحظات: </string>
+    <string name="edit_notes">تعديل الملاحظات</string>
+    <string name="notes_for_contact">ملاحظات لـ %1$s</string>
+    <string name="attendance_notes">ملاحظات الحضور</string>
+    <string name="attendance_notes_placeholder">أضف أي ملاحظات حول حضور هذا الشخص...</string>
+
+    <!-- EventsScreen -->
+    <string name="events">الأحداث</string>
+    <string name="take_attendance">تسجيل الحضور</string>
+    <string name="delete_event">حذف الحدث</string>
+    <string name="delete_event_confirmation">هل أنت متأكد من حذف \"%1$s\"؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="add_event_title">إضافة حدث</string>
+    <string name="edit_event_title">تعديل الحدث</string>
+    <string name="event_name">اسم الحدث</string>
+    <string name="description_optional">الوصف (اختياري)</string>
+    <string name="date">التاريخ</string>
+    <string name="time">الوقت</string>
+
+    <!-- ContactsScreen -->
+    <string name="contacts">جهات الاتصال</string>
+    <string name="delete_contact">حذف جهة الاتصال</string>
+    <string name="delete_contact_confirmation">هل أنت متأكد من حذف \"%1$s\"؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="add_contact_title">إضافة جهة اتصال</string>
+    <string name="edit_contact_title">تعديل جهة الاتصال</string>
+    <string name="name">الاسم</string>
+    <string name="phone_number">رقم الهاتف</string>
+    <string name="whatsapp_message">رسالة واتساب</string>
+    <string name="whatsapp_call">مكالمة واتساب</string>
+
+    <!-- Common Actions -->
+    <string name="save">حفظ</string>
+    <string name="cancel">إلغاء</string>
+    <string name="ok">موافق</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_contacts">جهات الاتصال</string>
+    <string name="nav_events">الأحداث</string>
+
+    <!-- Language Toggle -->
+    <string name="language_toggle">اللغة</string>
+    <string name="switch_language">تغيير اللغة</string>
+    <string name="current_language">الحالية: %1$s</string>
+</resources>
