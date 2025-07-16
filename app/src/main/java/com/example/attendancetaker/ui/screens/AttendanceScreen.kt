@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,6 +41,12 @@ fun AttendanceScreen(
         return
     }
 
+    // Get contacts from the event's contact groups (with duplicates filtered)
+    val eventContacts = repository.getContactsForEvent(eventId)
+    val selectedGroups = event.contactGroupIds.mapNotNull { groupId ->
+        repository.getContactGroup(groupId)
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
         // Header
         Row(
@@ -52,7 +59,7 @@ fun AttendanceScreen(
                 Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = event.name,
                     style = MaterialTheme.typography.headlineMedium,
@@ -63,31 +70,73 @@ fun AttendanceScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (selectedGroups.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Group,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${selectedGroups.joinToString(", ") { it.name }} (${eventContacts.size} contacts)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
         }
 
-        // Attendance List
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(repository.contacts) { contact ->
-                val attendanceRecord = repository.getAttendanceRecord(eventId, contact.id)
-                AttendanceItem(
-                    contact = contact,
-                    attendanceRecord = attendanceRecord,
-                    onAttendanceChange = { isPresent ->
-                        val record = attendanceRecord?.copy(isPresent = isPresent)
-                            ?: AttendanceRecord(
-                                contactId = contact.id,
-                                eventId = eventId,
-                                isPresent = isPresent
-                            )
-                        repository.updateAttendanceRecord(record)
-                    },
-                    onEditNotes = { selectedContact = contact }
+        // Show message if no contact groups are selected
+        if (selectedGroups.isEmpty()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
                 )
+            ) {
+                Text(
+                    text = "No contact groups selected for this event. Please edit the event to add contact groups.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        } else {
+            // Attendance List
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(eventContacts) { contact ->
+                    val attendanceRecord = repository.getAttendanceRecord(eventId, contact.id)
+                    val contactGroups = repository.getGroupsContainingContact(contact.id)
+                        .filter { group -> event.contactGroupIds.contains(group.id) }
+
+                    AttendanceItem(
+                        contact = contact,
+                        contactGroups = contactGroups,
+                        attendanceRecord = attendanceRecord,
+                        onAttendanceChange = { isPresent ->
+                            val record = attendanceRecord?.copy(isPresent = isPresent)
+                                ?: AttendanceRecord(
+                                    contactId = contact.id,
+                                    eventId = eventId,
+                                    isPresent = isPresent
+                                )
+                            repository.updateAttendanceRecord(record)
+                        },
+                        onEditNotes = { selectedContact = contact }
+                    )
+                }
             }
         }
     }
@@ -116,6 +165,7 @@ fun AttendanceScreen(
 @Composable
 fun AttendanceItem(
     contact: Contact,
+    contactGroups: List<com.example.attendancetaker.data.ContactGroup>,
     attendanceRecord: AttendanceRecord?,
     onAttendanceChange: (Boolean) -> Unit,
     onEditNotes: () -> Unit
@@ -145,6 +195,13 @@ fun AttendanceItem(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (contactGroups.isNotEmpty()) {
+                        Text(
+                            text = "Groups: ${contactGroups.joinToString(", ") { it.name }}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -221,7 +278,7 @@ fun NotesDialog(
             TextButton(
                 onClick = { onSave(notes.trim()) },
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonBlue // Blue for save button
+                    contentColor = ButtonBlue
                 )
             ) {
                 Text(stringResource(R.string.save))
@@ -231,7 +288,7 @@ fun NotesDialog(
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonRed // Red for cancel button
+                    contentColor = ButtonRed
                 )
             ) {
                 Text(stringResource(R.string.cancel))

@@ -10,7 +10,8 @@ data class Event(
     val name: String,
     val description: String = "",
     val date: LocalDate = LocalDate.now(),
-    val time: LocalTime = LocalTime.now()
+    val time: LocalTime = LocalTime.now(),
+    val contactGroupIds: List<String> = emptyList()
 ) {
     val dateTime: LocalDateTime = LocalDateTime.of(date, time)
 }

@@ -35,6 +35,9 @@ import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.ui.navigation.Screen
 import com.example.attendancetaker.ui.screens.AttendanceScreen
 import com.example.attendancetaker.ui.screens.ContactsScreen
+import com.example.attendancetaker.ui.screens.ContactGroupEditScreen
+import com.example.attendancetaker.ui.screens.ContactGroupDetailsScreen
+import com.example.attendancetaker.ui.screens.EventEditScreen
 import com.example.attendancetaker.ui.screens.EventsScreen
 import com.example.attendancetaker.ui.theme.AttendanceTakerTheme
 import com.example.attendancetaker.utils.LanguageManager
@@ -79,7 +82,6 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
 
     // State for dialogs
     var showAddContactDialog by remember { mutableStateOf(false) }
-    var showAddEventDialog by remember { mutableStateOf(false) }
 
     // Define bottom navigation items
     val bottomNavItems = listOf(
@@ -136,7 +138,9 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                                 }
                                 Screen.Events.route -> {
                                     IconButton(
-                                        onClick = { showAddEventDialog = true },
+                                        onClick = {
+                                            navController.navigate(Screen.EventEdit.createRouteForNew())
+                                        },
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
@@ -187,7 +191,18 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 ContactsScreen(
                     repository = repository,
                     showAddDialog = showAddContactDialog,
-                    onAddDialogDismiss = { showAddContactDialog = false }
+                    onAddDialogDismiss = { showAddContactDialog = false },
+                    onNavigateToGroupEdit = { group ->
+                        val route = if (group == null) {
+                            Screen.ContactGroupEdit.createRouteForNew()
+                        } else {
+                            Screen.ContactGroupEdit.createRoute(group.id)
+                        }
+                        navController.navigate(route)
+                    },
+                    onNavigateToGroupDetails = { group ->
+                        navController.navigate(Screen.ContactGroupDetails.createRoute(group.id))
+                    }
                 )
             }
 
@@ -197,8 +212,14 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                     onNavigateToAttendance = { eventId ->
                         navController.navigate(Screen.AttendanceList.createRoute(eventId))
                     },
-                    showAddDialog = showAddEventDialog,
-                    onAddDialogDismiss = { showAddEventDialog = false }
+                    onNavigateToEventEdit = { event ->
+                        val route = if (event == null) {
+                            Screen.EventEdit.createRouteForNew()
+                        } else {
+                            Screen.EventEdit.createRoute(event.id)
+                        }
+                        navController.navigate(route)
+                    }
                 )
             }
 
@@ -206,6 +227,41 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
                 AttendanceScreen(
                     eventId = eventId,
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.ContactGroupEdit.route) { backStackEntry ->
+                val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
+                val group = if (groupId == "new") null else repository.getContactGroup(groupId)
+                ContactGroupEditScreen(
+                    group = group,
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.ContactGroupDetails.route) { backStackEntry ->
+                val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
+                ContactGroupDetailsScreen(
+                    groupId = groupId,
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.EventEdit.route) { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
+                val event = if (eventId == "new") null else repository.events.find { it.id == eventId }
+                EventEditScreen(
+                    event = event,
                     repository = repository,
                     onNavigateBack = {
                         navController.popBackStack()

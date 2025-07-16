@@ -1,30 +1,23 @@
 package com.example.attendancetaker.ui.screens
-
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Message
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
-import com.example.attendancetaker.data.Contact
+import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue
@@ -35,60 +28,77 @@ fun ContactsScreen(
     repository: AttendanceRepository,
     showAddDialog: Boolean,
     onAddDialogDismiss: () -> Unit,
+    onNavigateToGroupEdit: (ContactGroup?) -> Unit,
+    onNavigateToGroupDetails: (ContactGroup) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var editingContact by remember { mutableStateOf<Contact?>(null) }
+    var showAddGroupDialog by remember { mutableStateOf(false) }
 
-    // Contacts List
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(repository.contacts) { contact ->
-            ContactItem(
-                contact = contact,
-                onEdit = { editingContact = contact },
-                onDelete = { repository.removeContact(contact.id) }
-            )
+    Column(modifier = modifier.fillMaxSize()) {
+        // Header
+        Text(
+            text = "Contact Groups",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(16.dp)
+        )
+
+        // Contact Groups List
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(repository.contactGroups) { group ->
+                ContactGroupItem(
+                    group = group,
+                    repository = repository,
+                    onEdit = { onNavigateToGroupEdit(group) },
+                    onDelete = { repository.removeContactGroup(group.id) },
+                    onItemClick = { onNavigateToGroupDetails(group) }
+                )
+            }
         }
     }
 
-    // Add/Edit Dialog
-    if (showAddDialog) {
-        ContactDialog(
-            contact = null,
-            onDismiss = onAddDialogDismiss,
-            onSave = { contact ->
-                repository.addContact(contact)
+    // Add Group Dialog
+    if (showAddDialog || showAddGroupDialog) {
+        ContactGroupDialog(
+            group = null,
+            onDismiss = {
                 onAddDialogDismiss()
-            }
-        )
-    }
-
-    editingContact?.let { contact ->
-        ContactDialog(
-            contact = contact,
-            onDismiss = { editingContact = null },
-            onSave = { updatedContact ->
-                repository.updateContact(updatedContact)
-                editingContact = null
+                showAddGroupDialog = false
+            },
+            onSave = { name, description ->
+                val newGroup = ContactGroup(
+                    name = name,
+                    description = description,
+                    contactIds = emptyList()
+                )
+                repository.addContactGroup(newGroup)
+                onAddDialogDismiss()
+                showAddGroupDialog = false
+                // Navigate to edit screen to add contacts
+                onNavigateToGroupEdit(newGroup)
             }
         )
     }
 }
 
 @Composable
-fun ContactItem(
-    contact: Contact,
+fun ContactGroupItem(
+    group: ContactGroup,
+    repository: AttendanceRepository,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onItemClick: () -> Unit
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
-    val context = LocalContext.current
+    val contacts = repository.getContactsFromGroups(listOf(group.id))
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onItemClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -103,77 +113,46 @@ fun ContactItem(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = contact.name,
+                        text = group.name,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
+                    if (group.description.isNotEmpty()) {
+                        Text(
+                            text = group.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Text(
-                        text = contact.phoneNumber,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "${contacts.size} members",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
                     )
+                    if (contacts.isNotEmpty()) {
+                        Text(
+                            text = contacts.take(3).joinToString(", ") { it.name } +
+                                if (contacts.size > 3) " and ${contacts.size - 3} more" else "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 Row {
                     IconButton(onClick = onEdit) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.edit),
+                            contentDescription = "Edit Group",
                             tint = EditIconBlue
                         )
                     }
                     IconButton(onClick = { showDeleteConfirmation = true }) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.delete),
+                            contentDescription = "Delete Group",
                             tint = Color(0xFFE53E3E)
                         )
                     }
-                }
-            }
-
-            // WhatsApp Buttons Row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = { openWhatsAppMessage(context, contact.phoneNumber) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF25D366) // WhatsApp green
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Message,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = stringResource(R.string.whatsapp_message),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                Button(
-                    onClick = { openWhatsAppCall(context, contact.phoneNumber) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF25D366) // WhatsApp green
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Call,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = stringResource(R.string.whatsapp_call),
-                        style = MaterialTheme.typography.bodySmall
-                    )
                 }
             }
         }
@@ -183,8 +162,8 @@ fun ContactItem(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text(stringResource(R.string.delete_contact)) },
-            text = { Text(stringResource(R.string.delete_contact_confirmation, contact.name)) },
+            title = { Text("Delete Group") },
+            text = { Text("Are you sure you want to delete the group '${group.name}'? This action cannot be undone.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -192,20 +171,20 @@ fun ContactItem(
                         showDeleteConfirmation = false
                     },
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonRed // Red for delete button
+                        contentColor = ButtonRed
                     )
                 ) {
-                    Text(stringResource(R.string.delete))
+                    Text("Delete")
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showDeleteConfirmation = false },
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonRed // Red for cancel button
+                        contentColor = ButtonRed
                     )
                 ) {
-                    Text(stringResource(R.string.cancel))
+                    Text("Cancel")
                 }
             }
         )
@@ -214,18 +193,18 @@ fun ContactItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContactDialog(
-    contact: Contact?,
+fun ContactGroupDialog(
+    group: ContactGroup?,
     onDismiss: () -> Unit,
-    onSave: (Contact) -> Unit
+    onSave: (String, String) -> Unit
 ) {
-    var name by remember { mutableStateOf(contact?.name ?: "") }
-    var phoneNumber by remember { mutableStateOf(contact?.phoneNumber ?: "") }
+    var name by remember { mutableStateOf(group?.name ?: "") }
+    var description by remember { mutableStateOf(group?.description ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(if (contact == null) stringResource(R.string.add_contact_title) else stringResource(R.string.edit_contact_title))
+            Text(if (group == null) "Add Contact Group" else "Edit Contact Group")
         },
         text = {
             Column(
@@ -234,13 +213,13 @@ fun ContactDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.name)) },
+                    label = { Text("Group Name") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
-                    value = phoneNumber,
-                    onValueChange = { phoneNumber = it },
-                    label = { Text(stringResource(R.string.phone_number)) },
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description (Optional)") },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -248,88 +227,26 @@ fun ContactDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (name.isNotBlank() && phoneNumber.isNotBlank()) {
-                        val newContact = if (contact == null) {
-                            Contact(name = name.trim(), phoneNumber = phoneNumber.trim())
-                        } else {
-                            contact.copy(name = name.trim(), phoneNumber = phoneNumber.trim())
-                        }
-                        onSave(newContact)
+                    if (name.isNotBlank()) {
+                        onSave(name.trim(), description.trim())
                     }
                 },
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonBlue // Blue for save button
+                    contentColor = ButtonBlue
                 )
             ) {
-                Text(stringResource(R.string.save))
+                Text("Save")
             }
         },
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonRed // Red for cancel button
+                    contentColor = ButtonRed
                 )
             ) {
-                Text(stringResource(R.string.cancel))
+                Text("Cancel")
             }
         }
     )
-}
-
-// Helper functions for WhatsApp functionality
-private fun openWhatsAppMessage(context: Context, phoneNumber: String) {
-    try {
-        // Format phone number (remove any non-digit characters)
-        val formattedNumber = phoneNumber.replace(Regex("[^\\d+]"), "")
-
-        // Try to open WhatsApp with specific contact
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("https://wa.me/$formattedNumber")
-            `package` = "com.whatsapp"
-        }
-
-        // Check if WhatsApp is installed
-        if (intent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(intent)
-        } else {
-            // WhatsApp not installed, open in browser
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$formattedNumber"))
-            if (browserIntent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(browserIntent)
-            } else {
-                Toast.makeText(context, "WhatsApp is not installed", Toast.LENGTH_SHORT).show()
-            }
-        }
-    } catch (e: Exception) {
-        Toast.makeText(context, "Error opening WhatsApp", Toast.LENGTH_SHORT).show()
-    }
-}
-
-private fun openWhatsAppCall(context: Context, phoneNumber: String) {
-    try {
-        // Format phone number (remove any non-digit characters)
-        val formattedNumber = phoneNumber.replace(Regex("[^\\d+]"), "")
-
-        // Try to open WhatsApp voice call
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("https://wa.me/$formattedNumber?action=call")
-            `package` = "com.whatsapp"
-        }
-
-        // Check if WhatsApp is installed
-        if (intent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(intent)
-        } else {
-            // WhatsApp not installed, open in browser
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$formattedNumber"))
-            if (browserIntent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(browserIntent)
-            } else {
-                Toast.makeText(context, "WhatsApp is not installed", Toast.LENGTH_SHORT).show()
-            }
-        }
-    } catch (e: Exception) {
-        Toast.makeText(context, "Error opening WhatsApp", Toast.LENGTH_SHORT).show()
-    }
 }
