@@ -17,72 +17,94 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Yellow80,
-    onPrimary = DarkYellow,
-    primaryContainer = YellowGrey40,
-    onPrimaryContainer = Yellow80,
-    secondary = YellowGrey80,
-    onSecondary = DarkYellow,
-    secondaryContainer = YellowGrey40,
-    onSecondaryContainer = YellowGrey80,
-    tertiary = Amber80,
-    onTertiary = Color(0xFF332600),
-    tertiaryContainer = Amber40,
-    onTertiaryContainer = Amber80,
-    error = YellowError,
+    // Primary colors
+    primary = Blue80,
+    onPrimary = Color(0xFF003258),
+    primaryContainer = Blue40,
+    onPrimaryContainer = Blue80,
+
+    // Secondary colors
+    secondary = BlueGrey80,
+    onSecondary = Color(0xFF263238),
+    secondaryContainer = BlueGrey40,
+    onSecondaryContainer = BlueGrey80,
+
+    // Tertiary colors
+    tertiary = Indigo80,
+    onTertiary = Color(0xFF1A1B3A),
+    tertiaryContainer = Indigo40,
+    onTertiaryContainer = Indigo80,
+
+    // Error colors
+    error = Error,
     onError = Color.White,
     errorContainer = Color(0xFF93000A),
     onErrorContainer = Color(0xFFFFDAD6),
-    background = Color(0xFF1C1B16),
-    onBackground = Color(0xFFE6E1D6),
-    surface = Color(0xFF1C1B16),
-    onSurface = Color(0xFFE6E1D6),
-    surfaceVariant = Color(0xFF4A4739),
-    onSurfaceVariant = Color(0xFFCBC5B4),
-    outline = Color(0xFF948F7E),
-    outlineVariant = Color(0xFF4A4739),
+
+    // Background and surface
+    background = Color(0xFF0F172A),
+    onBackground = Color(0xFFF1F5F9),
+    surface = DarkSurface,
+    onSurface = Color(0xFFF1F5F9),
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = Color(0xFFCBD5E1),
+
+    // Outline and other colors
+    outline = Color(0xFF64748B),
+    outlineVariant = Color(0xFF475569),
     scrim = Color.Black,
-    inverseSurface = Color(0xFFE6E1D6),
-    inverseOnSurface = Color(0xFF313026),
-    inversePrimary = Yellow40
+    inverseSurface = Color(0xFFF1F5F9),
+    inverseOnSurface = Color(0xFF1E293B),
+    inversePrimary = Blue40
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Yellow40,
+    // Primary colors
+    primary = Blue40,
     onPrimary = Color.White,
-    primaryContainer = LightYellow,
-    onPrimaryContainer = DarkYellow,
-    secondary = YellowGrey40,
+    primaryContainer = Color(0xFFE3F2FD),
+    onPrimaryContainer = Color(0xFF0D47A1),
+
+    // Secondary colors
+    secondary = BlueGrey40,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFE8E5D4),
-    onSecondaryContainer = Color(0xFF1E1E11),
-    tertiary = Amber40,
+    secondaryContainer = Color(0xFFECEFF1),
+    onSecondaryContainer = Color(0xFF263238),
+
+    // Tertiary colors
+    tertiary = Indigo40,
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFFFDCC0),
-    onTertiaryContainer = Color(0xFF2D1600),
-    error = YellowError,
+    tertiaryContainer = Color(0xFFE8EAF6),
+    onTertiaryContainer = Color(0xFF1A237E),
+
+    // Error colors
+    error = Error,
     onError = Color.White,
-    errorContainer = Color(0xFFFFDAD6),
+    errorContainer = Color(0xFFFFEDEA),
     onErrorContainer = Color(0xFF410E0B),
-    background = Color(0xFFFFFBF5),
-    onBackground = Color(0xFF1C1B16),
-    surface = Color(0xFFFFFBF5),
-    onSurface = Color(0xFF1C1B16),
-    surfaceVariant = Color(0xFFE8E2D0),
-    onSurfaceVariant = Color(0xFF4A4739),
-    outline = Color(0xFF7B7767),
-    outlineVariant = Color(0xFFCBC5B4),
+
+    // Background and surface
+    background = Color(0xFFFAFAFA),
+    onBackground = Color(0xFF1A202C),
+    surface = LightSurface,
+    onSurface = Color(0xFF1A202C),
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = Color(0xFF4A5568),
+
+    // Outline and other colors
+    outline = Color(0xFF718096),
+    outlineVariant = Color(0xFFCBD5E0),
     scrim = Color.Black,
-    inverseSurface = Color(0xFF313026),
-    inverseOnSurface = Color(0xFFF4F0E4),
-    inversePrimary = Yellow80
+    inverseSurface = Color(0xFF2D3748),
+    inverseOnSurface = Color(0xFFF7FAFC),
+    inversePrimary = Blue80
 )
 
 @Composable
 fun AttendanceTakerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // Disabled to use our custom yellow theme
+    dynamicColor: Boolean = false, // Disabled to use our custom blue theme
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -99,7 +121,7 @@ fun AttendanceTakerTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
+            window.statusBarColor = colorScheme.surface.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }

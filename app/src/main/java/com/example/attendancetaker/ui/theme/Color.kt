@@ -2,26 +2,44 @@ package com.example.attendancetaker.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// Modern Blue/Gray Theme Colors
 // Light Theme Colors
-val Yellow80 = Color(0xFFFFF59D)      // Light yellow for dark theme
-val YellowGrey80 = Color(0xFFF5F1C4)  // Light yellow-grey
-val Amber80 = Color(0xFFFFE082)       // Light amber
+val Blue80 = Color(0xFFBBDEFB)        // Light blue for dark theme
+val BlueGrey80 = Color(0xFFCFD8DC)    // Light blue-grey
+val Indigo80 = Color(0xFFC5CAE9)      // Light indigo
 
-val Yellow40 = Color(0xFFFBC02D)      // Primary yellow for light theme
-val YellowGrey40 = Color(0xFF9E9D24)  // Yellow-green grey
-val Amber40 = Color(0xFFFF8F00)       // Orange-amber accent
+val Blue40 = Color(0xFF1976D2)        // Primary blue for light theme
+val BlueGrey40 = Color(0xFF607D8B)    // Blue-grey for secondary
+val Indigo40 = Color(0xFF3F51B5)      // Indigo accent
 
-// Additional yellow theme colors
-val DarkYellow = Color(0xFF827717)    // Dark yellow for text/icons
-val LightYellow = Color(0xFFFFF8E1)   // Very light yellow for backgrounds
-val YellowAccent = Color(0xFFFFAB00)  // Bright yellow accent
+// Neutral colors for better UI
+val NeutralGray = Color(0xFF6B7280)   // Neutral gray for cancel buttons
+val DarkGray = Color(0xFF374151)      // Dark gray for text/icons
+val LightGray = Color(0xFFF9FAFB)     // Very light gray for backgrounds
+val BlueAccent = Color(0xFF2563EB)    // Bright blue accent
 
 // Supporting colors
-val YellowSuccess = Color(0xFF689F38) // Green that works with yellow
-val YellowError = Color(0xFFD32F2F)   // Red for errors
-val YellowWarning = Color(0xFFF57C00) // Orange for warnings
+val Success = Color(0xFF10B981)       // Green for success
+val Error = Color(0xFFEF4444)         // Red for errors
+val Warning = Color(0xFFF59E0B)       // Amber for warnings
 
-// Dialog button colors
-val ButtonRed = Color(0xFFE53E3E)     // Red for cancel buttons
-val ButtonBlue = Color(0xFF1976D2)    // Blue for save buttons (normal blue)
-val EditIconBlue = Color(0xFF1976D2)  // Normal blue for edit icons (changed from light blue)
+// Button colors
+val ButtonRed = Color(0xFFEF4444)     // Red for delete buttons
+val ButtonBlue = Color(0xFF2563EB)    // Blue for save buttons
+val ButtonNeutral = Color(0xFF6B7280) // Neutral gray for cancel buttons
+val EditIconBlue = Color(0xFF1976D2)  // Blue for edit icons
+
+// Card and surface colors
+val LightSurface = Color(0xFFFFFFFF)  // Pure white for light cards
+val LightSurfaceVariant = Color(0xFFF8FAFC) // Light gray for card variants
+val DarkSurface = Color(0xFF1F2937)   // Dark gray for dark cards
+val DarkSurfaceVariant = Color(0xFF374151) // Darker gray for dark card variants
+
+// Selection and interaction colors
+val SelectionLight = Color(0xFFEBF4FF)    // Light blue selection for light theme
+val SelectionDark = Color(0xFF1E3A8A)     // Dark blue selection for dark theme
+val SelectionBorder = Color(0xFF3B82F6)   // Blue border for selected items
+val HoverLight = Color(0xFFF1F5F9)        // Light gray hover for light theme
+val HoverDark = Color(0xFF334155)         // Dark gray hover for dark theme
+val CheckboxSelected = Color(0xFF2563EB)  // Blue for selected checkboxes
+val CheckboxUnselected = Color(0xFF9CA3AF) // Gray for unselected checkboxes

@@ -20,6 +20,7 @@ import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonRed
+import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.EditIconBlue
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,7 +100,11 @@ fun ContactGroupItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onItemClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
         Column(
             modifier = Modifier
@@ -150,7 +155,7 @@ fun ContactGroupItem(
                         Icon(
                             Icons.Default.Delete,
                             contentDescription = "Delete Group",
-                            tint = Color(0xFFE53E3E)
+                            tint = ButtonRed
                         )
                     }
                 }
@@ -181,7 +186,7 @@ fun ContactGroupItem(
                 TextButton(
                     onClick = { showDeleteConfirmation = false },
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonRed
+                        contentColor = ButtonNeutral
                     )
                 ) {
                     Text("Cancel")
@@ -242,7 +247,7 @@ fun ContactGroupDialog(
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonRed
+                    contentColor = ButtonNeutral
                 )
             ) {
                 Text("Cancel")

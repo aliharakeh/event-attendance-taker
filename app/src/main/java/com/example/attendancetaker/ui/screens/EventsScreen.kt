@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
@@ -24,6 +25,7 @@ import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.Event
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonRed
+import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.EditIconBlue
 import java.time.LocalDate
 import java.time.LocalTime
@@ -71,7 +73,11 @@ fun EventItem(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
         Column(
             modifier = Modifier
@@ -161,7 +167,7 @@ fun EventItem(
                         Icon(
                             Icons.Default.Delete,
                             contentDescription = stringResource(R.string.delete),
-                            tint = Color(0xFFE53E3E)
+                            tint = ButtonRed
                         )
                     }
                 }
@@ -201,7 +207,7 @@ fun EventItem(
                 TextButton(
                     onClick = { showDeleteConfirmation = false },
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonRed
+                        contentColor = ButtonNeutral
                     )
                 ) {
                     Text(stringResource(R.string.cancel))
@@ -298,34 +304,72 @@ fun EventDialog(
 
                 items(repository.contactGroups) { group ->
                     val contacts = repository.getContactsFromGroups(listOf(group.id))
-                    Row(
+                    val isSelected = selectedGroupIds.contains(group.id)
+
+                    Card(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = selectedGroupIds.contains(group.id),
-                            onCheckedChange = { isChecked ->
-                                selectedGroupIds = if (isChecked) {
-                                    selectedGroupIds + group.id
-                                } else {
-                                    selectedGroupIds - group.id
-                                }
-                            }
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = if (isSelected) 2.dp else 1.dp
+                        ),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+                            else
+                                MaterialTheme.colorScheme.surface
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = group.name,
-                                style = MaterialTheme.typography.bodyMedium
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = { isChecked ->
+                                    selectedGroupIds = if (isChecked) {
+                                        selectedGroupIds + group.id
+                                    } else {
+                                        selectedGroupIds - group.id
+                                    }
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colorScheme.primary,
+                                    uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    checkmarkColor = Color.White
+                                )
                             )
-                            Text(
-                                text = "${contacts.size} contacts" +
-                                    if (group.description.isNotEmpty()) " • ${group.description}" else "",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = group.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "${contacts.size} contacts" +
+                                        if (group.description.isNotEmpty()) " • ${group.description}" else "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            // Selection indicator
+                            if (isSelected) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
         },
@@ -364,7 +408,7 @@ fun EventDialog(
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonRed
+                    contentColor = ButtonNeutral
                 )
             ) {
                 Text(stringResource(R.string.cancel))
@@ -399,7 +443,7 @@ fun EventDialog(
                 TextButton(
                     onClick = { showDatePicker = false },
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonRed
+                        contentColor = ButtonNeutral
                     )
                 ) {
                     Text(stringResource(R.string.cancel))
@@ -440,7 +484,7 @@ fun EventDialog(
                 TextButton(
                     onClick = { showTimePicker = false },
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonRed
+                        contentColor = ButtonNeutral
                     )
                 ) {
                     Text(stringResource(R.string.cancel))

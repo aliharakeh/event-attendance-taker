@@ -21,6 +21,7 @@ import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.Contact
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonRed
+import com.example.attendancetaker.ui.theme.ButtonNeutral
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -172,7 +173,11 @@ fun AttendanceItem(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
         Column(
             modifier = Modifier
@@ -207,7 +212,7 @@ fun AttendanceItem(
                     Text(
                         text = if (attendanceRecord?.isPresent == true) stringResource(R.string.present) else stringResource(R.string.absent),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Switch(
@@ -236,12 +241,12 @@ fun AttendanceItem(
                         Icons.Default.Edit,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = Color.Black
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         stringResource(R.string.edit_notes),
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -288,7 +293,7 @@ fun NotesDialog(
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonRed
+                    contentColor = ButtonNeutral
                 )
             ) {
                 Text(stringResource(R.string.cancel))
