@@ -19,13 +19,15 @@
     <string name="edit_notes">تعديل الملاحظات</string>
     <string name="notes_for_contact">ملاحظات لـ %1$s</string>
     <string name="attendance_notes">ملاحظات الحضور</string>
-    <string name="attendance_notes_placeholder">أضف أي ملاحظات حول حضور هذا الشخص...</string>
+    <string name="attendance_notes_placeholder">أضف أي ملاحظات حول حضور هذا الشخص…</string>
+    <string name="no_contact_groups_selected">لم يتم اختيار أي مجموعات اتصال لهذا الحدث. يرجى تعديل الحدث لإضافة مجموعات اتصال.</string>
+    <string name="groups_list">المجموعات: %1$s</string>
 
     <!-- EventsScreen -->
     <string name="events">الأحداث</string>
     <string name="take_attendance">تسجيل الحضور</string>
     <string name="delete_event">حذف الحدث</string>
-    <string name="delete_event_confirmation">هل أنت متأكد من حذف \"%1$s\"؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="delete_event_confirmation">هل أنت متأكد من حذف &quot;%1$s&quot;؟ لا يمكن التراجع عن هذا الإجراء.</string>
     <string name="add_event_title">إضافة حدث</string>
     <string name="edit_event_title">تعديل الحدث</string>
     <string name="event_name">اسم الحدث</string>
@@ -36,13 +38,17 @@
     <!-- ContactsScreen -->
     <string name="contacts">جهات الاتصال</string>
     <string name="delete_contact">حذف جهة الاتصال</string>
-    <string name="delete_contact_confirmation">هل أنت متأكد من حذف \"%1$s\"؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="delete_contact_confirmation">هل أنت متأكد من حذف &quot;%1$s&quot;؟ لا يمكن التراجع عن هذا الإجراء.</string>
     <string name="add_contact_title">إضافة جهة اتصال</string>
     <string name="edit_contact_title">تعديل جهة الاتصال</string>
     <string name="name">الاسم</string>
     <string name="phone_number">رقم الهاتف</string>
     <string name="whatsapp_message">رسالة واتساب</string>
     <string name="whatsapp_call">مكالمة واتساب</string>
+    <string name="members_count">%1$d عضو</string>
+    <string name="and_more"> و%1$d آخرين</string>
+    <string name="delete_group">حذف المجموعة</string>
+    <string name="delete_group_confirmation">هل أنت متأكد من حذف المجموعة \'%1$s\'؟ لا يمكن التراجع عن هذا الإجراء.</string>
 
     <!-- Common Actions -->
     <string name="save">حفظ</string>
@@ -57,4 +63,76 @@
     <string name="language_toggle">اللغة</string>
     <string name="switch_language">تغيير اللغة</string>
     <string name="current_language">الحالية: %1$s</string>
+
+    <!-- Recurring Events -->
+    <string name="add_recurring_event">إضافة حدث متكرر</string>
+    <string name="edit_recurring_event">تعديل الحدث المتكرر</string>
+    <string name="recurring">متكرر</string>
+    <string name="delete_recurring_event">حذف الحدث المتكرر</string>
+    <string name="delete_recurring_event_confirmation">هل أنت متأكد من حذف هذا الحدث المتكرر؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="save_recurring_event">حفظ الحدث المتكرر</string>
+    <string name="save_recurring_event_question">هل تريد حفظ هذا الحدث المتكرر؟</string>
+    <string name="recurring_event_details">تفاصيل الحدث المتكرر</string>
+    <string name="active_status">نشط (سيتم إنشاء الأحداث تلقائيًا)</string>
+    <string name="recurring_events">الأحداث المتكررة</string>
+    <string name="no_recurring_events_yet">لا توجد أحداث متكررة بعد</string>
+    <string name="create_recurring_events_hint">أنشئ أحداثًا متكررة ستظهر تلقائيًا في نفس اليوم من كل أسبوع.</string>
+    <string name="inactive_status">غير نشط</string>
+    <string name="day_time_at">%1$s في %2$s</string>
+    <string name="ends_at">ينتهي في: %1$s</string>
+
+    <!-- Event Edit -->
+    <string name="save_event">حفظ الحدث</string>
+    <string name="save_event_question">هل تريد حفظ هذا الحدث؟</string>
+    <string name="end_date">تاريخ الانتهاء</string>
+    <string name="search_contact_groups">ابحث في مجموعات الاتصال…</string>
+    <string name="event_details">تفاصيل الحدث</string>
+    <string name="make_recurring_event">اجعل هذا الحدث متكرراً</string>
+    <string name="will_repeat_every">سيتكرر كل %1$s</string>
+    <string name="set_end_date">تعيين تاريخ الانتهاء</string>
+    <string name="select_end_date">اختر تاريخ الانتهاء</string>
+    <string name="contact_groups_selected">%1$d مجموعة اتصال محددة</string>
+    <string name="select_contact_groups">اختر مجموعات الاتصال</string>
+    <string name="no_contact_groups_available">لا توجد مجموعات اتصال متاحة. أنشئ مجموعات اتصال أولاً.</string>
+    <string name="no_contact_groups_match_search">لا توجد مجموعات اتصال مطابقة لبحثك.</string>
+    <string name="selected_groups_contacts">%1$s (%2$d جهة اتصال)</string>
+    <string name="select_contact_groups_colon">اختر مجموعات الاتصال:</string>
+    <string name="contacts_count_with_desc">%1$d جهة اتصال%2$s</string>
+
+    <!-- Contact Group Edit -->
+    <string name="group_name">اسم المجموعة</string>
+    <string name="group_details">تفاصيل المجموعة</string>
+    <string name="search_contacts">ابحث في جهات الاتصال…</string>
+    <string name="contacts_selected">%1$d جهة اتصال محددة</string>
+    <string name="allow_access">السماح بالوصول</string>
+    <string name="save_changes">حفظ التغييرات</string>
+    <string name="save_changes_question">هل تريد حفظ التغييرات على هذه المجموعة؟</string>
+    <string name="add_contact_group_title">إضافة مجموعة اتصال</string>
+    <string name="edit_contact_group_title">تعديل مجموعة الاتصال</string>
+    <string name="select_contacts">اختيار جهات الاتصال</string>
+    <string name="contacts_permission_rationale">يحتاج هذا التطبيق إلى إذن للوصول إلى جهات الاتصال لمساعدتك في اختيار أعضاء هذه المجموعة.</string>
+    <string name="no_contacts_available">لا توجد جهات اتصال متاحة. يرجى السماح بالوصول إلى جهات الاتصال أو إضافة جهات اتصال يدويًا.</string>
+    <string name="no_contacts_match_search">لا توجد جهات اتصال مطابقة لبحثك.</string>
+
+    <!-- Contact Group Details -->
+    <string name="message">رسالة</string>
+    <string name="call">اتصال</string>
+    <string name="no_contacts_in_group">لا توجد جهات اتصال في هذه المجموعة</string>
+    <string name="add_contacts_to_start_messaging">أضف جهات اتصال لبدء المراسلة</string>
+
+    <!-- Language Names -->
+    <string name="english">الإنجليزية</string>
+    <string name="arabic">العربية</string>
+
+    <!-- Content Descriptions for Accessibility -->
+    <string name="cd_add_recurring_event">إضافة حدث متكرر</string>
+    <string name="cd_recurring">متكرر</string>
+    <string name="cd_edit">تعديل</string>
+    <string name="cd_delete">حذف</string>
+    <string name="cd_back">رجوع</string>
+    <string name="cd_recurring_event">حدث متكرر</string>
+    <string name="cd_selected">محدد</string>
+    <string name="cd_edit_group">تعديل المجموعة</string>
+    <string name="cd_delete_group">حذف المجموعة</string>
+    <string name="cd_allow_access">السماح بالوصول</string>
 </resources>

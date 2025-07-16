@@ -395,7 +395,7 @@ fun LanguageSelectionDialog(
                         },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("English")
+                        Text(stringResource(R.string.english))
                     }
 
                     // Arabic Button
@@ -406,7 +406,7 @@ fun LanguageSelectionDialog(
                         },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("العربية")
+                        Text(stringResource(R.string.arabic))
                     }
                 }
             }

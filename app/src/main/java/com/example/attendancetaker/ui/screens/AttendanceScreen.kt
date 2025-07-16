@@ -128,7 +128,7 @@ fun AttendanceScreen(
                 )
             ) {
                 Text(
-                    text = "No contact groups selected for this event. Please edit the event to add contact groups.",
+                    text = stringResource(R.string.no_contact_groups_selected),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.padding(16.dp)
@@ -226,7 +226,7 @@ fun AttendanceItem(
                     )
                     if (contactGroups.isNotEmpty()) {
                         Text(
-                            text = "Groups: ${contactGroups.joinToString(", ") { it.name }}",
+                            text = stringResource(R.string.groups_list, contactGroups.joinToString(", ") { it.name }),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )

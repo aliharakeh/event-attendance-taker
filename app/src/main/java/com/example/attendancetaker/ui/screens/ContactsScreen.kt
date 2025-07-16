@@ -36,6 +36,8 @@ import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue
+import androidx.compose.ui.res.stringResource
+import com.example.attendancetaker.R
 
 @Composable
 fun ContactsScreen(
@@ -106,14 +108,14 @@ fun ContactGroupItem(
                         )
                     }
                     Text(
-                        text = "${contacts.size} members",
+                        text = stringResource(R.string.members_count, contacts.size),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
                     if (contacts.isNotEmpty()) {
                         Text(
                             text = contacts.take(3).joinToString(", ") { it.name } +
-                                    if (contacts.size > 3) " and ${contacts.size - 3} more" else "",
+                                    if (contacts.size > 3) stringResource(R.string.and_more, contacts.size - 3) else "",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -123,14 +125,14 @@ fun ContactGroupItem(
                     IconButton(onClick = onEdit) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = "Edit Group",
+                            contentDescription = stringResource(R.string.cd_edit_group),
                             tint = EditIconBlue
                         )
                     }
                     IconButton(onClick = { showDeleteConfirmation = true }) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Delete Group",
+                            contentDescription = stringResource(R.string.cd_delete_group),
                             tint = ButtonRed
                         )
                     }
@@ -143,8 +145,8 @@ fun ContactGroupItem(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Delete Group") },
-            text = { Text("Are you sure you want to delete the group '${group.name}'? This action cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_group)) },
+            text = { Text(stringResource(R.string.delete_group_confirmation, group.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -155,7 +157,7 @@ fun ContactGroupItem(
                         contentColor = ButtonRed
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
@@ -165,7 +167,7 @@ fun ContactGroupItem(
                         contentColor = ButtonNeutral
                     )
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

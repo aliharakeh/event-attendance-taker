@@ -47,6 +47,8 @@ import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.utils.ContactUtils
+import androidx.compose.ui.res.stringResource
+import com.example.attendancetaker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,11 +125,11 @@ fun ContactGroupEditScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
             }
 
             Text(
-                text = if (group == null) "Add Contact Group" else "Edit Contact Group",
+                text = if (group == null) stringResource(R.string.add_contact_group_title) else stringResource(R.string.edit_contact_group_title),
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier
                     .weight(1f)
@@ -139,7 +141,7 @@ fun ContactGroupEditScreen(
                 enabled = groupName.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = ButtonBlue)
             ) {
-                Text("Save")
+                Text(stringResource(R.string.save))
             }
         }
 
@@ -161,7 +163,7 @@ fun ContactGroupEditScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Group Details",
+                    text = stringResource(R.string.group_details),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -169,19 +171,19 @@ fun ContactGroupEditScreen(
                 OutlinedTextField(
                     value = groupName,
                     onValueChange = { groupName = it },
-                    label = { Text("Group Name") },
+                    label = { Text(stringResource(R.string.group_name)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
                     value = groupDescription,
                     onValueChange = { groupDescription = it },
-                    label = { Text("Description (Optional)") },
+                    label = { Text(stringResource(R.string.description_optional)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
-                    text = "${selectedContactIds.size} contacts selected",
+                    text = stringResource(R.string.contacts_selected, selectedContactIds.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -212,7 +214,7 @@ fun ContactGroupEditScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Select Contacts",
+                        text = stringResource(R.string.select_contacts),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -224,7 +226,7 @@ fun ContactGroupEditScreen(
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = ButtonBlue)
                         ) {
-                            Text("Allow Access")
+                            Text(stringResource(R.string.allow_access))
                         }
                     }
                 }
@@ -232,7 +234,7 @@ fun ContactGroupEditScreen(
                 if (!hasContactsPermission) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "This app needs permission to access your contacts to help you select members for this group.",
+                        text = stringResource(R.string.contacts_permission_rationale),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -243,7 +245,7 @@ fun ContactGroupEditScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        label = { Text("Search contacts...") },
+                        label = { Text(stringResource(R.string.search_contacts)) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -253,13 +255,13 @@ fun ContactGroupEditScreen(
                     if (filteredContacts.isEmpty()) {
                         if (allAvailableContacts.isEmpty()) {
                             Text(
-                                text = "No contacts available. Please allow contact access or add contacts manually.",
+                                text = stringResource(R.string.no_contacts_available),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         } else {
                             Text(
-                                text = "No contacts match your search.",
+                                text = stringResource(R.string.no_contacts_match_search),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -293,9 +295,9 @@ fun ContactGroupEditScreen(
     if (showSaveConfirmation) {
         AlertDialog(
             onDismissRequest = { showSaveConfirmation = false },
-            title = { Text("Save Changes") },
+            title = { Text(stringResource(R.string.save_changes)) },
             text = {
-                Text("Do you want to save the changes to this contact group?")
+                Text(stringResource(R.string.save_changes_question))
             },
             confirmButton = {
                 TextButton(
@@ -336,7 +338,7 @@ fun ContactGroupEditScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = ButtonBlue)
                 ) {
-                    Text("Save")
+                    Text(stringResource(R.string.save))
                 }
             },
             dismissButton = {
@@ -344,7 +346,7 @@ fun ContactGroupEditScreen(
                     onClick = { showSaveConfirmation = false },
                     colors = ButtonDefaults.textButtonColors(contentColor = ButtonNeutral)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

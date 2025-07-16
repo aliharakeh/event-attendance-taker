@@ -48,6 +48,8 @@ import com.example.attendancetaker.ui.theme.ButtonNeutral
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import androidx.compose.ui.res.stringResource
+import com.example.attendancetaker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,11 +113,11 @@ fun RecurringEventEditScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
             }
 
             Text(
-                text = if (recurringEvent == null) "Add Recurring Event" else "Edit Recurring Event",
+                text = if (recurringEvent == null) stringResource(R.string.add_recurring_event) else stringResource(R.string.edit_recurring_event),
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier
                     .weight(1f)
@@ -127,7 +129,7 @@ fun RecurringEventEditScreen(
                 enabled = eventName.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = ButtonBlue)
             ) {
-                Text("Save")
+                Text(stringResource(R.string.save))
             }
         }
 
@@ -154,7 +156,7 @@ fun RecurringEventEditScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Recurring Event Details",
+                        text = stringResource(R.string.recurring_event_details),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -162,14 +164,14 @@ fun RecurringEventEditScreen(
                     OutlinedTextField(
                         value = eventName,
                         onValueChange = { eventName = it },
-                        label = { Text("Event Name") },
+                        label = { Text(stringResource(R.string.event_name)) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
                         value = eventDescription,
                         onValueChange = { eventDescription = it },
-                        label = { Text("Description (Optional)") },
+                        label = { Text(stringResource(R.string.description_optional)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2
                     )
@@ -188,7 +190,7 @@ fun RecurringEventEditScreen(
                             OutlinedTextField(
                                 value = selectedDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
                                 onValueChange = { },
-                                label = { Text("Date") },
+                                label = { Text(stringResource(R.string.date)) },
                                 readOnly = true,
                                 enabled = false,
                                 leadingIcon = {
@@ -216,7 +218,7 @@ fun RecurringEventEditScreen(
                             OutlinedTextField(
                                 value = eventTime.format(DateTimeFormatter.ofPattern("h:mm a")),
                                 onValueChange = { },
-                                label = { Text("Time") },
+                                label = { Text(stringResource(R.string.time)) },
                                 readOnly = true,
                                 enabled = false,
                                 leadingIcon = {
@@ -238,10 +240,7 @@ fun RecurringEventEditScreen(
 
                     // Show which day it will repeat on
                     Text(
-                        text = "Will repeat every ${
-                            selectedDate.dayOfWeek.name.lowercase()
-                                .replaceFirstChar { it.uppercase() }
-                        }",
+                        text = stringResource(R.string.will_repeat_every, selectedDate.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -260,7 +259,7 @@ fun RecurringEventEditScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Set end date",
+                            text = stringResource(R.string.set_end_date),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -273,9 +272,9 @@ fun RecurringEventEditScreen(
                         ) {
                             OutlinedTextField(
                                 value = endDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
-                                    ?: "Select end date",
+                                    ?: stringResource(R.string.select_end_date),
                                 onValueChange = { },
-                                label = { Text("End Date") },
+                                label = { Text(stringResource(R.string.end_date)) },
                                 readOnly = true,
                                 enabled = false,
                                 leadingIcon = {
@@ -306,13 +305,13 @@ fun RecurringEventEditScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Active (will create events automatically)",
+                            text = stringResource(R.string.active_status),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
 
                     Text(
-                        text = "${selectedGroupIds.size} contact groups selected",
+                        text = stringResource(R.string.contact_groups_selected, selectedGroupIds.size),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -336,7 +335,7 @@ fun RecurringEventEditScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "Select Contact Groups",
+                        text = stringResource(R.string.select_contact_groups),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -347,7 +346,7 @@ fun RecurringEventEditScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        label = { Text("Search contact groups...") },
+                        label = { Text(stringResource(R.string.search_contact_groups)) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -357,13 +356,13 @@ fun RecurringEventEditScreen(
                     if (filteredGroups.isEmpty()) {
                         if (repository.contactGroups.isEmpty()) {
                             Text(
-                                text = "No contact groups available. Create contact groups first.",
+                                text = stringResource(R.string.no_contact_groups_available),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         } else {
                             Text(
-                                text = "No contact groups match your search.",
+                                text = stringResource(R.string.no_contact_groups_match_search),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -431,9 +430,9 @@ fun RecurringEventEditScreen(
     if (showSaveConfirmation) {
         AlertDialog(
             onDismissRequest = { showSaveConfirmation = false },
-            title = { Text("Save Recurring Event") },
+            title = { Text(stringResource(R.string.save_recurring_event)) },
             text = {
-                Text("Do you want to save this recurring event?")
+                Text(stringResource(R.string.save_recurring_event_question))
             },
             confirmButton = {
                 TextButton(
@@ -473,7 +472,7 @@ fun RecurringEventEditScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = ButtonBlue)
                 ) {
-                    Text("Save")
+                    Text(stringResource(R.string.save))
                 }
             },
             dismissButton = {
@@ -481,7 +480,7 @@ fun RecurringEventEditScreen(
                     onClick = { showSaveConfirmation = false },
                     colors = ButtonDefaults.textButtonColors(contentColor = ButtonNeutral)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

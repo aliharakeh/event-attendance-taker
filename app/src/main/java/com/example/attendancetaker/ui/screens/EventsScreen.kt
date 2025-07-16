@@ -134,7 +134,7 @@ fun EventItem(
                         if (event.isGeneratedFromRecurring) {
                             Icon(
                                 Icons.Default.Repeat,
-                                contentDescription = "Recurring event",
+                                contentDescription = stringResource(R.string.cd_recurring_event),
                                 modifier = Modifier.size(16.dp),
                                 tint = MaterialTheme.colorScheme.primary
                             )
@@ -193,7 +193,7 @@ fun EventItem(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${selectedGroups.joinToString(", ") { it.name }} ($totalContacts contacts)",
+                                text = stringResource(R.string.selected_groups_contacts, selectedGroups.joinToString(", ") { it.name }, totalContacts),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -204,14 +204,14 @@ fun EventItem(
                     IconButton(onClick = onEdit) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.edit),
+                            contentDescription = stringResource(R.string.cd_edit),
                             tint = EditIconBlue
                         )
                     }
                     IconButton(onClick = { showDeleteConfirmation = true }) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.delete),
+                            contentDescription = stringResource(R.string.cd_delete),
                             tint = ButtonRed
                         )
                     }
@@ -323,7 +323,7 @@ fun EventDialog(
                             IconButton(onClick = { showDatePicker = true }) {
                                 Icon(
                                     Icons.Default.CalendarToday,
-                                    contentDescription = stringResource(R.string.select_date)
+                                    contentDescription = stringResource(R.string.cd_select_date)
                                 )
                             }
                         }
@@ -342,7 +342,7 @@ fun EventDialog(
                             IconButton(onClick = { showTimePicker = true }) {
                                 Icon(
                                     Icons.Default.Schedule,
-                                    contentDescription = stringResource(R.string.select_time)
+                                    contentDescription = stringResource(R.string.cd_select_time)
                                 )
                             }
                         }
@@ -351,7 +351,7 @@ fun EventDialog(
 
                 item {
                     Text(
-                        text = "Select Contact Groups:",
+                        text = stringResource(R.string.select_contact_groups_colon),
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(top = 8.dp)
                     )
@@ -406,8 +406,7 @@ fun EventDialog(
                                         MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "${contacts.size} contacts" +
-                                            if (group.description.isNotEmpty()) " • ${group.description}" else "",
+                                    text = stringResource(R.string.contacts_count_with_desc, contacts.size, group.description),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -417,7 +416,7 @@ fun EventDialog(
                             if (isSelected) {
                                 Icon(
                                     Icons.Default.CheckCircle,
-                                    contentDescription = "Selected",
+                                    contentDescription = stringResource(R.string.cd_selected),
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp)
                                 )

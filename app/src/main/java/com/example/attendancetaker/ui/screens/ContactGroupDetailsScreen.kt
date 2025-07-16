@@ -41,6 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.Contact
+import androidx.compose.ui.res.stringResource
+import com.example.attendancetaker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,12 +128,12 @@ fun ContactGroupDetailsScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "No contacts in this group",
+                        text = stringResource(R.string.no_contacts_in_group),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Add contacts to start messaging them",
+                        text = stringResource(R.string.add_contacts_to_start_messaging),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -214,7 +216,7 @@ fun ContactItemWithWhatsApp(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Message")
+                    Text(stringResource(R.string.message))
                 }
 
                 // Call button
@@ -231,7 +233,7 @@ fun ContactItemWithWhatsApp(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Call")
+                    Text(stringResource(R.string.call))
                 }
             }
         }

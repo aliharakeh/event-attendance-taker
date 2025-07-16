@@ -45,6 +45,8 @@ import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue
 import java.time.format.DateTimeFormatter
+import androidx.compose.ui.res.stringResource
+import com.example.attendancetaker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +67,7 @@ fun RecurringEventsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Recurring Events",
+                text = stringResource(R.string.recurring_events),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -74,7 +76,7 @@ fun RecurringEventsScreen(
                 onClick = { onNavigateToRecurringEventEdit(null) },
                 modifier = Modifier.size(48.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add recurring event")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_recurring_event))
             }
         }
 
@@ -95,13 +97,13 @@ fun RecurringEventsScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "No recurring events yet",
+                    text = stringResource(R.string.no_recurring_events_yet),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Create recurring events that will automatically appear on the same day each week.",
+                    text = stringResource(R.string.create_recurring_events_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -167,13 +169,13 @@ fun RecurringEventItem(
                         )
                         Icon(
                             Icons.Default.Repeat,
-                            contentDescription = "Recurring",
+                            contentDescription = stringResource(R.string.cd_recurring),
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
                         if (!recurringEvent.isActive) {
                             Text(
-                                text = "INACTIVE",
+                                text = stringResource(R.string.inactive_status),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -202,10 +204,7 @@ fun RecurringEventItem(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "${
-                                recurringEvent.dayOfWeek.name.lowercase()
-                                    .replaceFirstChar { it.uppercase() }
-                            }s at ${recurringEvent.time.format(DateTimeFormatter.ofPattern("HH:mm"))}",
+                            text = stringResource(R.string.day_time_at, recurringEvent.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }, recurringEvent.time.format(DateTimeFormatter.ofPattern("HH:mm"))),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -215,7 +214,7 @@ fun RecurringEventItem(
                     recurringEvent.endDate?.let { endDate ->
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Ends: ${endDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))}",
+                            text = stringResource(R.string.ends_at, endDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -235,7 +234,7 @@ fun RecurringEventItem(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${selectedGroups.joinToString(", ") { it.name }} ($totalContacts contacts)",
+                                text = stringResource(R.string.selected_groups_contacts, selectedGroups.joinToString(", ") { it.name }, totalContacts),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -247,14 +246,14 @@ fun RecurringEventItem(
                     IconButton(onClick = onEdit) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = "Edit",
+                            contentDescription = stringResource(R.string.cd_edit),
                             tint = EditIconBlue
                         )
                     }
                     IconButton(onClick = { showDeleteConfirmation = true }) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Delete",
+                            contentDescription = stringResource(R.string.cd_delete),
                             tint = ButtonRed
                         )
                     }
@@ -267,9 +266,9 @@ fun RecurringEventItem(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Delete Recurring Event") },
+            title = { Text(stringResource(R.string.delete_recurring_event)) },
             text = {
-                Text("Are you sure you want to delete \"${recurringEvent.name}\"? This will also delete all future events created from this template.")
+                Text(stringResource(R.string.delete_recurring_event_confirmation, recurringEvent.name))
             },
             confirmButton = {
                 TextButton(
@@ -281,7 +280,7 @@ fun RecurringEventItem(
                         contentColor = ButtonRed
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
@@ -291,7 +290,7 @@ fun RecurringEventItem(
                         contentColor = ButtonNeutral
                     )
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
