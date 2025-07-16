@@ -17,11 +17,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,70 +33,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.ContactGroup
-import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactsScreen(
     repository: AttendanceRepository,
-    showAddDialog: Boolean,
-    onAddDialogDismiss: () -> Unit,
     onNavigateToGroupEdit: (ContactGroup?) -> Unit,
     onNavigateToGroupDetails: (ContactGroup) -> Unit,
-    modifier: Modifier = Modifier
 ) {
-    var showAddGroupDialog by remember { mutableStateOf(false) }
-
-    Column(modifier = modifier.fillMaxSize()) {
-        // Header
-        Text(
-            text = "Contact Groups",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(16.dp)
-        )
-
-        // Contact Groups List
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(repository.contactGroups) { group ->
-                ContactGroupItem(
-                    group = group,
-                    repository = repository,
-                    onEdit = { onNavigateToGroupEdit(group) },
-                    onDelete = { repository.removeContactGroup(group.id) },
-                    onItemClick = { onNavigateToGroupDetails(group) }
-                )
-            }
+    // Contact Groups List
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(repository.contactGroups) { group ->
+            ContactGroupItem(
+                group = group,
+                repository = repository,
+                onEdit = { onNavigateToGroupEdit(group) },
+                onDelete = { repository.removeContactGroup(group.id) },
+                onItemClick = { onNavigateToGroupDetails(group) }
+            )
         }
-    }
-
-    // Add Group Dialog
-    if (showAddDialog || showAddGroupDialog) {
-        ContactGroupDialog(
-            group = null,
-            onDismiss = {
-                onAddDialogDismiss()
-                showAddGroupDialog = false
-            },
-            onSave = { name, description ->
-                val newGroup = ContactGroup(
-                    name = name,
-                    description = description,
-                    contactIds = emptyList()
-                )
-                repository.addContactGroup(newGroup)
-                onAddDialogDismiss()
-                showAddGroupDialog = false
-                // Navigate to edit screen to add contacts
-                onNavigateToGroupEdit(newGroup)
-            }
-        )
     }
 }
 
@@ -211,64 +170,4 @@ fun ContactGroupItem(
             }
         )
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ContactGroupDialog(
-    group: ContactGroup?,
-    onDismiss: () -> Unit,
-    onSave: (String, String) -> Unit
-) {
-    var name by remember { mutableStateOf(group?.name ?: "") }
-    var description by remember { mutableStateOf(group?.description ?: "") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(if (group == null) "Add Contact Group" else "Edit Contact Group")
-        },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Group Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description (Optional)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (name.isNotBlank()) {
-                        onSave(name.trim(), description.trim())
-                    }
-                },
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonBlue
-                )
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonNeutral
-                )
-            ) {
-                Text("Cancel")
-            }
-        }
-    )
 }

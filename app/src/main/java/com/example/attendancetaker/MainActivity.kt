@@ -147,7 +147,10 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                             when (currentDestination?.route) {
                                 Screen.Contacts.route -> {
                                     IconButton(
-                                        onClick = { showAddContactDialog = true },
+                                        onClick = {
+                                            // Navigate directly to ContactGroupEdit for new group
+                                            navController.navigate(Screen.ContactGroupEdit.createRouteForNew())
+                                        },
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
@@ -226,8 +229,6 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
             composable(Screen.Contacts.route) {
                 ContactsScreen(
                     repository = repository,
-                    showAddDialog = showAddContactDialog,
-                    onAddDialogDismiss = { showAddContactDialog = false },
                     onNavigateToGroupEdit = { group ->
                         val route = if (group == null) {
                             Screen.ContactGroupEdit.createRouteForNew()

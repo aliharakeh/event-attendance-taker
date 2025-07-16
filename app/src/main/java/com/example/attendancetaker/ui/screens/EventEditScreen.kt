@@ -234,9 +234,6 @@ fun EventEditScreen(
                         }
                     }
 
-                    // Recurring event controls
-                    Spacer(modifier = Modifier.height(8.dp))
-
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -253,7 +250,6 @@ fun EventEditScreen(
                     }
 
                     if (isRecurring) {
-                        Spacer(modifier = Modifier.height(8.dp))
 
                         // Show which day it will repeat on
                         Text(
@@ -264,8 +260,6 @@ fun EventEditScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
-
-                        Spacer(modifier = Modifier.height(8.dp))
 
                         // End date option
                         Row(
@@ -287,7 +281,6 @@ fun EventEditScreen(
                         }
 
                         if (hasEndDate) {
-                            Spacer(modifier = Modifier.height(8.dp))
 
                             Box(
                                 modifier = Modifier

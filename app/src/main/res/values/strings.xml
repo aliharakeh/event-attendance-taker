@@ -49,7 +49,7 @@
     <string name="ok">OK</string>
 
     <!-- Bottom Navigation -->
-    <string name="nav_contacts">Contacts</string>
+    <string name="nav_contacts">Contact Groups</string>
     <string name="nav_events">Events</string>
 
     <!-- Language Toggle -->

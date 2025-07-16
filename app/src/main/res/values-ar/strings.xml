@@ -50,7 +50,7 @@
     <string name="ok">موافق</string>
 
     <!-- Bottom Navigation -->
-    <string name="nav_contacts">جهات الاتصال</string>
+    <string name="nav_contacts">مجوعات الاتصال</string>
     <string name="nav_events">الأحداث</string>
 
     <!-- Language Toggle -->
