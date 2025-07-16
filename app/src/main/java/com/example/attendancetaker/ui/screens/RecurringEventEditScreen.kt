@@ -33,68 +33,92 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.RecurringEvent
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import androidx.compose.ui.res.stringResource
-import com.example.attendancetaker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecurringEventEditScreen(
-    recurringEvent: RecurringEvent?,
+    recurringEventId: String?,
     repository: AttendanceRepository,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var eventName by remember { mutableStateOf(recurringEvent?.name ?: "") }
-    var eventDescription by remember { mutableStateOf(recurringEvent?.description ?: "") }
-    var eventTime by remember { mutableStateOf(recurringEvent?.time ?: LocalTime.now()) }
-    var selectedDate by remember {
-        mutableStateOf(
-            // If editing, find next occurrence of the day, otherwise use today
-            if (recurringEvent != null) {
-                val today = LocalDate.now()
-                val dayOfWeek = recurringEvent.dayOfWeek
-                val daysUntilNext = (dayOfWeek.value - today.dayOfWeek.value + 7) % 7
-                if (daysUntilNext == 0) today else today.plusDays(daysUntilNext.toLong())
-            } else {
-                LocalDate.now()
-            }
-        )
-    }
-    var selectedGroupIds by remember {
-        mutableStateOf(
-            recurringEvent?.contactGroupIds?.toSet() ?: emptySet()
-        )
-    }
+    val coroutineScope = rememberCoroutineScope()
+    var recurringEvent by remember { mutableStateOf<RecurringEvent?>(null) }
+    var eventName by remember { mutableStateOf("") }
+    var eventDescription by remember { mutableStateOf("") }
+    var eventTime by remember { mutableStateOf(LocalTime.now()) }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedGroupIds by remember { mutableStateOf(emptySet<String>()) }
     var searchQuery by remember { mutableStateOf("") }
     var showSaveConfirmation by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var hasEndDate by remember { mutableStateOf(recurringEvent?.endDate != null) }
-    var endDate by remember { mutableStateOf(recurringEvent?.endDate) }
+    var hasEndDate by remember { mutableStateOf(false) }
+    var endDate by remember { mutableStateOf<LocalDate?>(null) }
     var showEndDatePicker by remember { mutableStateOf(false) }
-    var isActive by remember { mutableStateOf(recurringEvent?.isActive ?: true) }
+    var isActive by remember { mutableStateOf(true) }
+
+    val contactGroups by repository.getAllContactGroups().collectAsState(initial = emptyList())
+    var contactsForGroups by remember { mutableStateOf(mapOf<String, List<com.example.attendancetaker.data.Contact>>()) }
+
+    // Load recurring event data if editing
+    LaunchedEffect(recurringEventId) {
+        if (recurringEventId != null) {
+            recurringEvent = repository.getRecurringEvent(recurringEventId)
+            recurringEvent?.let {
+                eventName = it.name
+                eventDescription = it.description
+                eventTime = it.time
+                selectedGroupIds = it.contactGroupIds.toSet()
+                hasEndDate = it.endDate != null
+                endDate = it.endDate
+                isActive = it.isActive
+
+                // Set selectedDate based on recurring event's day of week
+                val today = LocalDate.now()
+                val dayOfWeek = it.dayOfWeek
+                val daysUntilNext = (dayOfWeek.value - today.dayOfWeek.value + 7) % 7
+                selectedDate = if (daysUntilNext == 0) today else today.plusDays(daysUntilNext.toLong())
+            }
+        }
+    }
+
+    // Load contacts for each group
+    LaunchedEffect(contactGroups) {
+        val contactsMap = mutableMapOf<String, List<com.example.attendancetaker.data.Contact>>()
+        contactGroups.forEach { group ->
+            contactsMap[group.id] = repository.getContactsFromGroups(listOf(group.id))
+        }
+        contactsForGroups = contactsMap
+    }
 
     // Filter contact groups based on search query
-    val filteredGroups = remember(repository.contactGroups, searchQuery) {
+    val filteredGroups = remember(contactGroups, searchQuery) {
         if (searchQuery.isBlank()) {
-            repository.contactGroups
+            contactGroups
         } else {
-            repository.contactGroups.filter { group ->
+            contactGroups.filter { group ->
                 group.name.contains(searchQuery, ignoreCase = true) ||
                         group.description.contains(searchQuery, ignoreCase = true)
             }
@@ -354,7 +378,7 @@ fun RecurringEventEditScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     if (filteredGroups.isEmpty()) {
-                        if (repository.contactGroups.isEmpty()) {
+                        if (contactGroups.isEmpty()) {
                             Text(
                                 text = stringResource(R.string.no_contact_groups_available),
                                 style = MaterialTheme.typography.bodyMedium,
@@ -372,7 +396,7 @@ fun RecurringEventEditScreen(
                         filteredGroups.forEach { group ->
                             ContactGroupSelectionItem(
                                 group = group,
-                                repository = repository,
+                                contacts = contactsForGroups[group.id] ?: emptyList(),
                                 isSelected = selectedGroupIds.contains(group.id),
                                 onSelectionChanged = { isSelected ->
                                     selectedGroupIds = if (isSelected) {
@@ -437,38 +461,40 @@ fun RecurringEventEditScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // Save the recurring event
-                        val updatedRecurringEvent = if (recurringEvent == null) {
-                            RecurringEvent(
-                                name = eventName.trim(),
-                                description = eventDescription.trim(),
-                                time = eventTime,
-                                dayOfWeek = selectedDate.dayOfWeek,
-                                contactGroupIds = selectedGroupIds.toList(),
-                                startDate = selectedDate,
-                                endDate = if (hasEndDate) endDate else null,
-                                isActive = isActive
-                            )
-                        } else {
-                            recurringEvent.copy(
-                                name = eventName.trim(),
-                                description = eventDescription.trim(),
-                                time = eventTime,
-                                dayOfWeek = selectedDate.dayOfWeek,
-                                contactGroupIds = selectedGroupIds.toList(),
-                                endDate = if (hasEndDate) endDate else null,
-                                isActive = isActive
-                            )
-                        }
+                        coroutineScope.launch {
+                            // Save the recurring event
+                            val updatedRecurringEvent = if (recurringEvent == null) {
+                                RecurringEvent(
+                                    name = eventName.trim(),
+                                    description = eventDescription.trim(),
+                                    time = eventTime,
+                                    dayOfWeek = selectedDate.dayOfWeek,
+                                    contactGroupIds = selectedGroupIds.toList(),
+                                    startDate = selectedDate,
+                                    endDate = if (hasEndDate) endDate else null,
+                                    isActive = isActive
+                                )
+                            } else {
+                                recurringEvent!!.copy(
+                                    name = eventName.trim(),
+                                    description = eventDescription.trim(),
+                                    time = eventTime,
+                                    dayOfWeek = selectedDate.dayOfWeek,
+                                    contactGroupIds = selectedGroupIds.toList(),
+                                    endDate = if (hasEndDate) endDate else null,
+                                    isActive = isActive
+                                )
+                            }
 
-                        if (recurringEvent == null) {
-                            repository.addRecurringEvent(updatedRecurringEvent)
-                        } else {
-                            repository.updateRecurringEvent(updatedRecurringEvent)
-                        }
+                            if (recurringEvent == null) {
+                                repository.addRecurringEvent(updatedRecurringEvent)
+                            } else {
+                                repository.updateRecurringEvent(updatedRecurringEvent)
+                            }
 
-                        showSaveConfirmation = false
-                        onNavigateBack()
+                            showSaveConfirmation = false
+                            onNavigateBack()
+                        }
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = ButtonBlue)
                 ) {

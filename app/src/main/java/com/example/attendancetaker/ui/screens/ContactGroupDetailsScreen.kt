@@ -32,17 +32,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.Contact
-import androidx.compose.ui.res.stringResource
-import com.example.attendancetaker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,16 +56,20 @@ fun ContactGroupDetailsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val group = repository.getContactGroup(groupId)
-    val contacts = remember(group) {
-        group?.let { repository.getContactsFromGroups(listOf(it.id)) } ?: emptyList()
+    var group by remember { mutableStateOf<com.example.attendancetaker.data.ContactGroup?>(null) }
+    var contacts by remember { mutableStateOf(emptyList<Contact>()) }
+
+    // Load group and contacts data
+    LaunchedEffect(groupId) {
+        group = repository.getContactGroup(groupId)
+        if (group == null) {
+            onNavigateBack()
+            return@LaunchedEffect
+        }
+        contacts = repository.getContactsFromGroups(listOf(group!!.id))
     }
 
     if (group == null) {
-        // Handle case where group doesn't exist
-        LaunchedEffect(Unit) {
-            onNavigateBack()
-        }
         return
     }
 
@@ -87,13 +94,13 @@ fun ContactGroupDetailsScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 Text(
-                    text = group.name,
+                    text = group!!.name,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
-                if (group.description.isNotEmpty()) {
+                if (group!!.description.isNotEmpty()) {
                     Text(
-                        text = group.description,
+                        text = group!!.description,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

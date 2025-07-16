@@ -34,9 +34,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -59,6 +61,7 @@ import com.example.attendancetaker.ui.screens.RecurringEventsScreen
 import com.example.attendancetaker.ui.theme.AttendanceTakerTheme
 import com.example.attendancetaker.utils.LanguageManager
 import com.example.attendancetaker.utils.RecurringEventManager
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var languageManager: LanguageManager
@@ -88,10 +91,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AttendanceTakerApp(languageManager: LanguageManager) {
     val navController = rememberNavController()
-    val repository = remember { AttendanceRepository() }
+    val context = LocalContext.current
+    val repository = remember { AttendanceRepository(context) }
+    val coroutineScope = rememberCoroutineScope()
 
-    // Create recurring events when app starts
-    LaunchedEffect(Unit) {
+    // Initialize database with sample data and create recurring events when app starts
+    LaunchedEffect(repository) {
+        repository.initializeSampleDataIfEmpty()
         RecurringEventManager.createTodaysRecurringEvents(repository)
     }
 
@@ -273,9 +279,8 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
 
             composable(Screen.ContactGroupEdit.route) { backStackEntry ->
                 val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
-                val group = if (groupId == "new") null else repository.getContactGroup(groupId)
                 ContactGroupEditScreen(
-                    group = group,
+                    groupId = if (groupId == "new") null else groupId,
                     repository = repository,
                     onNavigateBack = {
                         navController.popBackStack()
@@ -296,10 +301,8 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
 
             composable(Screen.EventEdit.route) { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
-                val event =
-                    if (eventId == "new") null else repository.events.find { it.id == eventId }
                 EventEditScreen(
-                    event = event,
+                    eventId = if (eventId == "new") null else eventId,
                     repository = repository,
                     onNavigateBack = {
                         navController.popBackStack()
@@ -324,12 +327,8 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
             composable(Screen.RecurringEventEdit.route) { backStackEntry ->
                 val recurringEventId =
                     backStackEntry.arguments?.getString("recurringEventId") ?: return@composable
-                val recurringEvent =
-                    if (recurringEventId == "new") null else repository.getRecurringEvent(
-                        recurringEventId
-                    )
                 RecurringEventEditScreen(
-                    recurringEvent = recurringEvent,
+                    recurringEventId = if (recurringEventId == "new") null else recurringEventId,
                     repository = repository,
                     onNavigateBack = {
                         navController.popBackStack()

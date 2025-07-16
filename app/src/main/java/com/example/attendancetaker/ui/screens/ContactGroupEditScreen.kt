@@ -32,37 +32,42 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.Contact
 import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.utils.ContactUtils
-import androidx.compose.ui.res.stringResource
-import com.example.attendancetaker.R
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactGroupEditScreen(
-    group: ContactGroup?,
+    groupId: String?,
     repository: AttendanceRepository,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
-    var groupName by remember { mutableStateOf(group?.name ?: "") }
-    var groupDescription by remember { mutableStateOf(group?.description ?: "") }
-    var selectedContactIds by remember { mutableStateOf(group?.contactIds?.toSet() ?: emptySet()) }
+    var group by remember { mutableStateOf<ContactGroup?>(null) }
+    var groupName by remember { mutableStateOf("") }
+    var groupDescription by remember { mutableStateOf("") }
+    var selectedContactIds by remember { mutableStateOf(emptySet<String>()) }
     var phoneContacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
     var hasContactsPermission by remember {
@@ -73,6 +78,20 @@ fun ContactGroupEditScreen(
         )
     }
     var showSaveConfirmation by remember { mutableStateOf(false) }
+
+    val contacts by repository.getAllContacts().collectAsState(initial = emptyList())
+
+    // Load group data if editing existing group
+    LaunchedEffect(groupId) {
+        if (groupId != null) {
+            group = repository.getContactGroup(groupId)
+            group?.let {
+                groupName = it.name
+                groupDescription = it.description
+                selectedContactIds = it.contactIds.toSet()
+            }
+        }
+    }
 
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -92,9 +111,9 @@ fun ContactGroupEditScreen(
     }
 
     // Combine phone contacts with existing repository contacts
-    val allAvailableContacts = remember(phoneContacts, repository.contacts) {
+    val allAvailableContacts = remember(phoneContacts, contacts) {
         val phoneContactMap = phoneContacts.associateBy { it.id }
-        val repoContactMap = repository.contacts.associateBy { it.id }
+        val repoContactMap = contacts.associateBy { it.id }
 
         // Merge both lists, prioritizing repository contacts for duplicates
         val combinedMap = phoneContactMap + repoContactMap
@@ -302,39 +321,41 @@ fun ContactGroupEditScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // Save the group
-                        val updatedGroup = if (group == null) {
-                            ContactGroup(
-                                name = groupName.trim(),
-                                description = groupDescription.trim(),
-                                contactIds = selectedContactIds.toList()
-                            )
-                        } else {
-                            group.copy(
-                                name = groupName.trim(),
-                                description = groupDescription.trim(),
-                                contactIds = selectedContactIds.toList()
-                            )
-                        }
-
-                        if (group == null) {
-                            repository.addContactGroup(updatedGroup)
-                        } else {
-                            repository.updateContactGroup(updatedGroup)
-                        }
-
-                        // Add new contacts to repository if they don't exist
-                        selectedContactIds.forEach { contactId ->
-                            val existingContact = repository.contacts.find { it.id == contactId }
-                            if (existingContact == null) {
-                                val availableContact =
-                                    allAvailableContacts.find { it.id == contactId }
-                                availableContact?.let { repository.addContact(it) }
+                        coroutineScope.launch {
+                            // Save the group
+                            val updatedGroup = if (group == null) {
+                                ContactGroup(
+                                    name = groupName.trim(),
+                                    description = groupDescription.trim(),
+                                    contactIds = selectedContactIds.toList()
+                                )
+                            } else {
+                                group!!.copy(
+                                    name = groupName.trim(),
+                                    description = groupDescription.trim(),
+                                    contactIds = selectedContactIds.toList()
+                                )
                             }
-                        }
 
-                        showSaveConfirmation = false
-                        onNavigateBack()
+                            if (group == null) {
+                                repository.addContactGroup(updatedGroup)
+                            } else {
+                                repository.updateContactGroup(updatedGroup)
+                            }
+
+                            // Add new contacts to repository if they don't exist
+                            selectedContactIds.forEach { contactId ->
+                                val existingContact = contacts.find { it.id == contactId }
+                                if (existingContact == null) {
+                                    val availableContact =
+                                        allAvailableContacts.find { it.id == contactId }
+                                    availableContact?.let { repository.addContact(it) }
+                                }
+                            }
+
+                            showSaveConfirmation = false
+                            onNavigateBack()
+                        }
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = ButtonBlue)
                 ) {

@@ -1,6 +1,7 @@
 package com.example.attendancetaker.utils
 
 import com.example.attendancetaker.data.AttendanceRepository
+import kotlinx.coroutines.flow.first
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -9,11 +10,11 @@ object RecurringEventManager {
     /**
      * Checks all active recurring events and creates any missing events for today
      */
-    fun createTodaysRecurringEvents(repository: AttendanceRepository) {
+    suspend fun createTodaysRecurringEvents(repository: AttendanceRepository) {
         val today = LocalDate.now()
         val todayDayOfWeek = today.dayOfWeek
 
-        val activeRecurringEvents = repository.getActiveRecurringEvents()
+        val activeRecurringEvents = repository.getActiveRecurringEvents().first()
 
         activeRecurringEvents.forEach { recurringEvent ->
             // Check if this recurring event should create an event today
@@ -30,12 +31,12 @@ object RecurringEventManager {
     /**
      * Creates missing recurring events for a date range (useful for missed days when app wasn't opened)
      */
-    fun createRecurringEventsForDateRange(
+    suspend fun createRecurringEventsForDateRange(
         repository: AttendanceRepository,
         startDate: LocalDate,
         endDate: LocalDate
     ) {
-        val activeRecurringEvents = repository.getActiveRecurringEvents()
+        val activeRecurringEvents = repository.getActiveRecurringEvents().first()
 
         var currentDate = startDate
         while (!currentDate.isAfter(endDate)) {

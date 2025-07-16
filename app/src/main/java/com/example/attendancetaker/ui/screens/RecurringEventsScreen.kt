@@ -31,22 +31,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.RecurringEvent
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue
+import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
-import androidx.compose.ui.res.stringResource
-import com.example.attendancetaker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +59,9 @@ fun RecurringEventsScreen(
     onNavigateToRecurringEventEdit: (RecurringEvent?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val recurringEvents by repository.getAllRecurringEvents().collectAsState(initial = emptyList())
+    val coroutineScope = rememberCoroutineScope()
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -82,7 +89,7 @@ fun RecurringEventsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (repository.recurringEvents.isEmpty()) {
+        if (recurringEvents.isEmpty()) {
             // Empty state
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -113,12 +120,16 @@ fun RecurringEventsScreen(
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(repository.recurringEvents) { recurringEvent ->
+                items(recurringEvents) { recurringEvent ->
                     RecurringEventItem(
                         recurringEvent = recurringEvent,
                         repository = repository,
                         onEdit = { onNavigateToRecurringEventEdit(recurringEvent) },
-                        onDelete = { repository.removeRecurringEvent(recurringEvent.id) }
+                        onDelete = {
+                            coroutineScope.launch {
+                                repository.removeRecurringEvent(recurringEvent.id)
+                            }
+                        }
                     )
                 }
             }
@@ -134,10 +145,16 @@ fun RecurringEventItem(
     onDelete: () -> Unit
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
-    val selectedGroups = recurringEvent.contactGroupIds.mapNotNull { groupId ->
-        repository.getContactGroup(groupId)
+    var selectedGroups by remember { mutableStateOf(emptyList<com.example.attendancetaker.data.ContactGroup>()) }
+    var totalContacts by remember { mutableStateOf(0) }
+
+    // Load related data
+    LaunchedEffect(recurringEvent.contactGroupIds) {
+        selectedGroups = recurringEvent.contactGroupIds.mapNotNull { groupId ->
+            repository.getContactGroup(groupId)
+        }
+        totalContacts = repository.getContactsFromGroups(recurringEvent.contactGroupIds).size
     }
-    val totalContacts = repository.getContactsFromGroups(recurringEvent.contactGroupIds).size
 
     Card(
         modifier = Modifier.fillMaxWidth(),

@@ -48,7 +48,7 @@
     <string name="members_count">%1$d عضو</string>
     <string name="and_more"> و%1$d آخرين</string>
     <string name="delete_group">حذف المجموعة</string>
-    <string name="delete_group_confirmation">هل أنت متأكد من حذف المجموعة \'%1$s\'؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="delete_group_confirmation">هل أنت متأكد من حذف المجموعة \"%1$s\"؟ لا يمكن التراجع عن هذا الإجراء.</string>
 
     <!-- Common Actions -->
     <string name="save">حفظ</string>
@@ -135,4 +135,5 @@
     <string name="cd_edit_group">تعديل المجموعة</string>
     <string name="cd_delete_group">حذف المجموعة</string>
     <string name="cd_allow_access">السماح بالوصول</string>
+    <string name="cd_select_date">اختيار التاريخ</string>
 </resources>

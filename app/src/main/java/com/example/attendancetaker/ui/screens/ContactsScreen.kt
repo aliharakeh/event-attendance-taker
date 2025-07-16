@@ -23,21 +23,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue
-import androidx.compose.ui.res.stringResource
-import com.example.attendancetaker.R
+import kotlinx.coroutines.launch
 
 @Composable
 fun ContactsScreen(
@@ -45,18 +49,25 @@ fun ContactsScreen(
     onNavigateToGroupEdit: (ContactGroup?) -> Unit,
     onNavigateToGroupDetails: (ContactGroup) -> Unit,
 ) {
+    val contactGroups by repository.getAllContactGroups().collectAsState(initial = emptyList())
+    val coroutineScope = rememberCoroutineScope()
+
     // Contact Groups List
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(repository.contactGroups) { group ->
+        items(contactGroups) { group ->
             ContactGroupItem(
                 group = group,
                 repository = repository,
                 onEdit = { onNavigateToGroupEdit(group) },
-                onDelete = { repository.removeContactGroup(group.id) },
+                onDelete = {
+                    coroutineScope.launch {
+                        repository.removeContactGroup(group.id)
+                    }
+                },
                 onItemClick = { onNavigateToGroupDetails(group) }
             )
         }
@@ -72,7 +83,13 @@ fun ContactGroupItem(
     onItemClick: () -> Unit
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
-    val contacts = repository.getContactsFromGroups(listOf(group.id))
+    var contacts by remember { mutableStateOf(emptyList<com.example.attendancetaker.data.Contact>()) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Load contacts for this group
+    LaunchedEffect(group.id) {
+        contacts = repository.getContactsFromGroups(listOf(group.id))
+    }
 
     Card(
         modifier = Modifier

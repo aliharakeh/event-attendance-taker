@@ -39,43 +39,45 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.data.Event
 import com.example.attendancetaker.data.RecurringEvent
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import androidx.compose.ui.res.stringResource
-import com.example.attendancetaker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventEditScreen(
-    event: Event?,
+    eventId: String?,
     repository: AttendanceRepository,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var eventName by remember { mutableStateOf(event?.name ?: "") }
-    var eventDescription by remember { mutableStateOf(event?.description ?: "") }
-    var eventDate by remember { mutableStateOf(event?.date ?: LocalDate.now()) }
-    var eventTime by remember { mutableStateOf(event?.time ?: LocalTime.now()) }
-    var selectedGroupIds by remember {
-        mutableStateOf(
-            event?.contactGroupIds?.toSet() ?: emptySet()
-        )
-    }
+    val coroutineScope = rememberCoroutineScope()
+    var event by remember { mutableStateOf<Event?>(null) }
+    var eventName by remember { mutableStateOf("") }
+    var eventDescription by remember { mutableStateOf("") }
+    var eventDate by remember { mutableStateOf(LocalDate.now()) }
+    var eventTime by remember { mutableStateOf(LocalTime.now()) }
+    var selectedGroupIds by remember { mutableStateOf(emptySet<String>()) }
     var searchQuery by remember { mutableStateOf("") }
     var showSaveConfirmation by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -87,12 +89,38 @@ fun EventEditScreen(
     var showRecurringEndDatePicker by remember { mutableStateOf(false) }
     var hasEndDate by remember { mutableStateOf(false) }
 
+    val contactGroups by repository.getAllContactGroups().collectAsState(initial = emptyList())
+    var contactsForGroups by remember { mutableStateOf(mapOf<String, List<com.example.attendancetaker.data.Contact>>()) }
+
+    // Load event data if editing
+    LaunchedEffect(eventId) {
+        if (eventId != null) {
+            event = repository.getEventById(eventId)
+            event?.let {
+                eventName = it.name
+                eventDescription = it.description
+                eventDate = it.date
+                eventTime = it.time
+                selectedGroupIds = it.contactGroupIds.toSet()
+            }
+        }
+    }
+
+    // Load contacts for each group
+    LaunchedEffect(contactGroups) {
+        val contactsMap = mutableMapOf<String, List<com.example.attendancetaker.data.Contact>>()
+        contactGroups.forEach { group ->
+            contactsMap[group.id] = repository.getContactsFromGroups(listOf(group.id))
+        }
+        contactsForGroups = contactsMap
+    }
+
     // Filter contact groups based on search query
-    val filteredGroups = remember(repository.contactGroups, searchQuery) {
+    val filteredGroups = remember(contactGroups, searchQuery) {
         if (searchQuery.isBlank()) {
-            repository.contactGroups
+            contactGroups
         } else {
-            repository.contactGroups.filter { group ->
+            contactGroups.filter { group ->
                 group.name.contains(searchQuery, ignoreCase = true) ||
                         group.description.contains(searchQuery, ignoreCase = true)
             }
@@ -355,7 +383,7 @@ fun EventEditScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     if (filteredGroups.isEmpty()) {
-                        if (repository.contactGroups.isEmpty()) {
+                        if (contactGroups.isEmpty()) {
                             Text(
                                 text = stringResource(R.string.no_contact_groups_available),
                                 style = MaterialTheme.typography.bodyMedium,
@@ -373,7 +401,7 @@ fun EventEditScreen(
                         filteredGroups.forEach { group ->
                             ContactGroupSelectionItem(
                                 group = group,
-                                repository = repository,
+                                contacts = contactsForGroups[group.id] ?: emptyList(),
                                 isSelected = selectedGroupIds.contains(group.id),
                                 onSelectionChanged = { isSelected: Boolean ->
                                     selectedGroupIds = if (isSelected) {
@@ -438,48 +466,50 @@ fun EventEditScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        if (isRecurring) {
-                            // Create a recurring event
-                            val recurringEvent = RecurringEvent(
-                                name = eventName.trim(),
-                                description = eventDescription.trim(),
-                                time = eventTime,
-                                dayOfWeek = eventDate.dayOfWeek,
-                                contactGroupIds = selectedGroupIds.toList(),
-                                startDate = eventDate,
-                                endDate = if (hasEndDate) recurringEndDate else null,
-                                isActive = true
-                            )
-                            repository.addRecurringEvent(recurringEvent)
-                        } else {
-                            // Save as regular event
-                            val updatedEvent = if (event == null) {
-                                Event(
+                        coroutineScope.launch {
+                            if (isRecurring) {
+                                // Create a recurring event
+                                val recurringEvent = RecurringEvent(
                                     name = eventName.trim(),
                                     description = eventDescription.trim(),
-                                    date = eventDate,
                                     time = eventTime,
-                                    contactGroupIds = selectedGroupIds.toList()
+                                    dayOfWeek = eventDate.dayOfWeek,
+                                    contactGroupIds = selectedGroupIds.toList(),
+                                    startDate = eventDate,
+                                    endDate = if (hasEndDate) recurringEndDate else null,
+                                    isActive = true
                                 )
+                                repository.addRecurringEvent(recurringEvent)
                             } else {
-                                event.copy(
-                                    name = eventName.trim(),
-                                    description = eventDescription.trim(),
-                                    date = eventDate,
-                                    time = eventTime,
-                                    contactGroupIds = selectedGroupIds.toList()
-                                )
+                                // Save as regular event
+                                val updatedEvent = if (event == null) {
+                                    Event(
+                                        name = eventName.trim(),
+                                        description = eventDescription.trim(),
+                                        date = eventDate,
+                                        time = eventTime,
+                                        contactGroupIds = selectedGroupIds.toList()
+                                    )
+                                } else {
+                                    event!!.copy(
+                                        name = eventName.trim(),
+                                        description = eventDescription.trim(),
+                                        date = eventDate,
+                                        time = eventTime,
+                                        contactGroupIds = selectedGroupIds.toList()
+                                    )
+                                }
+
+                                if (event == null) {
+                                    repository.addEvent(updatedEvent)
+                                } else {
+                                    repository.updateEvent(updatedEvent)
+                                }
                             }
 
-                            if (event == null) {
-                                repository.addEvent(updatedEvent)
-                            } else {
-                                repository.updateEvent(updatedEvent)
-                            }
+                            showSaveConfirmation = false
+                            onNavigateBack()
                         }
-
-                        showSaveConfirmation = false
-                        onNavigateBack()
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = ButtonBlue)
                 ) {
@@ -501,12 +531,10 @@ fun EventEditScreen(
 @Composable
 fun ContactGroupSelectionItem(
     group: ContactGroup,
-    repository: AttendanceRepository,
+    contacts: List<com.example.attendancetaker.data.Contact>,
     isSelected: Boolean,
     onSelectionChanged: (Boolean) -> Unit
 ) {
-    val contacts = repository.getContactsFromGroups(listOf(group.id))
-
     Card(
         modifier = Modifier
             .fillMaxWidth()

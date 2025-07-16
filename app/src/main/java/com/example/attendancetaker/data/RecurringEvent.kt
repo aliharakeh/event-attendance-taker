@@ -1,12 +1,15 @@
 package com.example.attendancetaker.data
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
+@Entity(tableName = "recurring_events")
 data class RecurringEvent(
-    val id: String = UUID.randomUUID().toString(),
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val name: String,
     val description: String = "",
     val time: LocalTime,

@@ -31,9 +31,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +48,7 @@ import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.Contact
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,21 +58,30 @@ fun AttendanceScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val event = repository.events.find { it.id == eventId }
+    var event by remember { mutableStateOf<com.example.attendancetaker.data.Event?>(null) }
     var selectedContact by remember { mutableStateOf<Contact?>(null) }
+    var eventContacts by remember { mutableStateOf(emptyList<Contact>()) }
+    var selectedGroups by remember { mutableStateOf(emptyList<com.example.attendancetaker.data.ContactGroup>()) }
+    val coroutineScope = rememberCoroutineScope()
 
-    if (event == null) {
-        // Event not found, navigate back
-        LaunchedEffect(Unit) {
+    val attendanceRecords by repository.getAttendanceForEvent(eventId).collectAsState(initial = emptyList())
+
+    // Load event and related data
+    LaunchedEffect(eventId) {
+        event = repository.getEventById(eventId)
+        if (event == null) {
             onNavigateBack()
+            return@LaunchedEffect
         }
-        return
+
+        eventContacts = repository.getContactsForEvent(eventId)
+        selectedGroups = event!!.contactGroupIds.mapNotNull { groupId ->
+            repository.getContactGroup(groupId)
+        }
     }
 
-    // Get contacts from the event's contact groups (with duplicates filtered)
-    val eventContacts = repository.getContactsForEvent(eventId)
-    val selectedGroups = event.contactGroupIds.mapNotNull { groupId ->
-        repository.getContactGroup(groupId)
+    if (event == null) {
+        return
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -86,7 +98,7 @@ fun AttendanceScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = event.name,
+                    text = event!!.name,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -142,22 +154,29 @@ fun AttendanceScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(eventContacts) { contact ->
-                    val attendanceRecord = repository.getAttendanceRecord(eventId, contact.id)
-                    val contactGroups = repository.getGroupsContainingContact(contact.id)
-                        .filter { group -> event.contactGroupIds.contains(group.id) }
+                    val attendanceRecord = attendanceRecords.find { it.contactId == contact.id }
+                    var contactGroups by remember { mutableStateOf(emptyList<com.example.attendancetaker.data.ContactGroup>()) }
+
+                    // Load contact groups for each contact
+                    LaunchedEffect(contact.id, event!!.contactGroupIds) {
+                        contactGroups = repository.getGroupsContainingContact(contact.id)
+                            .filter { group -> event!!.contactGroupIds.contains(group.id) }
+                    }
 
                     AttendanceItem(
                         contact = contact,
                         contactGroups = contactGroups,
                         attendanceRecord = attendanceRecord,
                         onAttendanceChange = { isPresent ->
-                            val record = attendanceRecord?.copy(isPresent = isPresent)
-                                ?: AttendanceRecord(
-                                    contactId = contact.id,
-                                    eventId = eventId,
-                                    isPresent = isPresent
-                                )
-                            repository.updateAttendanceRecord(record)
+                            coroutineScope.launch {
+                                val record = attendanceRecord?.copy(isPresent = isPresent)
+                                    ?: AttendanceRecord(
+                                        contactId = contact.id,
+                                        eventId = eventId,
+                                        isPresent = isPresent
+                                    )
+                                repository.updateAttendanceRecord(record)
+                            }
                         },
                         onEditNotes = { selectedContact = contact }
                     )
@@ -168,20 +187,22 @@ fun AttendanceScreen(
 
     // Notes Dialog
     selectedContact?.let { contact ->
-        val attendanceRecord = repository.getAttendanceRecord(eventId, contact.id)
+        val attendanceRecord = attendanceRecords.find { it.contactId == contact.id }
         NotesDialog(
             contact = contact,
             currentNotes = attendanceRecord?.notes ?: "",
             onDismiss = { selectedContact = null },
             onSave = { notes ->
-                val record = attendanceRecord?.copy(notes = notes)
-                    ?: AttendanceRecord(
-                        contactId = contact.id,
-                        eventId = eventId,
-                        notes = notes
-                    )
-                repository.updateAttendanceRecord(record)
-                selectedContact = null
+                coroutineScope.launch {
+                    val record = attendanceRecord?.copy(notes = notes)
+                        ?: AttendanceRecord(
+                            contactId = contact.id,
+                            eventId = eventId,
+                            notes = notes
+                        )
+                    repository.updateAttendanceRecord(record)
+                    selectedContact = null
+                }
             }
         )
     }

@@ -42,9 +42,12 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,11 +57,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
+import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.data.Event
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -71,18 +76,25 @@ fun EventsScreen(
     onNavigateToEventEdit: (Event?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val events by repository.getAllEvents().collectAsState(initial = emptyList())
+    val coroutineScope = rememberCoroutineScope()
+
     // Events List
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(repository.events) { event ->
+        items(events) { event ->
             EventItem(
                 event = event,
                 repository = repository,
                 onEdit = { onNavigateToEventEdit(event) },
-                onDelete = { repository.removeEvent(event.id) },
+                onDelete = {
+                    coroutineScope.launch {
+                        repository.removeEvent(event.id)
+                    }
+                },
                 onTakeAttendance = { onNavigateToAttendance(event.id) }
             )
         }
@@ -98,10 +110,17 @@ fun EventItem(
     onTakeAttendance: () -> Unit
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
-    val selectedGroups = event.contactGroupIds.mapNotNull { groupId ->
-        repository.getContactGroup(groupId)
+    var selectedGroups by remember { mutableStateOf(emptyList<ContactGroup>()) }
+    var totalContacts by remember { mutableStateOf(0) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Load related data
+    LaunchedEffect(event.contactGroupIds) {
+        selectedGroups = event.contactGroupIds.mapNotNull { groupId ->
+            repository.getContactGroup(groupId)
+        }
+        totalContacts = repository.getContactsForEvent(event.id).size
     }
-    val totalContacts = repository.getContactsForEvent(event.id).size
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -283,6 +302,19 @@ fun EventDialog(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
+    val contactGroups by repository.getAllContactGroups().collectAsState(initial = emptyList())
+    var contactsForGroups by remember { mutableStateOf(mapOf<String, List<com.example.attendancetaker.data.Contact>>()) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Load contacts for each group
+    LaunchedEffect(contactGroups) {
+        val contactsMap = mutableMapOf<String, List<com.example.attendancetaker.data.Contact>>()
+        contactGroups.forEach { group ->
+            contactsMap[group.id] = repository.getContactsFromGroups(listOf(group.id))
+        }
+        contactsForGroups = contactsMap
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -342,7 +374,7 @@ fun EventDialog(
                             IconButton(onClick = { showTimePicker = true }) {
                                 Icon(
                                     Icons.Default.Schedule,
-                                    contentDescription = stringResource(R.string.cd_select_time)
+                                    contentDescription = stringResource(R.string.select_time)
                                 )
                             }
                         }
@@ -357,8 +389,8 @@ fun EventDialog(
                     )
                 }
 
-                items(repository.contactGroups) { group ->
-                    val contacts = repository.getContactsFromGroups(listOf(group.id))
+                items(contactGroups) { group ->
+                    val contacts = contactsForGroups[group.id] ?: emptyList()
                     val isSelected = selectedGroupIds.contains(group.id)
 
                     Card(

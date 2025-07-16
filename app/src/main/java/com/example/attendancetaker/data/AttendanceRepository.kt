@@ -1,33 +1,206 @@
 package com.example.attendancetaker.data
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
+import android.content.Context
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import java.time.LocalDateTime
 
-class AttendanceRepository {
-    private val _contacts = mutableStateListOf<Contact>()
-    val contacts: List<Contact> = _contacts
+class AttendanceRepository(context: Context) {
+    private val database = AttendanceDatabase.getDatabase(context)
+    private val contactDao = database.contactDao()
+    private val contactGroupDao = database.contactGroupDao()
+    private val eventDao = database.eventDao()
+    private val recurringEventDao = database.recurringEventDao()
+    private val attendanceRecordDao = database.attendanceRecordDao()
 
-    private val _contactGroups = mutableStateListOf<ContactGroup>()
-    val contactGroups: List<ContactGroup> = _contactGroups
+    // Contact management
+    fun getAllContacts(): Flow<List<Contact>> = contactDao.getAllContacts()
 
-    private val _events = mutableStateListOf<Event>()
-    val events: List<Event> = _events
-
-    private val _recurringEvents = mutableStateListOf<RecurringEvent>()
-    val recurringEvents: List<RecurringEvent> = _recurringEvents
-
-    // Map of "eventId_contactId" to AttendanceRecord
-    private val _attendanceRecords = mutableStateMapOf<String, AttendanceRecord>()
-
-    init {
-        // Add some sample data for testing
-        addSampleData()
+    suspend fun addContact(contact: Contact) {
+        contactDao.insertContact(contact)
     }
 
-    private fun addSampleData() {
-        // No sample contacts - users will add them through groups
+    suspend fun removeContact(contactId: String) {
+        // Remove contact from all groups first
+        val groups = contactGroupDao.getAllContactGroups().first()
+        groups.forEach { group ->
+            if (group.contactIds.contains(contactId)) {
+                val updatedGroup = group.copy(
+                    contactIds = group.contactIds.filter { it != contactId }
+                )
+                contactGroupDao.updateContactGroup(updatedGroup)
+            }
+        }
 
+        // Remove all attendance records for this contact
+        attendanceRecordDao.deleteAttendanceByContactId(contactId)
+
+        // Remove the contact
+        contactDao.deleteContactById(contactId)
+    }
+
+    suspend fun updateContact(contact: Contact) {
+        contactDao.updateContact(contact)
+    }
+
+    suspend fun getContactById(contactId: String): Contact? {
+        return contactDao.getContactById(contactId)
+    }
+
+    // Contact group management
+    fun getAllContactGroups(): Flow<List<ContactGroup>> = contactGroupDao.getAllContactGroups()
+
+    suspend fun addContactGroup(contactGroup: ContactGroup) {
+        contactGroupDao.insertContactGroup(contactGroup)
+    }
+
+    suspend fun removeContactGroup(groupId: String) {
+        // Remove group from all events first
+        val events = eventDao.getAllEvents().first()
+        events.forEach { event ->
+            if (event.contactGroupIds.contains(groupId)) {
+                val updatedEvent = event.copy(
+                    contactGroupIds = event.contactGroupIds.filter { it != groupId }
+                )
+                eventDao.updateEvent(updatedEvent)
+            }
+        }
+
+        contactGroupDao.deleteContactGroupById(groupId)
+    }
+
+    suspend fun updateContactGroup(contactGroup: ContactGroup) {
+        contactGroupDao.updateContactGroup(contactGroup)
+    }
+
+    suspend fun getContactGroup(groupId: String): ContactGroup? {
+        return contactGroupDao.getContactGroupById(groupId)
+    }
+
+    // Event management
+    fun getAllEvents(): Flow<List<Event>> = eventDao.getAllEvents()
+
+    suspend fun addEvent(event: Event) {
+        eventDao.insertEvent(event)
+    }
+
+    suspend fun removeEvent(eventId: String) {
+        // Remove all attendance records for this event
+        attendanceRecordDao.deleteAttendanceByEventId(eventId)
+
+        eventDao.deleteEventById(eventId)
+    }
+
+    suspend fun updateEvent(event: Event) {
+        eventDao.updateEvent(event)
+    }
+
+    suspend fun getEventById(eventId: String): Event? {
+        return eventDao.getEventById(eventId)
+    }
+
+    suspend fun getEventsBetweenDates(startDate: LocalDate, endDate: LocalDate): List<Event> {
+        return eventDao.getEventsBetweenDates(startDate, endDate)
+    }
+
+    // Helper functions for contact filtering
+    suspend fun getContactsForEvent(eventId: String): List<Contact> {
+        val event = eventDao.getEventById(eventId) ?: return emptyList()
+        return getContactsFromGroups(event.contactGroupIds)
+    }
+
+    suspend fun getContactsFromGroups(groupIds: List<String>): List<Contact> {
+        val allContactIds = mutableSetOf<String>()
+
+        groupIds.forEach { groupId ->
+            val group = contactGroupDao.getContactGroupById(groupId)
+            group?.contactIds?.forEach { contactId ->
+                allContactIds.add(contactId)
+            }
+        }
+
+        return if (allContactIds.isNotEmpty()) {
+            contactDao.getContactsByIds(allContactIds.toList())
+        } else {
+            emptyList()
+        }
+    }
+
+    suspend fun getGroupsContainingContact(contactId: String): List<ContactGroup> {
+        return contactGroupDao.getAllContactGroups().first().filter { group ->
+            group.contactIds.contains(contactId)
+        }
+    }
+
+    // Attendance management
+    suspend fun getAttendanceRecord(eventId: String, contactId: String): AttendanceRecord? {
+        return attendanceRecordDao.getAttendanceRecord(eventId, contactId)
+    }
+
+    suspend fun updateAttendanceRecord(record: AttendanceRecord) {
+        attendanceRecordDao.insertAttendanceRecord(record)
+    }
+
+    fun getAttendanceForEvent(eventId: String): Flow<List<AttendanceRecord>> {
+        return attendanceRecordDao.getAttendanceForEvent(eventId)
+    }
+
+    suspend fun getAttendanceForContact(contactId: String): List<AttendanceRecord> {
+        return attendanceRecordDao.getAttendanceForContact(contactId)
+    }
+
+    // Recurring event management
+    fun getAllRecurringEvents(): Flow<List<RecurringEvent>> = recurringEventDao.getAllRecurringEvents()
+
+    fun getActiveRecurringEvents(): Flow<List<RecurringEvent>> = recurringEventDao.getActiveRecurringEvents()
+
+    suspend fun addRecurringEvent(recurringEvent: RecurringEvent) {
+        recurringEventDao.insertRecurringEvent(recurringEvent)
+    }
+
+    suspend fun removeRecurringEvent(recurringEventId: String) {
+        // Remove all events generated from this recurring event
+        eventDao.deleteEventsByRecurringEventId(recurringEventId)
+
+        recurringEventDao.deleteRecurringEventById(recurringEventId)
+    }
+
+    suspend fun updateRecurringEvent(recurringEvent: RecurringEvent) {
+        recurringEventDao.updateRecurringEvent(recurringEvent)
+    }
+
+    suspend fun getRecurringEvent(recurringEventId: String): RecurringEvent? {
+        return recurringEventDao.getRecurringEventById(recurringEventId)
+    }
+
+    suspend fun hasEventForRecurringEvent(recurringEventId: String, date: LocalDate): Boolean {
+        return eventDao.getEventByRecurringEventAndDate(recurringEventId, date) != null
+    }
+
+    suspend fun createEventFromRecurring(recurringEvent: RecurringEvent, date: LocalDate): Event {
+        val event = Event(
+            name = recurringEvent.name,
+            description = recurringEvent.description,
+            date = date,
+            time = recurringEvent.time,
+            contactGroupIds = recurringEvent.contactGroupIds,
+            recurringEventId = recurringEvent.id
+        )
+        eventDao.insertEvent(event)
+        return event
+    }
+
+    // Initialize with sample data if database is empty
+    suspend fun initializeSampleDataIfEmpty() {
+        val existingGroups = contactGroupDao.getAllContactGroups().first()
+        if (existingGroups.isEmpty()) {
+            addSampleData()
+        }
+    }
+
+    private suspend fun addSampleData() {
         // Sample contact groups (empty initially)
         val teamGroup = ContactGroup(
             name = "Team Members",
@@ -40,8 +213,8 @@ class AttendanceRepository {
             contactIds = emptyList()
         )
 
-        _contactGroups.add(teamGroup)
-        _contactGroups.add(managementGroup)
+        contactGroupDao.insertContactGroup(teamGroup)
+        contactGroupDao.insertContactGroup(managementGroup)
 
         // Sample events (without contact groups initially)
         val sampleEvents = listOf(
@@ -69,156 +242,7 @@ class AttendanceRepository {
         )
 
         sampleEvents.forEach { event ->
-            _events.add(event)
+            eventDao.insertEvent(event)
         }
-    }
-
-    // Contact management
-    fun addContact(contact: Contact) {
-        _contacts.add(contact)
-    }
-
-    fun removeContact(contactId: String) {
-        _contacts.removeAll { it.id == contactId }
-        // Remove contact from all groups
-        _contactGroups.replaceAll { group ->
-            group.copy(contactIds = group.contactIds.filter { it != contactId })
-        }
-        // Remove all attendance records for this contact
-        _attendanceRecords.entries.removeAll { it.value.contactId == contactId }
-    }
-
-    fun updateContact(contact: Contact) {
-        val index = _contacts.indexOfFirst { it.id == contact.id }
-        if (index != -1) {
-            _contacts[index] = contact
-        }
-    }
-
-    // Contact group management
-    fun addContactGroup(contactGroup: ContactGroup) {
-        _contactGroups.add(contactGroup)
-    }
-
-    fun removeContactGroup(groupId: String) {
-        _contactGroups.removeAll { it.id == groupId }
-        // Remove group from all events
-        _events.replaceAll { event ->
-            event.copy(contactGroupIds = event.contactGroupIds.filter { it != groupId })
-        }
-    }
-
-    fun updateContactGroup(contactGroup: ContactGroup) {
-        val index = _contactGroups.indexOfFirst { it.id == contactGroup.id }
-        if (index != -1) {
-            _contactGroups[index] = contactGroup
-        }
-    }
-
-    fun getContactGroup(groupId: String): ContactGroup? {
-        return _contactGroups.find { it.id == groupId }
-    }
-
-    // Event management
-    fun addEvent(event: Event) {
-        _events.add(event)
-    }
-
-    fun removeEvent(eventId: String) {
-        _events.removeAll { it.id == eventId }
-        // Remove all attendance records for this event
-        _attendanceRecords.entries.removeAll { it.value.eventId == eventId }
-    }
-
-    fun updateEvent(event: Event) {
-        val index = _events.indexOfFirst { it.id == event.id }
-        if (index != -1) {
-            _events[index] = event
-        }
-    }
-
-    // Helper functions for contact filtering
-    fun getContactsForEvent(eventId: String): List<Contact> {
-        val event = _events.find { it.id == eventId } ?: return emptyList()
-        return getContactsFromGroups(event.contactGroupIds)
-    }
-
-    fun getContactsFromGroups(groupIds: List<String>): List<Contact> {
-        val allContactIds = mutableSetOf<String>()
-
-        groupIds.forEach { groupId ->
-            val group = _contactGroups.find { it.id == groupId }
-            group?.contactIds?.forEach { contactId ->
-                allContactIds.add(contactId)
-            }
-        }
-
-        return _contacts.filter { contact -> allContactIds.contains(contact.id) }
-    }
-
-    fun getGroupsContainingContact(contactId: String): List<ContactGroup> {
-        return _contactGroups.filter { group ->
-            group.contactIds.contains(contactId)
-        }
-    }
-
-    // Attendance management
-    fun getAttendanceRecord(eventId: String, contactId: String): AttendanceRecord? {
-        return _attendanceRecords["${eventId}_${contactId}"]
-    }
-
-    fun updateAttendanceRecord(record: AttendanceRecord) {
-        _attendanceRecords["${record.eventId}_${record.contactId}"] = record
-    }
-
-    fun getAttendanceForEvent(eventId: String): List<AttendanceRecord> {
-        return _attendanceRecords.values.filter { it.eventId == eventId }
-    }
-
-    fun getAttendanceForContact(contactId: String): List<AttendanceRecord> {
-        return _attendanceRecords.values.filter { it.contactId == contactId }
-    }
-
-    // Recurring event management
-    fun addRecurringEvent(recurringEvent: RecurringEvent) {
-        _recurringEvents.add(recurringEvent)
-    }
-
-    fun removeRecurringEvent(recurringEventId: String) {
-        _recurringEvents.removeAll { it.id == recurringEventId }
-        // Remove all events generated from this recurring event
-        _events.removeAll { it.recurringEventId == recurringEventId }
-    }
-
-    fun updateRecurringEvent(recurringEvent: RecurringEvent) {
-        val index = _recurringEvents.indexOfFirst { it.id == recurringEvent.id }
-        if (index != -1) {
-            _recurringEvents[index] = recurringEvent
-        }
-    }
-
-    fun getRecurringEvent(recurringEventId: String): RecurringEvent? {
-        return _recurringEvents.find { it.id == recurringEventId }
-    }
-
-    fun getActiveRecurringEvents(): List<RecurringEvent> {
-        return _recurringEvents.filter { it.isActive }
-    }
-
-    fun hasEventForRecurringEvent(recurringEventId: String, date: java.time.LocalDate): Boolean {
-        return _events.any { it.recurringEventId == recurringEventId && it.date == date }
-    }
-
-    fun createEventFromRecurring(recurringEvent: RecurringEvent, date: java.time.LocalDate): Event {
-        val event = Event(
-            name = recurringEvent.name,
-            description = recurringEvent.description,
-            date = date,
-            time = recurringEvent.time,
-            contactGroupIds = recurringEvent.contactGroupIds,
-            recurringEventId = recurringEvent.id
-        )
-        addEvent(event)
-        return event
     }
 }
