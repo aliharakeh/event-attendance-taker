@@ -1,12 +1,10 @@
 package com.example.attendancetaker.utils
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import java.util.Locale
 
 class LanguageManager(private val context: Context) {
@@ -39,7 +37,7 @@ class LanguageManager(private val context: Context) {
         setLanguage(newLanguage)
     }
 
-                fun setLanguage(languageCode: String) {
+    fun setLanguage(languageCode: String) {
         sharedPreferences.edit()
             .putString(KEY_LANGUAGE, languageCode)
             .apply()
@@ -55,7 +53,7 @@ class LanguageManager(private val context: Context) {
         onLanguageChangeListener = listener
     }
 
-        private fun updateAppLanguage(languageCode: String) {
+    private fun updateAppLanguage(languageCode: String) {
         val locale = Locale(languageCode)
         Locale.setDefault(locale)
 

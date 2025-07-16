@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,15 +12,31 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,20 +49,21 @@ import androidx.navigation.compose.rememberNavController
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.ui.navigation.Screen
 import com.example.attendancetaker.ui.screens.AttendanceScreen
-import com.example.attendancetaker.ui.screens.ContactsScreen
-import com.example.attendancetaker.ui.screens.ContactGroupEditScreen
 import com.example.attendancetaker.ui.screens.ContactGroupDetailsScreen
+import com.example.attendancetaker.ui.screens.ContactGroupEditScreen
+import com.example.attendancetaker.ui.screens.ContactsScreen
 import com.example.attendancetaker.ui.screens.EventEditScreen
 import com.example.attendancetaker.ui.screens.EventsScreen
+import com.example.attendancetaker.ui.screens.RecurringEventEditScreen
+import com.example.attendancetaker.ui.screens.RecurringEventsScreen
 import com.example.attendancetaker.ui.theme.AttendanceTakerTheme
 import com.example.attendancetaker.utils.LanguageManager
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.shape.RoundedCornerShape
+import com.example.attendancetaker.utils.RecurringEventManager
 
 class MainActivity : ComponentActivity() {
     private lateinit var languageManager: LanguageManager
 
-        override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Initialize language manager and apply saved language
@@ -73,6 +89,11 @@ class MainActivity : ComponentActivity() {
 fun AttendanceTakerApp(languageManager: LanguageManager) {
     val navController = rememberNavController()
     val repository = remember { AttendanceRepository() }
+
+    // Create recurring events when app starts
+    LaunchedEffect(Unit) {
+        RecurringEventManager.createTodaysRecurringEvents(repository)
+    }
 
     // Listen to language changes to trigger recomposition
     val currentLanguage by languageManager.currentLanguage
@@ -136,6 +157,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                                         )
                                     }
                                 }
+
                                 Screen.Events.route -> {
                                     IconButton(
                                         onClick = {
@@ -154,6 +176,20 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                         }
                     },
                     actions = {
+                        // Add recurring events menu for Events screen
+                        if (currentDestination?.route == Screen.Events.route) {
+                            IconButton(
+                                onClick = {
+                                    navController.navigate(Screen.RecurringEvents.route)
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.Repeat,
+                                    contentDescription = "Recurring Events",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
                         LanguageToggleButton(languageManager = languageManager)
                     }
                 )
@@ -259,9 +295,40 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
 
             composable(Screen.EventEdit.route) { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
-                val event = if (eventId == "new") null else repository.events.find { it.id == eventId }
+                val event =
+                    if (eventId == "new") null else repository.events.find { it.id == eventId }
                 EventEditScreen(
                     event = event,
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.RecurringEvents.route) {
+                RecurringEventsScreen(
+                    repository = repository,
+                    onNavigateToRecurringEventEdit = { recurringEvent ->
+                        val route = if (recurringEvent == null) {
+                            Screen.RecurringEventEdit.createRouteForNew()
+                        } else {
+                            Screen.RecurringEventEdit.createRoute(recurringEvent.id)
+                        }
+                        navController.navigate(route)
+                    }
+                )
+            }
+
+            composable(Screen.RecurringEventEdit.route) { backStackEntry ->
+                val recurringEventId =
+                    backStackEntry.arguments?.getString("recurringEventId") ?: return@composable
+                val recurringEvent =
+                    if (recurringEventId == "new") null else repository.getRecurringEvent(
+                        recurringEventId
+                    )
+                RecurringEventEditScreen(
+                    recurringEvent = recurringEvent,
                     repository = repository,
                     onNavigateBack = {
                         navController.popBackStack()
@@ -308,7 +375,10 @@ fun LanguageSelectionDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.current_language, languageManager.getCurrentLanguageName()),
+                    text = stringResource(
+                        R.string.current_language,
+                        languageManager.getCurrentLanguageName()
+                    ),
                     style = MaterialTheme.typography.bodyMedium
                 )
 

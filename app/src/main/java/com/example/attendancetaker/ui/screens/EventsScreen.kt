@@ -1,19 +1,51 @@
 package com.example.attendancetaker.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,8 +56,8 @@ import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.Event
 import com.example.attendancetaker.ui.theme.ButtonBlue
-import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.ButtonNeutral
+import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue
 import java.time.LocalDate
 import java.time.LocalTime
@@ -90,11 +122,24 @@ fun EventItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = event.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = event.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        if (event.isGeneratedFromRecurring) {
+                            Icon(
+                                Icons.Default.Repeat,
+                                contentDescription = "Recurring event",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     if (event.description.isNotBlank()) {
                         Text(
                             text = event.description,
@@ -229,7 +274,11 @@ fun EventDialog(
     var description by remember { mutableStateOf(event?.description ?: "") }
     var selectedDate by remember { mutableStateOf(event?.date ?: LocalDate.now()) }
     var selectedTime by remember { mutableStateOf(event?.time ?: LocalTime.now()) }
-    var selectedGroupIds by remember { mutableStateOf(event?.contactGroupIds?.toSet() ?: emptySet()) }
+    var selectedGroupIds by remember {
+        mutableStateOf(
+            event?.contactGroupIds?.toSet() ?: emptySet()
+        )
+    }
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -272,7 +321,10 @@ fun EventDialog(
                         readOnly = true,
                         trailingIcon = {
                             IconButton(onClick = { showDatePicker = true }) {
-                                Icon(Icons.Default.CalendarToday, contentDescription = stringResource(R.string.select_date))
+                                Icon(
+                                    Icons.Default.CalendarToday,
+                                    contentDescription = stringResource(R.string.select_date)
+                                )
                             }
                         }
                     )
@@ -288,7 +340,10 @@ fun EventDialog(
                         readOnly = true,
                         trailingIcon = {
                             IconButton(onClick = { showTimePicker = true }) {
-                                Icon(Icons.Default.Schedule, contentDescription = stringResource(R.string.select_time))
+                                Icon(
+                                    Icons.Default.Schedule,
+                                    contentDescription = stringResource(R.string.select_time)
+                                )
                             }
                         }
                     )
@@ -352,7 +407,7 @@ fun EventDialog(
                                 )
                                 Text(
                                     text = "${contacts.size} contacts" +
-                                        if (group.description.isNotEmpty()) " • ${group.description}" else "",
+                                            if (group.description.isNotEmpty()) " • ${group.description}" else "",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

@@ -14,6 +14,9 @@ class AttendanceRepository {
     private val _events = mutableStateListOf<Event>()
     val events: List<Event> = _events
 
+    private val _recurringEvents = mutableStateListOf<RecurringEvent>()
+    val recurringEvents: List<RecurringEvent> = _recurringEvents
+
     // Map of "eventId_contactId" to AttendanceRecord
     private val _attendanceRecords = mutableStateMapOf<String, AttendanceRecord>()
 
@@ -174,5 +177,48 @@ class AttendanceRepository {
 
     fun getAttendanceForContact(contactId: String): List<AttendanceRecord> {
         return _attendanceRecords.values.filter { it.contactId == contactId }
+    }
+
+    // Recurring event management
+    fun addRecurringEvent(recurringEvent: RecurringEvent) {
+        _recurringEvents.add(recurringEvent)
+    }
+
+    fun removeRecurringEvent(recurringEventId: String) {
+        _recurringEvents.removeAll { it.id == recurringEventId }
+        // Remove all events generated from this recurring event
+        _events.removeAll { it.recurringEventId == recurringEventId }
+    }
+
+    fun updateRecurringEvent(recurringEvent: RecurringEvent) {
+        val index = _recurringEvents.indexOfFirst { it.id == recurringEvent.id }
+        if (index != -1) {
+            _recurringEvents[index] = recurringEvent
+        }
+    }
+
+    fun getRecurringEvent(recurringEventId: String): RecurringEvent? {
+        return _recurringEvents.find { it.id == recurringEventId }
+    }
+
+    fun getActiveRecurringEvents(): List<RecurringEvent> {
+        return _recurringEvents.filter { it.isActive }
+    }
+
+    fun hasEventForRecurringEvent(recurringEventId: String, date: java.time.LocalDate): Boolean {
+        return _events.any { it.recurringEventId == recurringEventId && it.date == date }
+    }
+
+    fun createEventFromRecurring(recurringEvent: RecurringEvent, date: java.time.LocalDate): Event {
+        val event = Event(
+            name = recurringEvent.name,
+            description = recurringEvent.description,
+            date = date,
+            time = recurringEvent.time,
+            contactGroupIds = recurringEvent.contactGroupIds,
+            recurringEventId = recurringEvent.id
+        )
+        addEvent(event)
+        return event
     }
 }

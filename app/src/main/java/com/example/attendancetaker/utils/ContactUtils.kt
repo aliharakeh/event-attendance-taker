@@ -57,11 +57,13 @@ object ContactUtils {
                 // Clean up phone number
                 val cleanPhone = phone.replace(Regex("[^\\d+]"), "")
                 if (cleanPhone.isNotEmpty()) {
-                    contacts.add(Contact(
-                        id = generateContactId(cleanPhone),
-                        name = name,
-                        phoneNumber = cleanPhone
-                    ))
+                    contacts.add(
+                        Contact(
+                            id = generateContactId(cleanPhone),
+                            name = name,
+                            phoneNumber = cleanPhone
+                        )
+                    )
                 }
             }
         }
@@ -78,7 +80,8 @@ object ContactUtils {
         existingContacts: List<Contact>,
         phoneContacts: List<Contact>
     ): List<Contact> {
-        val existingPhoneNumbers = existingContacts.map { it.phoneNumber.replace(Regex("[^\\d+]"), "") }.toSet()
+        val existingPhoneNumbers =
+            existingContacts.map { it.phoneNumber.replace(Regex("[^\\d+]"), "") }.toSet()
 
         val newContacts = phoneContacts.filter { phoneContact ->
             val cleanPhone = phoneContact.phoneNumber.replace(Regex("[^\\d+]"), "")
