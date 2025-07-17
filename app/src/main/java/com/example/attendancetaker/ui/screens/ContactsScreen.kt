@@ -132,7 +132,7 @@ fun ContactGroupItem(
                     if (contacts.isNotEmpty()) {
                         Text(
                             text = contacts.take(3).joinToString(", ") { it.name } +
-                                    if (contacts.size > 3) stringResource(R.string.and_more, contacts.size - 3) else "",
+                                    if (contacts.size > 3) " " + stringResource(R.string.and_more, contacts.size - 3) else "",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

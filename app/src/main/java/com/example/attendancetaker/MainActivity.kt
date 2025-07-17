@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -56,8 +55,6 @@ import com.example.attendancetaker.ui.screens.ContactGroupEditScreen
 import com.example.attendancetaker.ui.screens.ContactsScreen
 import com.example.attendancetaker.ui.screens.EventEditScreen
 import com.example.attendancetaker.ui.screens.EventsScreen
-import com.example.attendancetaker.ui.screens.RecurringEventEditScreen
-import com.example.attendancetaker.ui.screens.RecurringEventsScreen
 import com.example.attendancetaker.ui.theme.AttendanceTakerTheme
 import com.example.attendancetaker.utils.LanguageManager
 import com.example.attendancetaker.utils.RecurringEventManager
@@ -184,21 +181,8 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                         }
                     },
                     actions = {
-                        // Add recurring events menu for Events screen
-                        if (currentDestination?.route == Screen.Events.route) {
-                            IconButton(
-                                onClick = {
-                                    navController.navigate(Screen.RecurringEvents.route)
-                                }
-                            ) {
-                                Icon(
-                                    Icons.Default.Repeat,
-                                    contentDescription = "Recurring Events",
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-                        LanguageToggleButton(languageManager = languageManager)
+                        // Language toggle button
+                        LanguageToggleButton(languageManager)
                     }
                 )
             }
@@ -234,6 +218,9 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
             composable(Screen.Contacts.route) {
                 ContactsScreen(
                     repository = repository,
+                    onNavigateToGroupDetails = { group ->
+                        navController.navigate(Screen.ContactGroupDetails.createRoute(group.id))
+                    },
                     onNavigateToGroupEdit = { group ->
                         val route = if (group == null) {
                             Screen.ContactGroupEdit.createRouteForNew()
@@ -241,9 +228,6 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                             Screen.ContactGroupEdit.createRoute(group.id)
                         }
                         navController.navigate(route)
-                    },
-                    onNavigateToGroupDetails = { group ->
-                        navController.navigate(Screen.ContactGroupDetails.createRoute(group.id))
                     }
                 )
             }
@@ -302,32 +286,6 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
                 EventEditScreen(
                     eventId = if (eventId == "new") null else eventId,
-                    repository = repository,
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    }
-                )
-            }
-
-            composable(Screen.RecurringEvents.route) {
-                RecurringEventsScreen(
-                    repository = repository,
-                    onNavigateToRecurringEventEdit = { recurringEvent ->
-                        val route = if (recurringEvent == null) {
-                            Screen.RecurringEventEdit.createRouteForNew()
-                        } else {
-                            Screen.RecurringEventEdit.createRoute(recurringEvent.id)
-                        }
-                        navController.navigate(route)
-                    }
-                )
-            }
-
-            composable(Screen.RecurringEventEdit.route) { backStackEntry ->
-                val recurringEventId =
-                    backStackEntry.arguments?.getString("recurringEventId") ?: return@composable
-                RecurringEventEditScreen(
-                    recurringEventId = if (recurringEventId == "new") null else recurringEventId,
                     repository = repository,
                     onNavigateBack = {
                         navController.popBackStack()

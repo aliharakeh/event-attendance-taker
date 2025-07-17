@@ -10,6 +10,15 @@ interface EventDao {
     @Query("SELECT * FROM events ORDER BY date DESC, time DESC")
     fun getAllEvents(): Flow<List<Event>>
 
+    @Query("SELECT * FROM events WHERE isRecurring = 0 ORDER BY date DESC, time DESC")
+    fun getRegularEvents(): Flow<List<Event>>
+
+    @Query("SELECT * FROM events WHERE isRecurring = 1 ORDER BY name ASC")
+    fun getRecurringEvents(): Flow<List<Event>>
+
+    @Query("SELECT * FROM events WHERE isRecurring = 1 AND isActive = 1 ORDER BY name ASC")
+    fun getActiveRecurringEvents(): Flow<List<Event>>
+
     @Query("SELECT * FROM events WHERE id = :eventId")
     suspend fun getEventById(eventId: String): Event?
 

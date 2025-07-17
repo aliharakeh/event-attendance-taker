@@ -67,6 +67,8 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -150,7 +152,14 @@ fun EventItem(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
                         )
-                        if (event.isGeneratedFromRecurring) {
+                        if (event.isRecurring) {
+                            Icon(
+                                Icons.Default.Repeat,
+                                contentDescription = stringResource(R.string.cd_recurring_event),
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        } else if (event.isGeneratedFromRecurring) {
                             Icon(
                                 Icons.Default.Repeat,
                                 contentDescription = stringResource(R.string.cd_recurring_event),
@@ -167,35 +176,66 @@ fun EventItem(
                         )
                     }
                     Spacer(modifier = Modifier.height(4.dp))
-                    // Date and Time Display
+
+                    // Date and Time Display - different for regular vs recurring events
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            Icons.Default.CalendarToday,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = event.date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Icon(
-                            Icons.Default.Schedule,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = event.time.format(DateTimeFormatter.ofPattern("HH:mm")),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (event.isRecurring) {
+                            // Show day of week and time for recurring events
+                            Icon(
+                                Icons.Default.Repeat,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = event.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.getDefault()) ?: "Unknown",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Icon(
+                                Icons.Default.Schedule,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = event.time.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            // Show fixed date and time for regular events
+                            Icon(
+                                Icons.Default.CalendarToday,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = event.date?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "No date",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Icon(
+                                Icons.Default.Schedule,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = event.time.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     // Contact Groups Display

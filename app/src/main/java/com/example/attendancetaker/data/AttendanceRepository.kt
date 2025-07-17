@@ -12,7 +12,6 @@ class AttendanceRepository(context: Context) {
     private val contactDao = database.contactDao()
     private val contactGroupDao = database.contactGroupDao()
     private val eventDao = database.eventDao()
-    private val recurringEventDao = database.recurringEventDao()
     private val attendanceRecordDao = database.attendanceRecordDao()
 
     // Contact management
@@ -79,8 +78,14 @@ class AttendanceRepository(context: Context) {
         return contactGroupDao.getContactGroupById(groupId)
     }
 
-    // Event management
+    // Event management (now handles both regular and recurring events)
     fun getAllEvents(): Flow<List<Event>> = eventDao.getAllEvents()
+
+    fun getRegularEvents(): Flow<List<Event>> = eventDao.getRegularEvents()
+
+    fun getRecurringEvents(): Flow<List<Event>> = eventDao.getRecurringEvents()
+
+    fun getActiveRecurringEvents(): Flow<List<Event>> = eventDao.getActiveRecurringEvents()
 
     suspend fun addEvent(event: Event) {
         eventDao.insertEvent(event)
@@ -151,35 +156,12 @@ class AttendanceRepository(context: Context) {
         return attendanceRecordDao.getAttendanceForContact(contactId)
     }
 
-    // Recurring event management
-    fun getAllRecurringEvents(): Flow<List<RecurringEvent>> = recurringEventDao.getAllRecurringEvents()
-
-    fun getActiveRecurringEvents(): Flow<List<RecurringEvent>> = recurringEventDao.getActiveRecurringEvents()
-
-    suspend fun addRecurringEvent(recurringEvent: RecurringEvent) {
-        recurringEventDao.insertRecurringEvent(recurringEvent)
-    }
-
-    suspend fun removeRecurringEvent(recurringEventId: String) {
-        // Remove all events generated from this recurring event
-        eventDao.deleteEventsByRecurringEventId(recurringEventId)
-
-        recurringEventDao.deleteRecurringEventById(recurringEventId)
-    }
-
-    suspend fun updateRecurringEvent(recurringEvent: RecurringEvent) {
-        recurringEventDao.updateRecurringEvent(recurringEvent)
-    }
-
-    suspend fun getRecurringEvent(recurringEventId: String): RecurringEvent? {
-        return recurringEventDao.getRecurringEventById(recurringEventId)
-    }
-
+    // Helper functions for recurring events
     suspend fun hasEventForRecurringEvent(recurringEventId: String, date: LocalDate): Boolean {
         return eventDao.getEventByRecurringEventAndDate(recurringEventId, date) != null
     }
 
-    suspend fun createEventFromRecurring(recurringEvent: RecurringEvent, date: LocalDate): Event {
+    suspend fun createEventFromRecurring(recurringEvent: Event, date: LocalDate): Event {
         val event = Event(
             name = recurringEvent.name,
             description = recurringEvent.description,

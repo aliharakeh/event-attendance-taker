@@ -20,10 +20,4 @@ sealed class Screen(val route: String) {
         fun createRoute(eventId: String) = "event_edit/$eventId"
         fun createRouteForNew() = "event_edit/new"
     }
-
-    object RecurringEvents : Screen("recurring_events")
-    object RecurringEventEdit : Screen("recurring_event_edit/{recurringEventId}") {
-        fun createRoute(recurringEventId: String) = "recurring_event_edit/$recurringEventId"
-        fun createRouteForNew() = "recurring_event_edit/new"
-    }
 }

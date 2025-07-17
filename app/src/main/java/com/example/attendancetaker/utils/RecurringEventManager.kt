@@ -1,6 +1,7 @@
 package com.example.attendancetaker.utils
 
 import com.example.attendancetaker.data.AttendanceRepository
+import com.example.attendancetaker.data.Event
 import kotlinx.coroutines.flow.first
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -51,26 +52,29 @@ object RecurringEventManager {
         }
     }
 
+    /**
+     * Determines if a recurring event should create an event for a specific day
+     */
     private fun shouldCreateEventForDay(
-        recurringEvent: com.example.attendancetaker.data.RecurringEvent,
+        recurringEvent: Event,
         date: LocalDate,
         dayOfWeek: DayOfWeek
     ): Boolean {
-        // Check if the day of week matches
+        // Check if the recurring event is for this day of the week
         if (recurringEvent.dayOfWeek != dayOfWeek) {
             return false
         }
 
-        // Check if the date is after the start date
-        if (date.isBefore(recurringEvent.startDate)) {
+        // Check if the date is before the start date
+        val startDate = recurringEvent.startDate ?: return false
+        if (date.isBefore(startDate)) {
             return false
         }
 
-        // Check if the date is before the end date (if set)
-        recurringEvent.endDate?.let { endDate ->
-            if (date.isAfter(endDate)) {
-                return false
-            }
+        // Check if the date is after the end date (if one is set)
+        val endDate = recurringEvent.endDate
+        if (endDate != null && date.isAfter(endDate)) {
+            return false
         }
 
         // Check if the recurring event is active

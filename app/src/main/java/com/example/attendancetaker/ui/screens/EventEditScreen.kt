@@ -1,9 +1,7 @@
 package com.example.attendancetaker.ui.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,40 +9,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,15 +36,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
-import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.data.Event
-import com.example.attendancetaker.data.RecurringEvent
 import com.example.attendancetaker.ui.theme.ButtonBlue
-import com.example.attendancetaker.ui.theme.ButtonNeutral
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -109,8 +85,18 @@ fun EventEditScreen(
             event?.let {
                 eventName = it.name
                 eventDescription = it.description
-                eventDate = it.date
-                eventTime = it.time
+                if (it.isRecurring) {
+                    // Editing a recurring event
+                    isRecurring = true
+                    eventTime = it.time
+                    eventDate = it.startDate ?: LocalDate.now()
+                    recurringEndDate = it.endDate
+                    hasEndDate = it.endDate != null
+                } else {
+                    // Editing a regular event
+                    eventDate = it.date ?: LocalDate.now()
+                    eventTime = it.time
+                }
                 selectedGroupIds = it.contactGroupIds.toSet()
             }
         }
@@ -123,18 +109,6 @@ fun EventEditScreen(
             contactsMap[group.id] = repository.getContactsFromGroups(listOf(group.id))
         }
         contactsForGroups = contactsMap
-    }
-
-    // Filter contact groups based on search query
-    val filteredGroups = remember(contactGroups, searchQuery) {
-        if (searchQuery.isBlank()) {
-            contactGroups
-        } else {
-            contactGroups.filter { group ->
-                group.name.contains(searchQuery, ignoreCase = true) ||
-                        group.description.contains(searchQuery, ignoreCase = true)
-            }
-        }
     }
 
     // Get selected contact groups for display
@@ -181,121 +155,30 @@ fun EventEditScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
-            // Event details section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.event_details),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
+            // Event details section using shared component
+            EventDetailsCard(
+                title = stringResource(R.string.event_details),
+                eventName = eventName,
+                onEventNameChange = { eventName = it },
+                eventDescription = eventDescription,
+                onEventDescriptionChange = { eventDescription = it },
+                additionalContent = {
+                    // Date and Time Selection using shared component
+                    DateTimeSelectionRow(
+                        selectedDate = eventDate,
+                        onDateClick = { showDatePicker = true },
+                        selectedTime = eventTime,
+                        onTimeClick = { showTimePicker = true }
                     )
 
-                    OutlinedTextField(
-                        value = eventName,
-                        onValueChange = { eventName = it },
-                        label = { Text(stringResource(R.string.event_name)) },
-                        modifier = Modifier.fillMaxWidth()
+                    // Recurring event option using shared component
+                    CheckboxRow(
+                        text = stringResource(R.string.make_recurring_event),
+                        checked = isRecurring,
+                        onCheckedChange = { isRecurring = it }
                     )
-
-                    OutlinedTextField(
-                        value = eventDescription,
-                        onValueChange = { eventDescription = it },
-                        label = { Text(stringResource(R.string.description_optional)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 2
-                    )
-
-                    // Date and Time Selection
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        // Date selection
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { showDatePicker = true }
-                        ) {
-                            OutlinedTextField(
-                                value = eventDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
-                                onValueChange = { },
-                                label = { Text(stringResource(R.string.date)) },
-                                readOnly = true,
-                                enabled = false,
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.CalendarToday,
-                                        contentDescription = null
-                                    )
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    disabledBorderColor = MaterialTheme.colorScheme.outline
-                                )
-                            )
-                        }
-
-                        // Time selection
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { showTimePicker = true }
-                        ) {
-                            OutlinedTextField(
-                                value = eventTime.format(DateTimeFormatter.ofPattern("h:mm a")),
-                                onValueChange = { },
-                                label = { Text(stringResource(R.string.time)) },
-                                readOnly = true,
-                                enabled = false,
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Schedule,
-                                        contentDescription = null
-                                    )
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    disabledBorderColor = MaterialTheme.colorScheme.outline
-                                )
-                            )
-                        }
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Checkbox(
-                            checked = isRecurring,
-                            onCheckedChange = { isRecurring = it }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.make_recurring_event),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
 
                     if (isRecurring) {
-
                         // Show which day it will repeat on
                         Text(
                             text = stringResource(R.string.will_repeat_every, eventDate.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }),
@@ -303,142 +186,63 @@ fun EventEditScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
 
-                        // End date option
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Checkbox(
-                                checked = hasEndDate,
-                                onCheckedChange = {
-                                    hasEndDate = it
-                                    if (!it) recurringEndDate = null
+                        // End date option using shared component
+                        CheckboxRow(
+                            text = stringResource(R.string.set_end_date),
+                            checked = hasEndDate,
+                            onCheckedChange = {
+                                hasEndDate = it
+                                if (!it) {
+                                    recurringEndDate = null
                                 }
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(R.string.set_end_date),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+                            }
+                        )
 
                         if (hasEndDate) {
-
-                            Box(
+                            // End date selection
+                            OutlinedTextField(
+                                value = recurringEndDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "",
+                                onValueChange = { },
+                                label = { Text(stringResource(R.string.end_date)) },
+                                readOnly = true,
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.CalendarToday,
+                                        contentDescription = null
+                                    )
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { showRecurringEndDatePicker = true }
-                            ) {
-                                OutlinedTextField(
-                                    value = recurringEndDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
-                                        ?: stringResource(R.string.select_end_date),
-                                    onValueChange = { },
-                                    label = { Text(stringResource(R.string.end_date)) },
-                                    readOnly = true,
-                                    enabled = false,
-                                    leadingIcon = {
-                                        Icon(
-                                            Icons.Default.CalendarToday,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        disabledBorderColor = MaterialTheme.colorScheme.outline
-                                    )
+                                    .clickable { showRecurringEndDatePicker = true },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                                 )
-                            }
+                            )
                         }
                     }
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Contact group selection section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.select_contact_groups),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-
-                        OutlinedButton(
-                            onClick = { showContactGroupBottomSheet = true }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                            Text(stringResource(R.string.add))
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = stringResource(R.string.contact_groups_selected, selectedGroupIds.size),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    if (selectedContactGroups.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        selectedContactGroups.forEach { group ->
-                            SelectedContactGroupItem(
-                                group = group,
-                                contacts = contactsForGroups[group.id] ?: emptyList(),
-                                onRemove = {
-                                    selectedGroupIds = selectedGroupIds - group.id
-                                }
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    } else {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.no_contact_groups_selected_for_event),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+            // Contact groups selection section using shared component
+            ContactGroupSelectionCard(
+                selectedGroupIds = selectedGroupIds,
+                selectedContactGroups = selectedContactGroups,
+                contactsForGroups = contactsForGroups,
+                onAddGroupsClick = { showContactGroupBottomSheet = true },
+                onRemoveGroup = { groupId ->
+                    selectedGroupIds = selectedGroupIds - groupId
                 }
-            }
-
-            // Add bottom padding to prevent content being cut off
-            Spacer(modifier = Modifier.height(24.dp))
+            )
         }
     }
 
-    // Contact group selection bottom sheet
+    // Contact Groups Bottom Sheet using shared component
     if (showContactGroupBottomSheet) {
         ModalBottomSheet(
-            onDismissRequest = {
-                showContactGroupBottomSheet = false
-                searchQuery = ""
-            },
+            onDismissRequest = { showContactGroupBottomSheet = false },
             sheetState = bottomSheetState
         ) {
             ContactGroupSelectionBottomSheet(
@@ -454,15 +258,12 @@ fun EventEditScreen(
                         selectedGroupIds - groupId
                     }
                 },
-                onDismiss = {
-                    showContactGroupBottomSheet = false
-                    searchQuery = ""
-                }
+                onDismiss = { showContactGroupBottomSheet = false }
             )
         }
     }
 
-    // Date Picker
+    // Date Picker using shared component
     if (showDatePicker) {
         DatePickerDialog(
             onDateSelected = { date ->
@@ -473,7 +274,7 @@ fun EventEditScreen(
         )
     }
 
-    // Time Picker
+    // Time Picker using shared component
     if (showTimePicker) {
         TimePickerDialog(
             onTimeSelected = { time ->
@@ -484,7 +285,7 @@ fun EventEditScreen(
         )
     }
 
-    // Recurring End Date Picker
+    // Recurring End Date Picker using shared component
     if (showRecurringEndDatePicker) {
         DatePickerDialog(
             onDateSelected = { date ->
@@ -495,373 +296,51 @@ fun EventEditScreen(
         )
     }
 
-    // Save confirmation dialog
-    if (showSaveConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showSaveConfirmation = false },
-            title = { Text(stringResource(R.string.save_event)) },
-            text = {
-                Text(stringResource(R.string.save_event_question))
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            if (isRecurring) {
-                                // Create a recurring event
-                                val recurringEvent = RecurringEvent(
-                                    name = eventName.trim(),
-                                    description = eventDescription.trim(),
-                                    time = eventTime,
-                                    dayOfWeek = eventDate.dayOfWeek,
-                                    contactGroupIds = selectedGroupIds.toList(),
-                                    startDate = eventDate,
-                                    endDate = if (hasEndDate) recurringEndDate else null,
-                                    isActive = true
-                                )
-                                repository.addRecurringEvent(recurringEvent)
-                            } else {
-                                // Save as regular event
-                                val updatedEvent = if (event == null) {
-                                    Event(
-                                        name = eventName.trim(),
-                                        description = eventDescription.trim(),
-                                        date = eventDate,
-                                        time = eventTime,
-                                        contactGroupIds = selectedGroupIds.toList()
-                                    )
-                                } else {
-                                    event!!.copy(
-                                        name = eventName.trim(),
-                                        description = eventDescription.trim(),
-                                        date = eventDate,
-                                        time = eventTime,
-                                        contactGroupIds = selectedGroupIds.toList()
-                                    )
-                                }
-
-                                if (event == null) {
-                                    repository.addEvent(updatedEvent)
-                                } else {
-                                    repository.updateEvent(updatedEvent)
-                                }
-                            }
-
-                            showSaveConfirmation = false
-                            onNavigateBack()
-                        }
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = ButtonBlue)
-                ) {
-                    Text(stringResource(R.string.save))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showSaveConfirmation = false },
-                    colors = ButtonDefaults.textButtonColors(contentColor = ButtonNeutral)
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
-    }
-}
-
-@Composable
-fun ContactGroupSelectionBottomSheet(
-    allContactGroups: List<ContactGroup>,
-    selectedGroupIds: Set<String>,
-    contactsForGroups: Map<String, List<com.example.attendancetaker.data.Contact>>,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    onGroupSelectionChanged: (String, Boolean) -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // Filter contact groups based on search query
-    val filteredGroups = remember(allContactGroups, searchQuery) {
-        if (searchQuery.isBlank()) {
-            allContactGroups
-        } else {
-            allContactGroups.filter { group ->
-                group.name.contains(searchQuery, ignoreCase = true) ||
-                        group.description.contains(searchQuery, ignoreCase = true)
-            }
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.select_contact_groups),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
-            )
-
-            IconButton(onClick = onDismiss) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.close)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Search field
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = onSearchQueryChange,
-            label = { Text(stringResource(R.string.search_contact_groups)) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Selected count
-        Text(
-            text = stringResource(R.string.contact_groups_selected, selectedGroupIds.size),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (filteredGroups.isEmpty()) {
-            if (allContactGroups.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.no_contact_groups_available),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 32.dp)
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.no_contact_groups_match_search),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 32.dp)
-                )
-            }
-        } else {
-            // Contact groups list
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                items(filteredGroups) { group ->
-                    ContactGroupSelectionItem(
-                        group = group,
-                        contacts = contactsForGroups[group.id] ?: emptyList(),
-                        isSelected = selectedGroupIds.contains(group.id),
-                        onSelectionChanged = { isSelected ->
-                            onGroupSelectionChanged(group.id, isSelected)
-                        }
+    // Save confirmation dialog using shared component
+    SaveConfirmationDialog(
+        showDialog = showSaveConfirmation,
+        title = stringResource(R.string.save_event),
+        message = stringResource(R.string.save_event_question),
+        onConfirm = {
+            coroutineScope.launch {
+                val updatedEvent = if (event == null) {
+                    Event(
+                        name = eventName.trim(),
+                        description = eventDescription.trim(),
+                        date = if (isRecurring) null else eventDate,
+                        time = eventTime,
+                        isRecurring = isRecurring,
+                        dayOfWeek = if (isRecurring) eventDate.dayOfWeek else null,
+                        startDate = if (isRecurring) eventDate else null,
+                        endDate = if (isRecurring && hasEndDate) recurringEndDate else null,
+                        isActive = true,
+                        contactGroupIds = selectedGroupIds.toList()
+                    )
+                } else {
+                    event!!.copy(
+                        name = eventName.trim(),
+                        description = eventDescription.trim(),
+                        date = if (isRecurring) null else eventDate,
+                        time = eventTime,
+                        isRecurring = isRecurring,
+                        dayOfWeek = if (isRecurring) eventDate.dayOfWeek else null,
+                        startDate = if (isRecurring) eventDate else null,
+                        endDate = if (isRecurring && hasEndDate) recurringEndDate else null,
+                        isActive = true,
+                        contactGroupIds = selectedGroupIds.toList()
                     )
                 }
-            }
-        }
 
-        // Add some bottom padding for the last item
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Composable
-fun SelectedContactGroupItem(
-    group: ContactGroup,
-    contacts: List<com.example.attendancetaker.data.Contact>,
-    onRemove: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = group.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                if (group.description.isNotEmpty()) {
-                    Text(
-                        text = group.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                if (event == null) {
+                    repository.addEvent(updatedEvent)
+                } else {
+                    repository.updateEvent(updatedEvent)
                 }
-                Text(
-                    text = stringResource(R.string.members_count, contacts.size),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
 
-            IconButton(onClick = onRemove) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.remove_contact_group),
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ContactGroupSelectionItem(
-    group: ContactGroup,
-    contacts: List<com.example.attendancetaker.data.Contact>,
-    isSelected: Boolean,
-    onSelectionChanged: (Boolean) -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onSelectionChanged(!isSelected) },
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 3.dp else 1.dp
-        ),
-        border = if (isSelected)
-            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-        else BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = group.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurface
-                )
-                if (group.description.isNotEmpty()) {
-                    Text(
-                        text = group.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.members_count, contacts.size),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.secondary
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DatePickerDialog(
-    onDateSelected: (LocalDate) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = System.currentTimeMillis()
-    )
-
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        val date = java.time.Instant.ofEpochMilli(millis)
-                            .atZone(java.time.ZoneId.systemDefault())
-                            .toLocalDate()
-                        onDateSelected(date)
-                    }
-                },
-                colors = ButtonDefaults.textButtonColors(contentColor = ButtonBlue)
-            ) {
-                Text("OK")
+                showSaveConfirmation = false
+                onNavigateBack()
             }
         },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(contentColor = ButtonNeutral)
-            ) {
-                Text("Cancel")
-            }
-        }
-    ) {
-        DatePicker(state = datePickerState)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TimePickerDialog(
-    onTimeSelected: (LocalTime) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val timePickerState = rememberTimePickerState(
-        initialHour = LocalTime.now().hour,
-        initialMinute = LocalTime.now().minute
-    )
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Select Time") },
-        text = {
-            TimePicker(state = timePickerState)
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val time = LocalTime.of(timePickerState.hour, timePickerState.minute)
-                    onTimeSelected(time)
-                },
-                colors = ButtonDefaults.textButtonColors(contentColor = ButtonBlue)
-            ) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(contentColor = ButtonNeutral)
-            ) {
-                Text("Cancel")
-            }
-        }
+        onDismiss = { showSaveConfirmation = false }
     )
 }
