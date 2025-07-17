@@ -5,7 +5,6 @@
     <!-- Navigation and Content Descriptions -->
     <string name="back">رجوع</string>
     <string name="add_event">إضافة حدث</string>
-    <string name="add_contact">إضافة جهة اتصال</string>
     <string name="edit">تعديل</string>
     <string name="delete">حذف</string>
     <string name="select_date">اختيار التاريخ</string>
@@ -54,6 +53,7 @@
     <string name="save">حفظ</string>
     <string name="cancel">إلغاء</string>
     <string name="ok">موافق</string>
+    <string name="add">إضافة</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_contacts">مجوعات الاتصال</string>
@@ -93,6 +93,8 @@
     <string name="select_end_date">اختر تاريخ الانتهاء</string>
     <string name="contact_groups_selected">%1$d مجموعة اتصال محددة</string>
     <string name="select_contact_groups">اختر مجموعات الاتصال</string>
+    <string name="no_contact_groups_selected_for_event">لم يتم اختيار أي مجموعات اتصال. انقر على \"إضافة مجموعات اتصال\" لاختيار مجموعات اتصال لهذا الحدث.</string>
+    <string name="remove_contact_group">إزالة مجموعة الاتصال</string>
     <string name="no_contact_groups_available">لا توجد مجموعات اتصال متاحة. أنشئ مجموعات اتصال أولاً.</string>
     <string name="no_contact_groups_match_search">لا توجد مجموعات اتصال مطابقة لبحثك.</string>
     <string name="selected_groups_contacts">%1$s (%2$d جهة اتصال)</string>
@@ -105,6 +107,9 @@
     <string name="search_contacts">ابحث في جهات الاتصال…</string>
     <string name="contacts_selected">%1$d جهة اتصال محددة</string>
     <string name="allow_access">السماح بالوصول</string>
+    <string name="no_contacts_selected_for_group">لم يتم اختيار أي جهات اتصال. انقر على \"إضافة جهات اتصال\" لاختيار جهات اتصال لهذه المجموعة.</string>
+    <string name="remove_contact">إزالة جهة الاتصال</string>
+    <string name="close">إغلاق</string>
     <string name="save_changes">حفظ التغييرات</string>
     <string name="save_changes_question">هل تريد حفظ التغييرات على هذه المجموعة؟</string>
     <string name="add_contact_group_title">إضافة مجموعة اتصال</string>

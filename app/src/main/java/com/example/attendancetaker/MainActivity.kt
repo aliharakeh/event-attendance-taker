@@ -160,7 +160,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                                     ) {
                                         Icon(
                                             Icons.Default.Add,
-                                            contentDescription = stringResource(R.string.add_contact),
+                                            contentDescription = stringResource(R.string.add),
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }

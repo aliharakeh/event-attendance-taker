@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -27,9 +29,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -63,6 +68,7 @@ fun ContactGroupEditScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val bottomSheetState = rememberModalBottomSheetState()
 
     var group by remember { mutableStateOf<ContactGroup?>(null) }
     var groupName by remember { mutableStateOf("") }
@@ -78,6 +84,7 @@ fun ContactGroupEditScreen(
         )
     }
     var showSaveConfirmation by remember { mutableStateOf(false) }
+    var showContactBottomSheet by remember { mutableStateOf(false) }
 
     val contacts by repository.getAllContacts().collectAsState(initial = emptyList())
 
@@ -130,6 +137,11 @@ fun ContactGroupEditScreen(
                         contact.phoneNumber.contains(searchQuery, ignoreCase = true)
             }
         }
+    }
+
+    // Get selected contacts for display
+    val selectedContacts = remember(selectedContactIds, allAvailableContacts) {
+        allAvailableContacts.filter { selectedContactIds.contains(it.id) }
     }
 
     Column(
@@ -200,12 +212,6 @@ fun ContactGroupEditScreen(
                     label = { Text(stringResource(R.string.description_optional)) },
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                Text(
-                    text = stringResource(R.string.contacts_selected, selectedContactIds.size),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
             }
         }
 
@@ -238,17 +244,36 @@ fun ContactGroupEditScreen(
                         fontWeight = FontWeight.Medium
                     )
 
-                    if (!hasContactsPermission) {
-                        Button(
-                            onClick = {
+                    OutlinedButton(
+                        onClick = {
+                            if (hasContactsPermission) {
+                                showContactBottomSheet = true
+                            } else {
                                 permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = ButtonBlue)
-                        ) {
-                            Text(stringResource(R.string.allow_access))
+                            }
                         }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(
+                            text = if (hasContactsPermission)
+                                stringResource(R.string.add)
+                            else
+                                stringResource(R.string.allow_access)
+                        )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = stringResource(R.string.contacts_selected, selectedContactIds.size),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
 
                 if (!hasContactsPermission) {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -257,56 +282,59 @@ fun ContactGroupEditScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                } else {
+                } else if (selectedContacts.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Search field
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        label = { Text(stringResource(R.string.search_contacts)) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    if (filteredContacts.isEmpty()) {
-                        if (allAvailableContacts.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.no_contacts_available),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(selectedContacts) { contact ->
+                            SelectedContactItem(
+                                contact = contact,
+                                onRemove = {
+                                    selectedContactIds = selectedContactIds - contact.id
+                                }
                             )
-                        } else {
-                            Text(
-                                text = stringResource(R.string.no_contacts_match_search),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    } else {
-                        // Contact list
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(filteredContacts) { contact ->
-                                ContactSelectionItem(
-                                    contact = contact,
-                                    isSelected = selectedContactIds.contains(contact.id),
-                                    onSelectionChanged = { isSelected ->
-                                        selectedContactIds = if (isSelected) {
-                                            selectedContactIds + contact.id
-                                        } else {
-                                            selectedContactIds - contact.id
-                                        }
-                                    }
-                                )
-                            }
                         }
                     }
+                } else if (hasContactsPermission) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.no_contacts_selected_for_group),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
+        }
+    }
+
+    // Contact selection bottom sheet
+    if (showContactBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                showContactBottomSheet = false
+                searchQuery = ""
+            },
+            sheetState = bottomSheetState
+        ) {
+            ContactSelectionBottomSheet(
+                allAvailableContacts = allAvailableContacts,
+                selectedContactIds = selectedContactIds,
+                searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
+                onContactSelectionChanged = { contactId, isSelected ->
+                    selectedContactIds = if (isSelected) {
+                        selectedContactIds + contactId
+                    } else {
+                        selectedContactIds - contactId
+                    }
+                },
+                onDismiss = {
+                    showContactBottomSheet = false
+                    searchQuery = ""
+                }
+            )
         }
     }
 
@@ -371,6 +399,158 @@ fun ContactGroupEditScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+fun ContactSelectionBottomSheet(
+    allAvailableContacts: List<Contact>,
+    selectedContactIds: Set<String>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onContactSelectionChanged: (String, Boolean) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Filter contacts based on search query
+    val filteredContacts = remember(allAvailableContacts, searchQuery) {
+        if (searchQuery.isBlank()) {
+            allAvailableContacts
+        } else {
+            allAvailableContacts.filter { contact ->
+                contact.name.contains(searchQuery, ignoreCase = true) ||
+                        contact.phoneNumber.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.select_contacts),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium
+            )
+
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.close)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Search field
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            label = { Text(stringResource(R.string.search_contacts)) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Selected count
+        Text(
+            text = stringResource(R.string.contacts_selected, selectedContactIds.size),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (filteredContacts.isEmpty()) {
+            if (allAvailableContacts.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.no_contacts_available),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 32.dp)
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.no_contacts_match_search),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 32.dp)
+                )
+            }
+        } else {
+            // Contact list
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(filteredContacts) { contact ->
+                    ContactSelectionItem(
+                        contact = contact,
+                        isSelected = selectedContactIds.contains(contact.id),
+                        onSelectionChanged = { isSelected ->
+                            onContactSelectionChanged(contact.id, isSelected)
+                        }
+                    )
+                }
+            }
+        }
+
+        // Add some bottom padding for the last item
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun SelectedContactItem(
+    contact: Contact,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = contact.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = contact.phoneNumber,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            IconButton(onClick = onRemove) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.remove_contact),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
     }
 }
 

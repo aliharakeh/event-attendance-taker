@@ -12,11 +12,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -31,12 +35,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -72,6 +79,8 @@ fun EventEditScreen(
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val bottomSheetState = rememberModalBottomSheetState()
+
     var event by remember { mutableStateOf<Event?>(null) }
     var eventName by remember { mutableStateOf("") }
     var eventDescription by remember { mutableStateOf("") }
@@ -82,6 +91,7 @@ fun EventEditScreen(
     var showSaveConfirmation by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+    var showContactGroupBottomSheet by remember { mutableStateOf(false) }
 
     // Recurring event state
     var isRecurring by remember { mutableStateOf(false) }
@@ -125,6 +135,11 @@ fun EventEditScreen(
                         group.description.contains(searchQuery, ignoreCase = true)
             }
         }
+    }
+
+    // Get selected contact groups for display
+    val selectedContactGroups = remember(selectedGroupIds, contactGroups) {
+        contactGroups.filter { selectedGroupIds.contains(it.id) }
     }
 
     Column(
@@ -338,12 +353,6 @@ fun EventEditScreen(
                             }
                         }
                     }
-
-                    Text(
-                        text = stringResource(R.string.contact_groups_selected, selectedGroupIds.size),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
                 }
             }
 
@@ -363,62 +372,93 @@ fun EventEditScreen(
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.select_contact_groups),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.select_contact_groups),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Search field
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        label = { Text(stringResource(R.string.search_contact_groups)) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    if (filteredGroups.isEmpty()) {
-                        if (contactGroups.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.no_contact_groups_available),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        OutlinedButton(
+                            onClick = { showContactGroupBottomSheet = true }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.padding(end = 8.dp)
                             )
-                        } else {
-                            Text(
-                                text = stringResource(R.string.no_contact_groups_match_search),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Text(stringResource(R.string.add))
                         }
-                    } else {
-                        // Contact groups list
-                        filteredGroups.forEach { group ->
-                            ContactGroupSelectionItem(
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = stringResource(R.string.contact_groups_selected, selectedGroupIds.size),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    if (selectedContactGroups.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        selectedContactGroups.forEach { group ->
+                            SelectedContactGroupItem(
                                 group = group,
                                 contacts = contactsForGroups[group.id] ?: emptyList(),
-                                isSelected = selectedGroupIds.contains(group.id),
-                                onSelectionChanged = { isSelected: Boolean ->
-                                    selectedGroupIds = if (isSelected) {
-                                        selectedGroupIds + group.id
-                                    } else {
-                                        selectedGroupIds - group.id
-                                    }
+                                onRemove = {
+                                    selectedGroupIds = selectedGroupIds - group.id
                                 }
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
+                    } else {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_contact_groups_selected_for_event),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
 
             // Add bottom padding to prevent content being cut off
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+
+    // Contact group selection bottom sheet
+    if (showContactGroupBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                showContactGroupBottomSheet = false
+                searchQuery = ""
+            },
+            sheetState = bottomSheetState
+        ) {
+            ContactGroupSelectionBottomSheet(
+                allContactGroups = contactGroups,
+                selectedGroupIds = selectedGroupIds,
+                contactsForGroups = contactsForGroups,
+                searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
+                onGroupSelectionChanged = { groupId, isSelected ->
+                    selectedGroupIds = if (isSelected) {
+                        selectedGroupIds + groupId
+                    } else {
+                        selectedGroupIds - groupId
+                    }
+                },
+                onDismiss = {
+                    showContactGroupBottomSheet = false
+                    searchQuery = ""
+                }
+            )
         }
     }
 
@@ -529,6 +569,168 @@ fun EventEditScreen(
 }
 
 @Composable
+fun ContactGroupSelectionBottomSheet(
+    allContactGroups: List<ContactGroup>,
+    selectedGroupIds: Set<String>,
+    contactsForGroups: Map<String, List<com.example.attendancetaker.data.Contact>>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onGroupSelectionChanged: (String, Boolean) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Filter contact groups based on search query
+    val filteredGroups = remember(allContactGroups, searchQuery) {
+        if (searchQuery.isBlank()) {
+            allContactGroups
+        } else {
+            allContactGroups.filter { group ->
+                group.name.contains(searchQuery, ignoreCase = true) ||
+                        group.description.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.select_contact_groups),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium
+            )
+
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.close)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Search field
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            label = { Text(stringResource(R.string.search_contact_groups)) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Selected count
+        Text(
+            text = stringResource(R.string.contact_groups_selected, selectedGroupIds.size),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (filteredGroups.isEmpty()) {
+            if (allContactGroups.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.no_contact_groups_available),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 32.dp)
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.no_contact_groups_match_search),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 32.dp)
+                )
+            }
+        } else {
+            // Contact groups list
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(filteredGroups) { group ->
+                    ContactGroupSelectionItem(
+                        group = group,
+                        contacts = contactsForGroups[group.id] ?: emptyList(),
+                        isSelected = selectedGroupIds.contains(group.id),
+                        onSelectionChanged = { isSelected ->
+                            onGroupSelectionChanged(group.id, isSelected)
+                        }
+                    )
+                }
+            }
+        }
+
+        // Add some bottom padding for the last item
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun SelectedContactGroupItem(
+    group: ContactGroup,
+    contacts: List<com.example.attendancetaker.data.Contact>,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = group.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                if (group.description.isNotEmpty()) {
+                    Text(
+                        text = group.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.members_count, contacts.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+
+            IconButton(onClick = onRemove) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.remove_contact_group),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun ContactGroupSelectionItem(
     group: ContactGroup,
     contacts: List<com.example.attendancetaker.data.Contact>,
@@ -573,7 +775,7 @@ fun ContactGroupSelectionItem(
                     )
                 }
                 Text(
-                    text = "${contacts.size} members",
+                    text = stringResource(R.string.members_count, contacts.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isSelected)
                         MaterialTheme.colorScheme.primary
