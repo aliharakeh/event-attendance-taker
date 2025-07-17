@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Schedule
@@ -76,18 +78,45 @@ fun EventsScreen(
     repository: AttendanceRepository,
     onNavigateToAttendance: (String) -> Unit,
     onNavigateToEventEdit: (Event?) -> Unit,
+    onNavigateToHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val events by repository.getAllEvents().collectAsState(initial = emptyList())
+    val events by repository.getCurrentAndFutureEvents().collectAsState(initial = emptyList())
     val coroutineScope = rememberCoroutineScope()
 
-    // Events List
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    Column(
+        modifier = modifier.fillMaxSize()
     ) {
-        items(events) { event ->
+        // History Button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(
+                onClick = onNavigateToHistory,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    Icons.Default.History,
+                    contentDescription = stringResource(R.string.event_history),
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(stringResource(R.string.event_history))
+            }
+        }
+
+        // Events List
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(events) { event ->
             EventItem(
                 event = event,
                 repository = repository,
@@ -99,6 +128,86 @@ fun EventsScreen(
                 },
                 onTakeAttendance = { onNavigateToAttendance(event.id) }
             )
+        }
+    }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EventHistoryScreen(
+    repository: AttendanceRepository,
+    onNavigateBack: () -> Unit,
+    onNavigateToAttendance: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val pastEvents by repository.getPastEvents().collectAsState(initial = emptyList())
+
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        // Header with back button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onNavigateBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.event_history),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        if (pastEvents.isEmpty()) {
+            // Empty state
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+            Icon(
+                Icons.Default.CalendarToday,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.no_past_events),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.no_past_events_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+            }
+        } else {
+            // Past Events List
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(pastEvents) { event ->
+                    PastEventItem(
+                        event = event,
+                        repository = repository,
+                        onViewAttendance = { onNavigateToAttendance(event.id) }
+                    )
+                }
+            }
         }
     }
 }
@@ -318,6 +427,189 @@ fun EventItem(
                 }
             }
         )
+    }
+}
+
+@Composable
+fun PastEventItem(
+    event: Event,
+    repository: AttendanceRepository,
+    onViewAttendance: () -> Unit
+) {
+    var selectedGroups by remember { mutableStateOf(emptyList<ContactGroup>()) }
+    var totalContacts by remember { mutableStateOf(0) }
+
+    // Load related data
+    LaunchedEffect(event.contactGroupIds) {
+        selectedGroups = event.contactGroupIds.mapNotNull { groupId ->
+            repository.getContactGroup(groupId)
+        }
+        totalContacts = repository.getContactsForEvent(event.id).size
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = event.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        if (event.isRecurring) {
+                            Icon(
+                                Icons.Default.Repeat,
+                                contentDescription = stringResource(R.string.cd_recurring_event),
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        } else if (event.isGeneratedFromRecurring) {
+                            Icon(
+                                Icons.Default.Repeat,
+                                contentDescription = stringResource(R.string.cd_recurring_event),
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    if (event.description.isNotBlank()) {
+                        Text(
+                            text = event.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Date and Time Display - different for regular vs recurring events
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (event.isRecurring) {
+                            // Show day of week and time for recurring events
+                            Icon(
+                                Icons.Default.Repeat,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = event.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.getDefault()) ?: "Unknown",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Icon(
+                                Icons.Default.Schedule,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = event.time.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            // Show fixed date and time for regular events
+                            Icon(
+                                Icons.Default.CalendarToday,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = event.date?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "No date",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Icon(
+                                Icons.Default.Schedule,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = event.time.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    // Contact Groups Display
+                    if (selectedGroups.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Group,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = stringResource(R.string.selected_groups_contacts, selectedGroups.joinToString(", ") { it.name }, totalContacts),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+
+                // Past Event Badge
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ),
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.past_event_badge),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onViewAttendance,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.People, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.view_attendance))
+            }
+        }
     }
 }
 

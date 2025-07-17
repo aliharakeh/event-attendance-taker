@@ -24,6 +24,7 @@
     <!-- EventsScreen -->
     <string name="events">Events</string>
     <string name="take_attendance">Take Attendance</string>
+    <string name="view_attendance">View Attendance</string>
     <string name="delete_event">Delete Event</string>
     <string name="delete_event_confirmation">Are you sure you want to delete &quot;%1$s&quot;? This action cannot be undone.</string>
     <string name="add_event_title">Add Event</string>
@@ -57,6 +58,12 @@
     <!-- Bottom Navigation -->
     <string name="nav_contacts">Contact Groups</string>
     <string name="nav_events">Events</string>
+    <string name="nav_history">History</string>
+    <string name="event_history">Event History</string>
+    <string name="past_events">Past Events</string>
+    <string name="past_event_badge">Past</string>
+    <string name="no_past_events">No past events found</string>
+    <string name="no_past_events_description">Past events will appear here once you have completed events.</string>
 
     <!-- Language Toggle -->
     <string name="language_toggle">Language</string>

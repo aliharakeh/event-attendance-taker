@@ -54,6 +54,7 @@ import com.example.attendancetaker.ui.screens.ContactGroupDetailsScreen
 import com.example.attendancetaker.ui.screens.ContactGroupEditScreen
 import com.example.attendancetaker.ui.screens.ContactsScreen
 import com.example.attendancetaker.ui.screens.EventEditScreen
+import com.example.attendancetaker.ui.screens.EventHistoryScreen
 import com.example.attendancetaker.ui.screens.EventsScreen
 import com.example.attendancetaker.ui.theme.AttendanceTakerTheme
 import com.example.attendancetaker.utils.LanguageManager
@@ -245,6 +246,21 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                             Screen.EventEdit.createRoute(event.id)
                         }
                         navController.navigate(route)
+                    },
+                    onNavigateToHistory = {
+                        navController.navigate(Screen.EventHistory.route)
+                    }
+                )
+            }
+
+            composable(Screen.EventHistory.route) {
+                EventHistoryScreen(
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToAttendance = { eventId ->
+                        navController.navigate(Screen.AttendanceList.createRoute(eventId))
                     }
                 )
             }

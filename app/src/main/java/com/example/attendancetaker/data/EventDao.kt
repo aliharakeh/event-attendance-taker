@@ -31,6 +31,12 @@ interface EventDao {
     @Query("SELECT * FROM events WHERE date BETWEEN :startDate AND :endDate ORDER BY date ASC, time ASC")
     suspend fun getEventsBetweenDates(startDate: LocalDate, endDate: LocalDate): List<Event>
 
+    @Query("SELECT * FROM events WHERE date < :currentDate ORDER BY date DESC, time DESC")
+    fun getPastEvents(currentDate: LocalDate): Flow<List<Event>>
+
+    @Query("SELECT * FROM events WHERE date >= :currentDate OR date IS NULL ORDER BY date ASC, time ASC")
+    fun getCurrentAndFutureEvents(currentDate: LocalDate): Flow<List<Event>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEvent(event: Event)
 

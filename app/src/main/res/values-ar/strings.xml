@@ -25,6 +25,7 @@
     <!-- EventsScreen -->
     <string name="events">الأحداث</string>
     <string name="take_attendance">تسجيل الحضور</string>
+    <string name="view_attendance">عرض الحضور</string>
     <string name="delete_event">حذف الحدث</string>
     <string name="delete_event_confirmation">هل أنت متأكد من حذف &quot;%1$s&quot;؟ لا يمكن التراجع عن هذا الإجراء.</string>
     <string name="add_event_title">إضافة حدث</string>
@@ -56,8 +57,14 @@
     <string name="add">إضافة</string>
 
     <!-- Bottom Navigation -->
-    <string name="nav_contacts">مجوعات الاتصال</string>
+    <string name="nav_contacts">مجموعات الجهات</string>
     <string name="nav_events">الأحداث</string>
+    <string name="nav_history">التاريخ</string>
+    <string name="event_history">تاريخ الأحداث</string>
+    <string name="past_events">الأحداث السابقة</string>
+    <string name="past_event_badge">سابق</string>
+    <string name="no_past_events">لم يتم العثور على أحداث سابقة</string>
+    <string name="no_past_events_description">ستظهر الأحداث السابقة هنا بمجرد إكمال الأحداث.</string>
 
     <!-- Language Toggle -->
     <string name="language_toggle">اللغة</string>
