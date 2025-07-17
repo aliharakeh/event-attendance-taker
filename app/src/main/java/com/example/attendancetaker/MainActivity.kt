@@ -97,7 +97,6 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
 
     // Initialize database with sample data and create recurring events when app starts
     LaunchedEffect(repository) {
-        repository.initializeSampleDataIfEmpty()
         RecurringEventManager.createTodaysRecurringEvents(repository)
     }
 
