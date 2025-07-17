@@ -1,5 +1,8 @@
 package com.example.attendancetaker.ui.screens
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,8 +18,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Message
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -39,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -216,6 +222,8 @@ fun AttendanceItem(
     onAttendanceChange: (Boolean) -> Unit,
     onEditNotes: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -281,8 +289,48 @@ fun AttendanceItem(
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                // Contact action buttons
+                Row {
+                    // WhatsApp button
+                    TextButton(onClick = {
+                        openWhatsApp(context, contact.phoneNumber)
+                    }) {
+                        Icon(
+                            Icons.Default.Message,
+                            contentDescription = "WhatsApp",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "WhatsApp",
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // Call button
+                    TextButton(onClick = {
+                        makePhoneCall(context, contact.phoneNumber)
+                    }) {
+                        Icon(
+                            Icons.Default.Call,
+                            contentDescription = "Call",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "Call",
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                // Edit notes button
                 TextButton(onClick = onEditNotes) {
                     Icon(
                         Icons.Default.Edit,
@@ -297,6 +345,68 @@ fun AttendanceItem(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Opens WhatsApp with the given phone number
+ */
+private fun openWhatsApp(context: Context, phoneNumber: String) {
+    try {
+        // Clean the phone number (remove any non-digit characters except +)
+        val cleanPhoneNumber = phoneNumber.replace(Regex("[^\\d+]"), "")
+
+        // Create WhatsApp intent
+        val whatsappIntent = Intent(Intent.ACTION_VIEW)
+        whatsappIntent.data = Uri.parse("https://api.whatsapp.com/send?phone=$cleanPhoneNumber")
+
+        // Check if WhatsApp is installed
+        if (whatsappIntent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(whatsappIntent)
+        } else {
+            // Fallback to web WhatsApp
+            val webWhatsappIntent = Intent(Intent.ACTION_VIEW)
+            webWhatsappIntent.data = Uri.parse("https://web.whatsapp.com/send?phone=$cleanPhoneNumber")
+            context.startActivity(webWhatsappIntent)
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+/**
+ * Initiates a phone call to the given phone number
+ */
+private fun makePhoneCall(context: Context, phoneNumber: String) {
+    try {
+        // Clean the phone number (keep digits and + for international numbers)
+        val cleanPhoneNumber = phoneNumber.replace(Regex("[^\\d+]"), "")
+
+        // Log for debugging
+        println("Attempting to call: $cleanPhoneNumber")
+
+        // Create call intent - using ACTION_DIAL to avoid needing CALL_PHONE permission
+        val callIntent = Intent(Intent.ACTION_DIAL).apply {
+            data = Uri.parse("tel:$cleanPhoneNumber")
+            // Add flags to ensure the intent works properly
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        // Start the activity - remove the resolveActivity check as it might be causing issues
+        context.startActivity(callIntent)
+
+    } catch (e: Exception) {
+        println("Error making phone call: ${e.message}")
+        e.printStackTrace()
+
+        // Fallback: try with a simpler approach
+        try {
+            val fallbackIntent = Intent(Intent.ACTION_VIEW, Uri.parse("tel:${phoneNumber}"))
+            fallbackIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(fallbackIntent)
+        } catch (fallbackException: Exception) {
+            println("Fallback call also failed: ${fallbackException.message}")
         }
     }
 }
