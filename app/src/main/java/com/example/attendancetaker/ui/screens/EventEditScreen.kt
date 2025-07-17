@@ -171,54 +171,58 @@ fun EventEditScreen(
                         onTimeClick = { showTimePicker = true }
                     )
 
-                    // Recurring event option using shared component
-                    CheckboxRow(
-                        text = stringResource(R.string.make_recurring_event),
-                        checked = isRecurring,
-                        onCheckedChange = { isRecurring = it }
-                    )
+                    // Recurring event option - only show for new events or recurring templates
+                    val shouldShowRecurringSettings = event == null || event!!.isRecurring
 
-                    if (isRecurring) {
-                        // Show which day it will repeat on
-                        Text(
-                            text = stringResource(R.string.will_repeat_every, eventDate.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        // End date option using shared component
+                    if (shouldShowRecurringSettings) {
                         CheckboxRow(
-                            text = stringResource(R.string.set_end_date),
-                            checked = hasEndDate,
-                            onCheckedChange = {
-                                hasEndDate = it
-                                if (!it) {
-                                    recurringEndDate = null
-                                }
-                            }
+                            text = stringResource(R.string.make_recurring_event),
+                            checked = isRecurring,
+                            onCheckedChange = { isRecurring = it }
                         )
 
-                        if (hasEndDate) {
-                            // End date selection
-                            OutlinedTextField(
-                                value = recurringEndDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "",
-                                onValueChange = { },
-                                label = { Text(stringResource(R.string.end_date)) },
-                                readOnly = true,
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.CalendarToday,
-                                        contentDescription = null
-                                    )
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showRecurringEndDatePicker = true },
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                                )
+                        if (isRecurring) {
+                            // Show which day it will repeat on
+                            Text(
+                                text = stringResource(R.string.will_repeat_every, eventDate.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
                             )
+
+                            // End date option using shared component
+                            CheckboxRow(
+                                text = stringResource(R.string.set_end_date),
+                                checked = hasEndDate,
+                                onCheckedChange = {
+                                    hasEndDate = it
+                                    if (!it) {
+                                        recurringEndDate = null
+                                    }
+                                }
+                            )
+
+                            if (hasEndDate) {
+                                // End date selection
+                                OutlinedTextField(
+                                    value = recurringEndDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "",
+                                    onValueChange = { },
+                                    label = { Text(stringResource(R.string.end_date)) },
+                                    readOnly = true,
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.CalendarToday,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showRecurringEndDatePicker = true },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                                    )
+                                )
+                            }
                         }
                     }
                 }
