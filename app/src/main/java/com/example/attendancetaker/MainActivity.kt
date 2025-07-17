@@ -56,6 +56,7 @@ import com.example.attendancetaker.ui.screens.ContactsScreen
 import com.example.attendancetaker.ui.screens.EventEditScreen
 import com.example.attendancetaker.ui.screens.EventHistoryScreen
 import com.example.attendancetaker.ui.screens.EventsScreen
+import com.example.attendancetaker.ui.screens.RecurringTemplatesScreen
 import com.example.attendancetaker.ui.theme.AttendanceTakerTheme
 import com.example.attendancetaker.utils.LanguageManager
 import com.example.attendancetaker.utils.RecurringEventManager
@@ -249,6 +250,9 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                     },
                     onNavigateToHistory = {
                         navController.navigate(Screen.EventHistory.route)
+                    },
+                    onNavigateToRecurringTemplates = {
+                        navController.navigate(Screen.RecurringTemplates.route)
                     }
                 )
             }
@@ -261,6 +265,23 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                     },
                     onNavigateToAttendance = { eventId ->
                         navController.navigate(Screen.AttendanceList.createRoute(eventId))
+                    }
+                )
+            }
+
+            composable(Screen.RecurringTemplates.route) {
+                RecurringTemplatesScreen(
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToEventEdit = { event ->
+                        val route = if (event == null) {
+                            Screen.EventEdit.createRouteForNew()
+                        } else {
+                            Screen.EventEdit.createRoute(event.id)
+                        }
+                        navController.navigate(route)
                     }
                 )
             }

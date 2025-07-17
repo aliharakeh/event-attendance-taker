@@ -66,6 +66,18 @@
     <string name="no_past_events">لم يتم العثور على أحداث سابقة</string>
     <string name="no_past_events_description">ستظهر الأحداث السابقة هنا بمجرد إكمال الأحداث.</string>
 
+    <!-- Recurring Templates -->
+    <string name="recurring_templates">قوالب الأحداث المتكررة</string>
+    <string name="templates">القوالب</string>
+    <string name="history">التاريخ</string>
+    <string name="no_recurring_templates">لا توجد قوالب متكررة</string>
+    <string name="no_recurring_templates_description">أنشئ قوالب أحداث متكررة ستنشئ أحداثًا تلقائيًا في الأيام المحددة.</string>
+    <string name="recurring_template_pattern">كل %1$s في %2$s</string>
+    <string name="recurring_date_range">من %1$s إلى %2$s</string>
+    <string name="recurring_from_date">من %1$s فما بعد</string>
+    <string name="delete_template">حذف القالب</string>
+    <string name="delete_template_confirmation">هل أنت متأكد من حذف القالب &quot;%1$s&quot;؟ سيؤدي هذا أيضًا إلى إيقاف إنشاء الأحداث المستقبلية من هذا القالب.</string>
+
     <!-- Language Toggle -->
     <string name="language_toggle">اللغة</string>
     <string name="switch_language">تغيير اللغة</string>

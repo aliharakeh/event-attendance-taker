@@ -4,6 +4,7 @@ sealed class Screen(val route: String) {
     object Contacts : Screen("contacts")
     object Events : Screen("events")
     object EventHistory : Screen("event_history")
+    object RecurringTemplates : Screen("recurring_templates")
     object AttendanceList : Screen("attendance/{eventId}") {
         fun createRoute(eventId: String) = "attendance/$eventId"
     }

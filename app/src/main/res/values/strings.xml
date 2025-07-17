@@ -65,6 +65,18 @@
     <string name="no_past_events">No past events found</string>
     <string name="no_past_events_description">Past events will appear here once you have completed events.</string>
 
+    <!-- Recurring Templates -->
+    <string name="recurring_templates">Recurring Templates</string>
+    <string name="templates">Templates</string>
+    <string name="history">History</string>
+    <string name="no_recurring_templates">No recurring templates</string>
+    <string name="no_recurring_templates_description">Create recurring event templates that will automatically generate events on scheduled days.</string>
+    <string name="recurring_template_pattern">Every %1$s at %2$s</string>
+    <string name="recurring_date_range">From %1$s to %2$s</string>
+    <string name="recurring_from_date">From %1$s onwards</string>
+    <string name="delete_template">Delete Template</string>
+    <string name="delete_template_confirmation">Are you sure you want to delete the template &quot;%1$s&quot;? This will also stop creating future events from this template.</string>
+
     <!-- Language Toggle -->
     <string name="language_toggle">Language</string>
     <string name="switch_language">Switch Language</string>
