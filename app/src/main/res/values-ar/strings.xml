@@ -105,6 +105,10 @@
     <string name="save_event_question">هل تريد حفظ هذا الحدث؟</string>
     <string name="end_date">تاريخ الانتهاء</string>
     <string name="search_contact_groups">ابحث في مجموعات الاتصال…</string>
+    <string name="search_events">ابحث في الأحداث…</string>
+    <string name="search_templates">ابحث في القوالب…</string>
+    <string name="clear_search">مسح البحث</string>
+    <string name="no_search_results">لا توجد نتائج بحث</string>
     <string name="event_details">تفاصيل الحدث</string>
     <string name="make_recurring_event">اجعل هذا الحدث متكرراً</string>
     <string name="will_repeat_every">سيتكرر كل %1$s</string>

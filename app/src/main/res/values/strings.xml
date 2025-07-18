@@ -104,6 +104,10 @@
     <string name="save_event_question">Do you want to save this event?</string>
     <string name="end_date">End Date</string>
     <string name="search_contact_groups">Search contact groups…</string>
+    <string name="search_events">Search events…</string>
+    <string name="search_templates">Search templates…</string>
+    <string name="clear_search">Clear search</string>
+    <string name="no_search_results">No search results found</string>
     <string name="event_details">Event Details</string>
     <string name="make_recurring_event">Make this a recurring event</string>
     <string name="will_repeat_every">Will repeat every %1$s</string>

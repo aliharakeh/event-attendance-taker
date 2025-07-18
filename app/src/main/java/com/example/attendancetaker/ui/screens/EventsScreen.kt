@@ -13,10 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
@@ -24,26 +25,20 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -54,7 +49,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -62,13 +56,10 @@ import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.data.Event
-import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
@@ -85,6 +76,17 @@ fun EventsScreen(
 ) {
     val events by repository.getCurrentAndFutureEvents().collectAsState(initial = emptyList())
     val coroutineScope = rememberCoroutineScope()
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Filter events based on search query
+    val filteredEvents = events.filter { event ->
+        if (searchQuery.isBlank()) {
+            true
+        } else {
+            event.name.contains(searchQuery, ignoreCase = true) ||
+                    event.description.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -127,26 +129,64 @@ fun EventsScreen(
             }
         }
 
+        // Search Bar
+        TextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text(stringResource(R.string.search_events)) },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear_search),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            ),
+            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 8.dp),
+            singleLine = true
+        )
+
         // Events List
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(events) { event ->
-            EventItem(
-                event = event,
-                repository = repository,
-                onEdit = { onNavigateToEventEdit(event) },
-                onDelete = {
-                    coroutineScope.launch {
-                        repository.removeEvent(event.id)
-                    }
-                },
-                onTakeAttendance = { onNavigateToAttendance(event.id) }
-            )
+            items(filteredEvents) { event ->
+                EventItem(
+                    event = event,
+                    repository = repository,
+                    onEdit = { onNavigateToEventEdit(event) },
+                    onDelete = {
+                        coroutineScope.launch {
+                            repository.removeEvent(event.id)
+                        }
+                    },
+                    onTakeAttendance = { onNavigateToAttendance(event.id) }
+                )
+            }
         }
-    }
     }
 }
 
@@ -159,6 +199,17 @@ fun EventHistoryScreen(
     modifier: Modifier = Modifier
 ) {
     val pastEvents by repository.getPastEvents().collectAsState(initial = emptyList())
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Filter past events based on search query
+    val filteredPastEvents = pastEvents.filter { event ->
+        if (searchQuery.isBlank()) {
+            true
+        } else {
+            event.name.contains(searchQuery, ignoreCase = true) ||
+                    event.description.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -181,7 +232,67 @@ fun EventHistoryScreen(
             )
         }
 
-        if (pastEvents.isEmpty()) {
+        // Search Bar
+        TextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text(stringResource(R.string.search_events)) },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear_search),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            ),
+            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 8.dp),
+            singleLine = true
+        )
+
+        if (filteredPastEvents.isEmpty() && pastEvents.isNotEmpty()) {
+            // No search results
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.no_search_results),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else if (pastEvents.isEmpty()) {
             // Empty state
             Column(
                 modifier = Modifier
@@ -190,25 +301,25 @@ fun EventHistoryScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-            Icon(
-                Icons.Default.CalendarToday,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.no_past_events),
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.no_past_events_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
+                Icon(
+                    Icons.Default.CalendarToday,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.no_past_events),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.no_past_events_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
             }
         } else {
             // Past Events List
@@ -217,7 +328,7 @@ fun EventHistoryScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(pastEvents) { event ->
+                items(filteredPastEvents) { event ->
                     PastEventItem(
                         event = event,
                         repository = repository,
@@ -239,6 +350,17 @@ fun RecurringTemplatesScreen(
 ) {
     val recurringEvents by repository.getRecurringEvents().collectAsState(initial = emptyList())
     val coroutineScope = rememberCoroutineScope()
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Filter recurring templates based on search query
+    val filteredRecurringEvents = recurringEvents.filter { template ->
+        if (searchQuery.isBlank()) {
+            true
+        } else {
+            template.name.contains(searchQuery, ignoreCase = true) ||
+                    template.description.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -261,7 +383,67 @@ fun RecurringTemplatesScreen(
             )
         }
 
-        if (recurringEvents.isEmpty()) {
+        // Search Bar
+        TextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text(stringResource(R.string.search_templates)) },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear_search),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            ),
+            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 8.dp),
+            singleLine = true
+        )
+
+        if (filteredRecurringEvents.isEmpty() && recurringEvents.isNotEmpty()) {
+            // No search results
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.no_search_results),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else if (recurringEvents.isEmpty()) {
             // Empty state
             Column(
                 modifier = Modifier
@@ -297,7 +479,7 @@ fun RecurringTemplatesScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(recurringEvents) { template ->
+                items(filteredRecurringEvents) { template ->
                     RecurringTemplateItem(
                         template = template,
                         repository = repository,
@@ -389,8 +571,12 @@ fun RecurringTemplateItem(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = stringResource(R.string.recurring_template_pattern,
-                                template.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.getDefault()) ?: "Unknown",
+                            text = stringResource(
+                                R.string.recurring_template_pattern,
+                                template.dayOfWeek?.getDisplayName(
+                                    TextStyle.FULL,
+                                    Locale.getDefault()
+                                ) ?: "Unknown",
                                 template.time.format(DateTimeFormatter.ofPattern("HH:mm"))
                             ),
                             style = MaterialTheme.typography.bodySmall,
@@ -413,12 +599,14 @@ fun RecurringTemplateItem(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = if (template.endDate != null) {
-                                    stringResource(R.string.recurring_date_range,
+                                    stringResource(
+                                        R.string.recurring_date_range,
                                         template.startDate!!.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
                                         template.endDate!!.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
                                     )
                                 } else {
-                                    stringResource(R.string.recurring_from_date,
+                                    stringResource(
+                                        R.string.recurring_from_date,
                                         template.startDate!!.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
                                     )
                                 },
@@ -442,7 +630,11 @@ fun RecurringTemplateItem(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = stringResource(R.string.selected_groups_contacts, selectedGroups.joinToString(", ") { it.name }, totalContacts),
+                                text = stringResource(
+                                    R.string.selected_groups_contacts,
+                                    selectedGroups.joinToString(", ") { it.name },
+                                    totalContacts
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -590,7 +782,10 @@ fun EventItem(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = event.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.getDefault()) ?: "Unknown",
+                                text = event.dayOfWeek?.getDisplayName(
+                                    TextStyle.FULL,
+                                    Locale.getDefault()
+                                ) ?: "Unknown",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -617,7 +812,8 @@ fun EventItem(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = event.date?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "No date",
+                                text = event.date?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                                    ?: "No date",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -651,7 +847,11 @@ fun EventItem(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = stringResource(R.string.selected_groups_contacts, selectedGroups.joinToString(", ") { it.name }, totalContacts),
+                                text = stringResource(
+                                    R.string.selected_groups_contacts,
+                                    selectedGroups.joinToString(", ") { it.name },
+                                    totalContacts
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -804,7 +1004,10 @@ fun PastEventItem(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = event.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.getDefault()) ?: "Unknown",
+                                text = event.dayOfWeek?.getDisplayName(
+                                    TextStyle.FULL,
+                                    Locale.getDefault()
+                                ) ?: "Unknown",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -831,7 +1034,8 @@ fun PastEventItem(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = event.date?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "No date",
+                                text = event.date?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                                    ?: "No date",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -865,7 +1069,11 @@ fun PastEventItem(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = stringResource(R.string.selected_groups_contacts, selectedGroups.joinToString(", ") { it.name }, totalContacts),
+                                text = stringResource(
+                                    R.string.selected_groups_contacts,
+                                    selectedGroups.joinToString(", ") { it.name },
+                                    totalContacts
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -900,304 +1108,5 @@ fun PastEventItem(
                 Text(stringResource(R.string.view_attendance))
             }
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun EventDialog(
-    event: Event?,
-    repository: AttendanceRepository,
-    onDismiss: () -> Unit,
-    onSave: (Event) -> Unit
-) {
-    var name by remember { mutableStateOf(event?.name ?: "") }
-    var description by remember { mutableStateOf(event?.description ?: "") }
-    var selectedDate by remember { mutableStateOf(event?.date ?: LocalDate.now()) }
-    var selectedTime by remember { mutableStateOf(event?.time ?: LocalTime.now()) }
-    var selectedGroupIds by remember {
-        mutableStateOf(
-            event?.contactGroupIds?.toSet() ?: emptySet()
-        )
-    }
-
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showTimePicker by remember { mutableStateOf(false) }
-
-    val contactGroups by repository.getAllContactGroups().collectAsState(initial = emptyList())
-    var contactsForGroups by remember { mutableStateOf(mapOf<String, List<com.example.attendancetaker.data.Contact>>()) }
-    val coroutineScope = rememberCoroutineScope()
-
-    // Load contacts for each group
-    LaunchedEffect(contactGroups) {
-        val contactsMap = mutableMapOf<String, List<com.example.attendancetaker.data.Contact>>()
-        contactGroups.forEach { group ->
-            contactsMap[group.id] = repository.getContactsFromGroups(listOf(group.id))
-        }
-        contactsForGroups = contactsMap
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(if (event == null) stringResource(R.string.add_event_title) else stringResource(R.string.edit_event_title))
-        },
-        text = {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item {
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text(stringResource(R.string.event_name)) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                item {
-                    OutlinedTextField(
-                        value = description,
-                        onValueChange = { description = it },
-                        label = { Text(stringResource(R.string.description_optional)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 2
-                    )
-                }
-
-                item {
-                    // Date Selection
-                    OutlinedTextField(
-                        value = selectedDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
-                        onValueChange = { },
-                        label = { Text(stringResource(R.string.date)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        readOnly = true,
-                        trailingIcon = {
-                            IconButton(onClick = { showDatePicker = true }) {
-                                Icon(
-                                    Icons.Default.CalendarToday,
-                                    contentDescription = stringResource(R.string.cd_select_date)
-                                )
-                            }
-                        }
-                    )
-                }
-
-                item {
-                    // Time Selection
-                    OutlinedTextField(
-                        value = selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")),
-                        onValueChange = { },
-                        label = { Text(stringResource(R.string.time)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        readOnly = true,
-                        trailingIcon = {
-                            IconButton(onClick = { showTimePicker = true }) {
-                                Icon(
-                                    Icons.Default.Schedule,
-                                    contentDescription = stringResource(R.string.select_time)
-                                )
-                            }
-                        }
-                    )
-                }
-
-                item {
-                    Text(
-                        text = stringResource(R.string.select_contact_groups_colon),
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-
-                items(contactGroups) { group ->
-                    val contacts = contactsForGroups[group.id] ?: emptyList()
-                    val isSelected = selectedGroupIds.contains(group.id)
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = if (isSelected) 2.dp else 1.dp
-                        ),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected)
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
-                            else
-                                MaterialTheme.colorScheme.surface
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = isSelected,
-                                onCheckedChange = { isChecked ->
-                                    selectedGroupIds = if (isChecked) {
-                                        selectedGroupIds + group.id
-                                    } else {
-                                        selectedGroupIds - group.id
-                                    }
-                                },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.primary,
-                                    uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    checkmarkColor = Color.White
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = group.name,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected)
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = stringResource(R.string.contacts_count_with_desc, contacts.size, group.description),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            // Selection indicator
-                            if (isSelected) {
-                                Icon(
-                                    Icons.Default.CheckCircle,
-                                    contentDescription = stringResource(R.string.cd_selected),
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (name.isNotBlank()) {
-                        val newEvent = if (event == null) {
-                            Event(
-                                name = name.trim(),
-                                description = description.trim(),
-                                date = selectedDate,
-                                time = selectedTime,
-                                contactGroupIds = selectedGroupIds.toList()
-                            )
-                        } else {
-                            event.copy(
-                                name = name.trim(),
-                                description = description.trim(),
-                                date = selectedDate,
-                                time = selectedTime,
-                                contactGroupIds = selectedGroupIds.toList()
-                            )
-                        }
-                        onSave(newEvent)
-                    }
-                },
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonBlue
-                )
-            ) {
-                Text(stringResource(R.string.save))
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonNeutral
-                )
-            ) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
-    )
-
-    // Date Picker
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate.toEpochDay() * 24 * 60 * 60 * 1000
-        )
-
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let { millis ->
-                            selectedDate = LocalDate.ofEpochDay(millis / (24 * 60 * 60 * 1000))
-                        }
-                        showDatePicker = false
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonBlue
-                    )
-                ) {
-                    Text(stringResource(R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDatePicker = false },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonNeutral
-                    )
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
-    }
-
-    // Time Picker
-    if (showTimePicker) {
-        val timePickerState = rememberTimePickerState(
-            initialHour = selectedTime.hour,
-            initialMinute = selectedTime.minute
-        )
-
-        AlertDialog(
-            onDismissRequest = { showTimePicker = false },
-            title = { Text(stringResource(R.string.select_time)) },
-            text = {
-                TimePicker(state = timePickerState)
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
-                        showTimePicker = false
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonBlue
-                    )
-                ) {
-                    Text(stringResource(R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showTimePicker = false },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonNeutral
-                    )
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
     }
 }
