@@ -322,7 +322,8 @@ fun EventHistoryScreen(
                         Text(
                             text = stringResource(R.string.no_search_results),
                             style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                     }
                     // No results from date range filter
@@ -337,7 +338,8 @@ fun EventHistoryScreen(
                         Text(
                             text = stringResource(R.string.no_events_in_date_range),
                             style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                     }
                     // No past events at all
@@ -504,7 +506,8 @@ fun RecurringTemplatesScreen(
                 Text(
                     text = stringResource(R.string.no_search_results),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
         } else if (recurringEvents.isEmpty()) {
@@ -526,7 +529,8 @@ fun RecurringTemplatesScreen(
                 Text(
                     text = stringResource(R.string.no_recurring_templates),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
