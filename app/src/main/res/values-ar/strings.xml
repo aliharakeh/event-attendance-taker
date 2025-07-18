@@ -66,6 +66,14 @@
     <string name="no_past_events">لم يتم العثور على أحداث سابقة</string>
     <string name="no_past_events_description">ستظهر الأحداث السابقة هنا بمجرد إكمال الأحداث.</string>
 
+    <!-- Date Range Search -->
+    <string name="filter_by_date_range">التصفية حسب نطاق التاريخ</string>
+    <string name="from_date">من تاريخ</string>
+    <string name="to_date">إلى تاريخ</string>
+    <string name="clear_date_filter">مسح مرشح التاريخ</string>
+    <string name="no_events_in_date_range">لم يتم العثور على أحداث في نطاق التاريخ المحدد</string>
+    <string name="date_range_active">نطاق التاريخ: %1$s إلى %2$s</string>
+
     <!-- Recurring Templates -->
     <string name="recurring_templates">قوالب الأحداث المتكررة</string>
     <string name="templates">القوالب</string>

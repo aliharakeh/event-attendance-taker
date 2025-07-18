@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
@@ -60,6 +61,7 @@ import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
@@ -198,8 +200,21 @@ fun EventHistoryScreen(
     onNavigateToAttendance: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val pastEvents by repository.getPastEvents().collectAsState(initial = emptyList())
     var searchQuery by remember { mutableStateOf("") }
+    var isDateFilterEnabled by remember { mutableStateOf(false) }
+    var fromDate by remember { mutableStateOf<LocalDate?>(null) }
+    var toDate by remember { mutableStateOf<LocalDate?>(null) }
+    var showFromDatePicker by remember { mutableStateOf(false) }
+    var showToDatePicker by remember { mutableStateOf(false) }
+
+    // Get events based on whether date filter is enabled
+    val pastEvents by remember(isDateFilterEnabled, fromDate, toDate) {
+        if (isDateFilterEnabled && fromDate != null && toDate != null) {
+            repository.getPastEventsInDateRange(fromDate!!, toDate!!)
+        } else {
+            repository.getPastEvents()
+        }
+    }.collectAsState(initial = emptyList())
 
     // Filter past events based on search query
     val filteredPastEvents = pastEvents.filter { event ->
@@ -270,8 +285,23 @@ fun EventHistoryScreen(
             singleLine = true
         )
 
-        if (filteredPastEvents.isEmpty() && pastEvents.isNotEmpty()) {
-            // No search results
+        // Date Range Filter
+        DateRangeFilterCard(
+            isDateFilterEnabled = isDateFilterEnabled,
+            fromDate = fromDate,
+            toDate = toDate,
+            onDateFilterToggle = { isDateFilterEnabled = it },
+            onFromDateClick = { showFromDatePicker = true },
+            onToDateClick = { showToDatePicker = true },
+            onClearDateFilter = {
+                isDateFilterEnabled = false
+                fromDate = null
+                toDate = null
+            },
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        if (filteredPastEvents.isEmpty()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -279,47 +309,60 @@ fun EventHistoryScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Icon(
-                    Icons.Default.Search,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.no_search_results),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else if (pastEvents.isEmpty()) {
-            // Empty state
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    Icons.Default.CalendarToday,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.no_past_events),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.no_past_events_description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
+                when {
+                    // No results from search query
+                    pastEvents.isNotEmpty() && searchQuery.isNotBlank() -> {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_search_results),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    // No results from date range filter
+                    pastEvents.isEmpty() && isDateFilterEnabled && fromDate != null && toDate != null -> {
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_events_in_date_range),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    // No past events at all
+                    else -> {
+                        Icon(
+                            Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_past_events),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.no_past_events_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
             }
         } else {
             // Past Events List
@@ -337,6 +380,27 @@ fun EventHistoryScreen(
                 }
             }
         }
+    }
+
+    // Date Picker Dialogs
+    if (showFromDatePicker) {
+        DatePickerDialog(
+            onDateSelected = { date ->
+                fromDate = date
+                showFromDatePicker = false
+            },
+            onDismiss = { showFromDatePicker = false }
+        )
+    }
+
+    if (showToDatePicker) {
+        DatePickerDialog(
+            onDateSelected = { date ->
+                toDate = date
+                showToDatePicker = false
+            },
+            onDismiss = { showToDatePicker = false }
+        )
     }
 }
 

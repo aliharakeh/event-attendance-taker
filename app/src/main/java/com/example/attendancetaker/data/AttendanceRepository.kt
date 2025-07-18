@@ -89,6 +89,9 @@ class AttendanceRepository(context: Context) {
 
     fun getPastEvents(): Flow<List<Event>> = eventDao.getPastEvents(LocalDate.now())
 
+    fun getPastEventsInDateRange(startDate: LocalDate, endDate: LocalDate): Flow<List<Event>> =
+        eventDao.getPastEventsInDateRange(LocalDate.now(), startDate, endDate)
+
     fun getCurrentAndFutureEvents(): Flow<List<Event>> = eventDao.getCurrentAndFutureEvents(LocalDate.now())
 
     suspend fun addEvent(event: Event) {

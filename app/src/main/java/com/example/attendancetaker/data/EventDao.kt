@@ -34,6 +34,9 @@ interface EventDao {
     @Query("SELECT * FROM events WHERE date < :currentDate ORDER BY date DESC, time DESC")
     fun getPastEvents(currentDate: LocalDate): Flow<List<Event>>
 
+    @Query("SELECT * FROM events WHERE date < :currentDate AND date BETWEEN :startDate AND :endDate ORDER BY date DESC, time DESC")
+    fun getPastEventsInDateRange(currentDate: LocalDate, startDate: LocalDate, endDate: LocalDate): Flow<List<Event>>
+
     @Query("SELECT * FROM events WHERE (date >= :currentDate OR (date IS NULL AND isRecurring = 0)) AND isRecurring = 0 ORDER BY date ASC, time ASC")
     fun getCurrentAndFutureEvents(currentDate: LocalDate): Flow<List<Event>>
 

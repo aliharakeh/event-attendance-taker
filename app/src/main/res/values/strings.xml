@@ -65,6 +65,14 @@
     <string name="no_past_events">No past events found</string>
     <string name="no_past_events_description">Past events will appear here once you have completed events.</string>
 
+    <!-- Date Range Search -->
+    <string name="filter_by_date_range">Filter by date range</string>
+    <string name="from_date">From Date</string>
+    <string name="to_date">To Date</string>
+    <string name="clear_date_filter">Clear date filter</string>
+    <string name="no_events_in_date_range">No events found in the selected date range</string>
+    <string name="date_range_active">Date range: %1$s to %2$s</string>
+
     <!-- Recurring Templates -->
     <string name="recurring_templates">Recurring Templates</string>
     <string name="templates">Templates</string>
