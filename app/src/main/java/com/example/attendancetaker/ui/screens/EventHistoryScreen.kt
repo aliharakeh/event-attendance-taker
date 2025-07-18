@@ -15,19 +15,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -44,7 +40,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,30 +50,37 @@ import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.ContactGroup
 import com.example.attendancetaker.data.Event
-import com.example.attendancetaker.ui.theme.ButtonNeutral
-import com.example.attendancetaker.ui.theme.ButtonRed
-import com.example.attendancetaker.ui.theme.EditIconBlue
-import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventsScreen(
+fun EventHistoryScreen(
     repository: AttendanceRepository,
+    onNavigateBack: () -> Unit,
     onNavigateToAttendance: (String) -> Unit,
-    onNavigateToEventEdit: (Event?) -> Unit,
-    onNavigateToHistory: () -> Unit,
-    onNavigateToRecurringTemplates: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val events by repository.getCurrentAndFutureEvents().collectAsState(initial = emptyList())
-    val coroutineScope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
+    var isDateFilterEnabled by remember { mutableStateOf(false) }
+    var fromDate by remember { mutableStateOf<LocalDate?>(null) }
+    var toDate by remember { mutableStateOf<LocalDate?>(null) }
+    var showFromDatePicker by remember { mutableStateOf(false) }
+    var showToDatePicker by remember { mutableStateOf(false) }
 
-    // Filter events based on search query
-    val filteredEvents = events.filter { event ->
+    // Get events based on whether date filter is enabled
+    val pastEvents by remember(isDateFilterEnabled, fromDate, toDate) {
+        if (isDateFilterEnabled && fromDate != null && toDate != null) {
+            repository.getPastEventsInDateRange(fromDate!!, toDate!!)
+        } else {
+            repository.getPastEvents()
+        }
+    }.collectAsState(initial = emptyList())
+
+    // Filter past events based on search query
+    val filteredPastEvents = pastEvents.filter { event ->
         if (searchQuery.isBlank()) {
             true
         } else {
@@ -90,42 +92,22 @@ fun EventsScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Navigation Buttons
+        // Header with back button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.End
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(
-                onClick = onNavigateToRecurringTemplates,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Icon(
-                    Icons.Default.Repeat,
-                    contentDescription = stringResource(R.string.recurring_templates),
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.templates))
+            IconButton(onClick = onNavigateBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
             }
             Spacer(modifier = Modifier.width(8.dp))
-            TextButton(
-                onClick = onNavigateToHistory,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Icon(
-                    Icons.Default.History,
-                    contentDescription = stringResource(R.string.event_history),
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.history))
-            }
+            Text(
+                text = stringResource(R.string.event_history),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         // Search Bar
@@ -166,47 +148,135 @@ fun EventsScreen(
             singleLine = true
         )
 
-        // Events List
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(filteredEvents) { event ->
-                EventItem(
-                    event = event,
-                    repository = repository,
-                    onEdit = { onNavigateToEventEdit(event) },
-                    onDelete = {
-                        coroutineScope.launch {
-                            repository.removeEvent(event.id)
-                        }
-                    },
-                    onTakeAttendance = { onNavigateToAttendance(event.id) }
-                )
+        // Date Range Filter
+        DateRangeFilterCard(
+            isDateFilterEnabled = isDateFilterEnabled,
+            fromDate = fromDate,
+            toDate = toDate,
+            onDateFilterToggle = { isDateFilterEnabled = it },
+            onFromDateClick = { showFromDatePicker = true },
+            onToDateClick = { showToDatePicker = true },
+            onClearDateFilter = {
+                isDateFilterEnabled = false
+                fromDate = null
+                toDate = null
+            },
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        if (filteredPastEvents.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                when {
+                    // No results from search query
+                    pastEvents.isNotEmpty() && searchQuery.isNotBlank() -> {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_search_results),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                    // No results from date range filter
+                    pastEvents.isEmpty() && isDateFilterEnabled && fromDate != null && toDate != null -> {
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_events_in_date_range),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                    // No past events at all
+                    else -> {
+                        Icon(
+                            Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_past_events),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.no_past_events_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            }
+        } else {
+            // Past Events List
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(filteredPastEvents) { event ->
+                    PastEventItem(
+                        event = event,
+                        repository = repository,
+                        onViewAttendance = { onNavigateToAttendance(event.id) }
+                    )
+                }
             }
         }
     }
+
+    // Date Picker Dialogs
+    if (showFromDatePicker) {
+        DatePickerDialog(
+            onDateSelected = { date ->
+                fromDate = date
+                showFromDatePicker = false
+            },
+            onDismiss = { showFromDatePicker = false }
+        )
+    }
+
+    if (showToDatePicker) {
+        DatePickerDialog(
+            onDateSelected = { date ->
+                toDate = date
+                showToDatePicker = false
+            },
+            onDismiss = { showToDatePicker = false }
+        )
+    }
 }
 
-
-
-
-
-
-
 @Composable
-fun EventItem(
+fun PastEventItem(
     event: Event,
     repository: AttendanceRepository,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
-    onTakeAttendance: () -> Unit
+    onViewAttendance: () -> Unit
 ) {
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
     var selectedGroups by remember { mutableStateOf(emptyList<ContactGroup>()) }
     var totalContacts by remember { mutableStateOf(0) }
-    val coroutineScope = rememberCoroutineScope()
 
     // Load related data
     LaunchedEffect(event.contactGroupIds) {
@@ -359,65 +429,33 @@ fun EventItem(
                         }
                     }
                 }
-                Row {
-                    IconButton(onClick = onEdit) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.cd_edit),
-                            tint = EditIconBlue
-                        )
-                    }
-                    IconButton(onClick = { showDeleteConfirmation = true }) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.cd_delete),
-                            tint = ButtonRed
-                        )
-                    }
+
+                // Past Event Badge
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ),
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.past_event_badge),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
+
             Spacer(modifier = Modifier.height(12.dp))
             Button(
-                onClick = onTakeAttendance,
+                onClick = onViewAttendance,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.People, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.take_attendance))
+                Text(stringResource(R.string.view_attendance))
             }
         }
     }
-
-    // Delete Confirmation Dialog
-    if (showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text(stringResource(R.string.delete_event)) },
-            text = { Text(stringResource(R.string.delete_event_confirmation, event.name)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDelete()
-                        showDeleteConfirmation = false
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonRed
-                    )
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDeleteConfirmation = false },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonNeutral
-                    )
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
-    }
 }
-
