@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Whatsapp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -218,12 +219,10 @@ fun ContactItemWithWhatsApp(
                     )
                 ) {
                     Icon(
-                        Icons.Default.Message,
+                        Icons.Default.Whatsapp,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(22.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.message))
                 }
 
                 // Call button
@@ -231,16 +230,14 @@ fun ContactItemWithWhatsApp(
                     onClick = { openWhatsAppCall(context, contact.phoneNumber) },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF075E54) // Darker WhatsApp green
+                        containerColor = Color(0xFF0B5D9C)
                     )
                 ) {
                     Icon(
                         Icons.Default.Call,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(22.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.call))
                 }
             }
         }

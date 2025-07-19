@@ -14,7 +14,7 @@
     <string name="present">Present</string>
     <string name="absent">Absent</string>
     <string name="notes_prefix">Notes: </string>
-    <string name="edit_notes">Edit Notes</string>
+    <string name="edit_notes">Notes</string>
     <string name="notes_for_contact">Notes for %1$s</string>
     <string name="attendance_notes">Attendance Notes</string>
     <string name="attendance_notes_placeholder">Add any notes about this person\'s attendance…</string>

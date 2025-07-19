@@ -25,7 +25,9 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Whatsapp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,6 +52,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -355,48 +358,41 @@ fun AttendanceItem(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // WhatsApp buttons (reusing from ContactGroupDetailsScreen)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Contact action buttons
-                Row {
-                    // WhatsApp button
-                    TextButton(onClick = {
-                        openWhatsApp(context, contact.phoneNumber)
-                    }) {
-                        Icon(
-                            Icons.Default.Message,
-                            contentDescription = "WhatsApp",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            "WhatsApp",
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                // Message button
+                Button(
+                    onClick = { openWhatsAppMessage(context, contact.phoneNumber) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF25D366) // WhatsApp green
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Whatsapp,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
 
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // Call button
-                    TextButton(onClick = {
-                        makePhoneCall(context, contact.phoneNumber)
-                    }) {
-                        Icon(
-                            Icons.Default.Call,
-                            contentDescription = "Call",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            "Call",
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                // Call button
+                Button(
+                    onClick = { openWhatsAppCall(context, contact.phoneNumber) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF0B5D9C)
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Call,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp)
+                    )
                 }
 
                 // Edit notes button
@@ -418,64 +414,73 @@ fun AttendanceItem(
     }
 }
 
-/**
- * Opens WhatsApp with the given phone number
- */
-private fun openWhatsApp(context: Context, phoneNumber: String) {
+// WhatsApp functions reused from ContactGroupDetailsScreen
+private fun openWhatsAppMessage(context: Context, phoneNumber: String) {
     try {
-        // Clean the phone number (remove any non-digit characters except +)
-        val cleanPhoneNumber = phoneNumber.replace(Regex("[^\\d+]"), "")
+        // Clean the phone number (remove any non-numeric characters except +)
+        val cleanedNumber = phoneNumber.replace(Regex("[^+\\d]"), "")
 
-        // Create WhatsApp intent
-        val whatsappIntent = Intent(Intent.ACTION_VIEW)
-        whatsappIntent.data = Uri.parse("https://api.whatsapp.com/send?phone=$cleanPhoneNumber")
+        // Try to open WhatsApp directly
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("https://wa.me/$cleanedNumber")
+            setPackage("com.whatsapp")
+        }
 
         // Check if WhatsApp is installed
-        if (whatsappIntent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(whatsappIntent)
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
         } else {
             // Fallback to web WhatsApp
-            val webWhatsappIntent = Intent(Intent.ACTION_VIEW)
-            webWhatsappIntent.data = Uri.parse("https://web.whatsapp.com/send?phone=$cleanPhoneNumber")
-            context.startActivity(webWhatsappIntent)
+            val webIntent = Intent(Intent.ACTION_VIEW).apply {
+                data = Uri.parse("https://wa.me/$cleanedNumber")
+            }
+            context.startActivity(webIntent)
         }
     } catch (e: Exception) {
         e.printStackTrace()
+        // Fallback to regular SMS
+        val smsIntent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("smsto:$phoneNumber")
+        }
+        try {
+            context.startActivity(smsIntent)
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
     }
 }
 
-/**
- * Initiates a phone call to the given phone number
- */
-private fun makePhoneCall(context: Context, phoneNumber: String) {
+private fun openWhatsAppCall(context: Context, phoneNumber: String) {
     try {
-        // Clean the phone number (keep digits and + for international numbers)
-        val cleanPhoneNumber = phoneNumber.replace(Regex("[^\\d+]"), "")
+        // Clean the phone number
+        val cleanedNumber = phoneNumber.replace(Regex("[^+\\d]"), "")
 
-        // Log for debugging
-        println("Attempting to call: $cleanPhoneNumber")
-
-        // Create call intent - using ACTION_DIAL to avoid needing CALL_PHONE permission
-        val callIntent = Intent(Intent.ACTION_DIAL).apply {
-            data = Uri.parse("tel:$cleanPhoneNumber")
-            // Add flags to ensure the intent works properly
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        // Try to open WhatsApp call directly
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("https://wa.me/$cleanedNumber?call")
+            setPackage("com.whatsapp")
         }
 
-        // Start the activity - remove the resolveActivity check as it might be causing issues
-        context.startActivity(callIntent)
-
+        // Check if WhatsApp is installed
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+        } else {
+            // Fallback to regular phone call
+            val callIntent = Intent(Intent.ACTION_DIAL).apply {
+                data = Uri.parse("tel:$phoneNumber")
+            }
+            context.startActivity(callIntent)
+        }
     } catch (e: Exception) {
-        println("Error making phone call: ${e.message}")
         e.printStackTrace()
-
-        // Fallback: try with a simpler approach
+        // Fallback to regular phone call
+        val callIntent = Intent(Intent.ACTION_DIAL).apply {
+            data = Uri.parse("tel:$phoneNumber")
+        }
         try {
-            val fallbackIntent = Intent(Intent.ACTION_VIEW, Uri.parse("tel:${phoneNumber}"))
-            fallbackIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(fallbackIntent)
-        } catch (fallbackException: Exception) {
-            println("Fallback call also failed: ${fallbackException.message}")
+            context.startActivity(callIntent)
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         }
     }
 }

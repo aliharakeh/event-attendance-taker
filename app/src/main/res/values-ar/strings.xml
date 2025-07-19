@@ -15,7 +15,7 @@
     <string name="present">حاضر</string>
     <string name="absent">غائب</string>
     <string name="notes_prefix">ملاحظات: </string>
-    <string name="edit_notes">تعديل الملاحظات</string>
+    <string name="edit_notes">الملاحظات</string>
     <string name="notes_for_contact">ملاحظات لـ %1$s</string>
     <string name="attendance_notes">ملاحظات الحضور</string>
     <string name="attendance_notes_placeholder">أضف أي ملاحظات حول حضور هذا الشخص…</string>
