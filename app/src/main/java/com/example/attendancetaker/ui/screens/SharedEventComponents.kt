@@ -763,22 +763,10 @@ fun DateRangeFilterCard(
                         fontWeight = FontWeight.Medium
                     )
                 }
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (isDateFilterEnabled) {
-                        TextButton(
-                            onClick = onClearDateFilter,
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = MaterialTheme.colorScheme.error
-                            )
-                        ) {
-                            Text(stringResource(R.string.clear_date_filter))
-                        }
-                    }
-
                     androidx.compose.material3.Switch(
                         checked = isDateFilterEnabled,
                         onCheckedChange = onDateFilterToggle

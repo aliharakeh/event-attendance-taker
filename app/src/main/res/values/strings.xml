@@ -67,9 +67,8 @@
 
     <!-- Date Range Search -->
     <string name="filter_by_date_range">Filter by date range</string>
-    <string name="from_date">From Date</string>
-    <string name="to_date">To Date</string>
-    <string name="clear_date_filter">Clear date filter</string>
+    <string name="from_date">From</string>
+    <string name="to_date">To</string>
     <string name="no_events_in_date_range">No events found in the selected date range</string>
     <string name="date_range_active">Date range: %1$s to %2$s</string>
 
@@ -114,6 +113,8 @@
     <string name="search_contact_groups">Search contact groups…</string>
     <string name="search_events">Search events…</string>
     <string name="search_templates">Search templates…</string>
+    <string name="search_contacts_placeholder">Search contacts…</string>
+    <string name="search_results_count">Showing %1$d of %2$d contacts</string>
     <string name="clear_search">Clear search</string>
     <string name="no_search_results">No search results found</string>
     <string name="event_details">Event Details</string>
