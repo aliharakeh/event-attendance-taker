@@ -160,6 +160,22 @@
     <string name="english">English</string>
     <string name="arabic">Arabic</string>
 
+    <!-- Attendance Summary -->
+    <string name="attendance_summary">Attendance Summary</string>
+    <string name="summary">Summary</string>
+    <string name="present_attendees">Present Attendees (%1$d)</string>
+    <string name="absent_attendees">Absent Attendees (%1$d)</string>
+    <string name="show_present">Show Present</string>
+    <string name="show_absent">Show Absent</string>
+    <string name="copy_summary">Copy Summary</string>
+    <string name="share_summary">Share Summary</string>
+    <string name="summary_copied">Summary copied to clipboard</string>
+    <string name="event_attendance_summary">Event Attendance Summary\n%1$s\n%2$s\n\n%3$s</string>
+    <string name="total_attendees">Total: %1$d attendees</string>
+    <string name="summary_language">Summary Language</string>
+    <string name="summary_in_english">English</string>
+    <string name="summary_in_arabic">العربية</string>
+
     <!-- Content Descriptions for Accessibility -->
     <string name="cd_add_recurring_event">Add recurring event</string>
     <string name="cd_recurring">Recurring</string>

@@ -1,8 +1,11 @@
 package com.example.attendancetaker.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,18 +22,25 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Summarize
 import androidx.compose.material.icons.filled.Whatsapp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,6 +75,11 @@ import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import kotlinx.coroutines.launch
 
+enum class SummaryLanguage(val displayName: String, val code: String) {
+    ENGLISH("English", "en"),
+    ARABIC("العربية", "ar")
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AttendanceScreen(
@@ -78,6 +93,7 @@ fun AttendanceScreen(
     var eventContacts by remember { mutableStateOf(emptyList<Contact>()) }
     var selectedGroups by remember { mutableStateOf(emptyList<com.example.attendancetaker.data.ContactGroup>()) }
     var searchQuery by remember { mutableStateOf("") }
+    var showSummaryDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     val attendanceRecords by repository.getAttendanceForEvent(eventId).collectAsState(initial = emptyList())
@@ -156,6 +172,13 @@ fun AttendanceScreen(
                         )
                     }
                 }
+            }
+            IconButton(onClick = { showSummaryDialog = true }) {
+                Icon(
+                    Icons.Default.Share,
+                    contentDescription = stringResource(R.string.summary),
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         }
 
@@ -261,6 +284,16 @@ fun AttendanceScreen(
                 }
             }
         }
+    }
+
+    // Summary Dialog
+    if (showSummaryDialog) {
+        AttendanceSummaryDialog(
+            eventName = event!!.name,
+            contacts = eventContacts,
+            attendanceRecords = attendanceRecords,
+            onDismiss = { showSummaryDialog = false }
+        )
     }
 
     // Notes Dialog
@@ -482,6 +515,335 @@ private fun openWhatsAppCall(context: Context, phoneNumber: String) {
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
+    }
+}
+
+@Composable
+fun AttendanceSummaryDialog(
+    eventName: String,
+    contacts: List<Contact>,
+    attendanceRecords: List<AttendanceRecord>,
+    onDismiss: () -> Unit
+) {
+    var showPresent by remember { mutableStateOf(true) }
+    var showAbsent by remember { mutableStateOf(true) }
+    var summaryLanguage by remember { mutableStateOf(SummaryLanguage.ENGLISH) }
+    var showLanguageDropdown by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    // Separate contacts into present and absent lists
+    val presentContacts = contacts.filter { contact ->
+        attendanceRecords.find { it.contactId == contact.id }?.isPresent == true
+    }
+    val absentContacts = contacts.filter { contact ->
+        val record = attendanceRecords.find { it.contactId == contact.id }
+        record?.isPresent != true
+    }
+
+    // Generate summary text based on current filter settings
+    val summaryText = remember(showPresent, showAbsent, presentContacts, absentContacts, summaryLanguage) {
+        generateSummaryText(eventName, presentContacts, absentContacts, showPresent, showAbsent, summaryLanguage)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(stringResource(R.string.attendance_summary))
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Filter checkboxes
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = showPresent,
+                            onCheckedChange = { showPresent = it }
+                        )
+                        Text(
+                            text = stringResource(R.string.show_present),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = showAbsent,
+                            onCheckedChange = { showAbsent = it }
+                        )
+                        Text(
+                            text = stringResource(R.string.show_absent),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Language selector
+                Text(
+                    text = stringResource(R.string.summary_language),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { showLanguageDropdown = true },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = summaryLanguage.displayName,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Icon(
+                            Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showLanguageDropdown,
+                        onDismissRequest = { showLanguageDropdown = false }
+                    ) {
+                        SummaryLanguage.values().forEach { language ->
+                            DropdownMenuItem(
+                                text = { Text(language.displayName) },
+                                onClick = {
+                                    summaryLanguage = language
+                                    showLanguageDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Summary content
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+                        Text(
+                            text = eventName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = getTotalAttendeesText(contacts.size, summaryLanguage),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        if (showPresent && presentContacts.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = getPresentAttendeesText(presentContacts.size, summaryLanguage),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            presentContacts.forEach { contact ->
+                                Text(
+                                    text = "• ${contact.name}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                                )
+                            }
+                        }
+
+                        if (showAbsent && absentContacts.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = getAbsentAttendeesText(absentContacts.size, summaryLanguage),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            absentContacts.forEach { contact ->
+                                Text(
+                                    text = "• ${contact.name}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Copy button
+                TextButton(
+                    onClick = {
+                        copyToClipboard(context, summaryText)
+                        Toast.makeText(context, context.getString(R.string.summary_copied), Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.ContentCopy,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(R.string.copy_summary))
+                }
+
+                // Share button
+                TextButton(
+                    onClick = {
+                        shareText(context, summaryText)
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(R.string.share_summary))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = ButtonNeutral
+                )
+            ) {
+                Text(stringResource(R.string.close))
+            }
+        }
+    )
+}
+
+private fun generateSummaryText(
+    eventName: String,
+    presentContacts: List<Contact>,
+    absentContacts: List<Contact>,
+    showPresent: Boolean,
+    showAbsent: Boolean,
+    language: SummaryLanguage
+): String {
+    val builder = StringBuilder()
+
+    // Use hardcoded strings based on selected language
+    when (language) {
+        SummaryLanguage.ENGLISH -> {
+            builder.appendLine("Attendance Summary")
+            builder.appendLine(eventName)
+            builder.appendLine()
+            builder.appendLine("Total: ${presentContacts.size + absentContacts.size}")
+            builder.appendLine()
+
+            if (showPresent && presentContacts.isNotEmpty()) {
+                builder.appendLine("Present (${presentContacts.size})")
+                presentContacts.forEach { contact ->
+                    builder.appendLine("• ${contact.name}")
+                }
+                builder.appendLine()
+            }
+
+            if (showAbsent && absentContacts.isNotEmpty()) {
+                builder.appendLine("Absent (${absentContacts.size})")
+                absentContacts.forEach { contact ->
+                    builder.appendLine("• ${contact.name}")
+                }
+            }
+        }
+        SummaryLanguage.ARABIC -> {
+            builder.appendLine("ملخص الحضور")
+            builder.appendLine(eventName)
+            builder.appendLine()
+            builder.appendLine("المجموع: ${presentContacts.size + absentContacts.size}")
+            builder.appendLine()
+
+            if (showPresent && presentContacts.isNotEmpty()) {
+                builder.appendLine("الحاضرون (${presentContacts.size})")
+                presentContacts.forEach { contact ->
+                    builder.appendLine("• ${contact.name}")
+                }
+                builder.appendLine()
+            }
+
+            if (showAbsent && absentContacts.isNotEmpty()) {
+                builder.appendLine("الغائبون (${absentContacts.size})")
+                absentContacts.forEach { contact ->
+                    builder.appendLine("• ${contact.name}")
+                }
+            }
+        }
+    }
+
+    return builder.toString().trim()
+}
+
+private fun copyToClipboard(context: Context, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clip = ClipData.newPlainText("Attendance Summary", text)
+    clipboard.setPrimaryClip(clip)
+}
+
+private fun shareText(context: Context, text: String) {
+    val shareIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_summary)))
+}
+
+private fun getTotalAttendeesText(count: Int, language: SummaryLanguage): String {
+    return when (language) {
+        SummaryLanguage.ENGLISH -> "Total: $count"
+        SummaryLanguage.ARABIC -> "المجموع: $count"
+    }
+}
+
+private fun getPresentAttendeesText(count: Int, language: SummaryLanguage): String {
+    return when (language) {
+        SummaryLanguage.ENGLISH -> "Present ($count)"
+        SummaryLanguage.ARABIC -> "الحاضرون ($count)"
+    }
+}
+
+private fun getAbsentAttendeesText(count: Int, language: SummaryLanguage): String {
+    return when (language) {
+        SummaryLanguage.ENGLISH -> "Absent ($count)"
+        SummaryLanguage.ARABIC -> "الغائبون ($count)"
     }
 }
 

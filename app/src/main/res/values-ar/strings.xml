@@ -157,6 +157,22 @@
     <string name="no_contacts_in_group">لا توجد جهات اتصال في هذه المجموعة</string>
     <string name="add_contacts_to_start_messaging">أضف جهات اتصال لبدء المراسلة</string>
 
+    <!-- Attendance Summary -->
+    <string name="attendance_summary">ملخص الحضور</string>
+    <string name="summary">ملخص</string>
+    <string name="present_attendees">الحاضرون (%1$d)</string>
+    <string name="absent_attendees">الغائبون (%1$d)</string>
+    <string name="show_present">إظهار الحاضرين</string>
+    <string name="show_absent">إظهار الغائبين</string>
+    <string name="copy_summary">نسخ الملخص</string>
+    <string name="share_summary">مشاركة الملخص</string>
+    <string name="summary_copied">تم نسخ الملخص إلى الحافظة</string>
+    <string name="event_attendance_summary">ملخص حضور الحدث\n%1$s\n%2$s\n\n%3$s</string>
+    <string name="total_attendees">المجموع: %1$d حضور</string>
+    <string name="summary_language">لغة الملخص</string>
+    <string name="summary_in_english">English</string>
+    <string name="summary_in_arabic">العربية</string>
+
     <!-- Language Names -->
     <string name="english">الإنجليزية</string>
     <string name="arabic">العربية</string>
