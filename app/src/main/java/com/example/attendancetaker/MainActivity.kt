@@ -96,6 +96,9 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
 
     // Initialize database with sample data and create recurring events when app starts
     LaunchedEffect(repository) {
+        // Sync contact names with phone contacts first
+        repository.syncContactNamesWithPhone()
+        // Then create recurring events
         RecurringEventManager.createTodaysRecurringEvents(repository)
     }
 

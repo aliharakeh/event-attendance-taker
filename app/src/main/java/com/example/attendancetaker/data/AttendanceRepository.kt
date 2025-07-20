@@ -1,13 +1,14 @@
 package com.example.attendancetaker.data
 
 import android.content.Context
+import com.example.attendancetaker.utils.ContactUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-class AttendanceRepository(context: Context) {
+class AttendanceRepository(private val context: Context) {
     private val database = AttendanceDatabase.getDatabase(context)
     private val contactDao = database.contactDao()
     private val contactGroupDao = database.contactGroupDao()
@@ -46,6 +47,38 @@ class AttendanceRepository(context: Context) {
 
     suspend fun getContactById(contactId: String): Contact? {
         return contactDao.getContactById(contactId)
+    }
+
+    /**
+     * Sync all existing contacts in contact groups with phone contacts
+     * Only updates names for contacts that already exist in the database
+     */
+    suspend fun syncContactNamesWithPhone() {
+        if (!ContactUtils.hasContactsPermission(context)) {
+            return
+        }
+
+        // Get all contacts that are actually used in contact groups
+        val allGroups = contactGroupDao.getAllContactGroups().first()
+        val usedContactIds = allGroups.flatMap { it.contactIds }.toSet()
+
+        if (usedContactIds.isEmpty()) {
+            return
+        }
+
+        // Get the actual contact objects for these IDs
+        val usedContacts = contactDao.getContactsByIds(usedContactIds.toList())
+
+        // Sync their names with phone contacts
+        val syncedContacts = ContactUtils.syncContactNamesWithPhone(context, usedContacts)
+
+        // Update contacts that have changed names
+        syncedContacts.forEach { syncedContact ->
+            val originalContact = usedContacts.find { it.id == syncedContact.id }
+            if (originalContact != null && originalContact.name != syncedContact.name) {
+                contactDao.updateContact(syncedContact)
+            }
+        }
     }
 
     // Contact group management

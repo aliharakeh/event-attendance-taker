@@ -90,4 +90,35 @@ object ContactUtils {
 
         return existingContacts + newContacts
     }
+
+    /**
+     * Sync existing contacts with phone contacts to update names
+     * This only updates existing contacts, doesn't add new ones
+     */
+    fun syncContactNamesWithPhone(
+        context: Context,
+        existingContacts: List<Contact>
+    ): List<Contact> {
+        if (!hasContactsPermission(context) || existingContacts.isEmpty()) {
+            return existingContacts
+        }
+
+        val phoneContacts = getPhoneContacts(context)
+        val phoneContactMap = phoneContacts.associateBy { contact ->
+            contact.phoneNumber.replace(Regex("[^\\d+]"), "")
+        }
+
+        return existingContacts.map { existingContact ->
+            val cleanExistingPhone = existingContact.phoneNumber.replace(Regex("[^\\d+]"), "")
+            val phoneContact = phoneContactMap[cleanExistingPhone]
+
+            if (phoneContact != null && phoneContact.name != existingContact.name) {
+                // Update the contact name from phone
+                existingContact.copy(name = phoneContact.name)
+            } else {
+                // Keep existing contact unchanged
+                existingContact
+            }
+        }
+    }
 }
