@@ -18,6 +18,16 @@ sealed class Screen(val route: String) {
         fun createRoute(groupId: String) = "contact_group_details/$groupId"
     }
 
+    object ContactSelection : Screen("contact_selection/{groupId}") {
+        fun createRoute(groupId: String) = "contact_selection/$groupId"
+        fun createRouteForNew() = "contact_selection/new"
+    }
+
+    object ContactGroupSelection : Screen("contact_group_selection/{eventId}") {
+        fun createRoute(eventId: String) = "contact_group_selection/$eventId"
+        fun createRouteForNew() = "contact_group_selection/new"
+    }
+
     object EventEdit : Screen("event_edit/{eventId}") {
         fun createRoute(eventId: String) = "event_edit/$eventId"
         fun createRouteForNew() = "event_edit/new"

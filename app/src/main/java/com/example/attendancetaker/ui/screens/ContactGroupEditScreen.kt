@@ -29,12 +29,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -64,18 +62,16 @@ fun ContactGroupEditScreen(
     groupId: String?,
     repository: AttendanceRepository,
     onNavigateBack: () -> Unit,
+    onNavigateToContactSelection: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val bottomSheetState = rememberModalBottomSheetState()
-
     var group by remember { mutableStateOf<ContactGroup?>(null) }
     var groupName by remember { mutableStateOf("") }
     var groupDescription by remember { mutableStateOf("") }
     var selectedContactIds by remember { mutableStateOf(emptySet<String>()) }
     var phoneContacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
-    var searchQuery by remember { mutableStateOf("") }
     var hasContactsPermission by remember {
         mutableStateOf(
             ContactUtils.hasContactsPermission(
@@ -84,7 +80,6 @@ fun ContactGroupEditScreen(
         )
     }
     var showSaveConfirmation by remember { mutableStateOf(false) }
-    var showContactBottomSheet by remember { mutableStateOf(false) }
 
     val contacts by repository.getAllContacts().collectAsState(initial = emptyList())
 
@@ -125,18 +120,6 @@ fun ContactGroupEditScreen(
         // Merge both lists, prioritizing repository contacts for duplicates
         val combinedMap = phoneContactMap + repoContactMap
         combinedMap.values.toList()
-    }
-
-    // Filter contacts based on search query
-    val filteredContacts = remember(allAvailableContacts, searchQuery) {
-        if (searchQuery.isBlank()) {
-            allAvailableContacts
-        } else {
-            allAvailableContacts.filter { contact ->
-                contact.name.contains(searchQuery, ignoreCase = true) ||
-                        contact.phoneNumber.contains(searchQuery, ignoreCase = true)
-            }
-        }
     }
 
     // Get selected contacts for display
@@ -247,7 +230,7 @@ fun ContactGroupEditScreen(
                     OutlinedButton(
                         onClick = {
                             if (hasContactsPermission) {
-                                showContactBottomSheet = true
+                                onNavigateToContactSelection(groupId)
                             } else {
                                 permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
                             }
@@ -306,35 +289,6 @@ fun ContactGroupEditScreen(
                     )
                 }
             }
-        }
-    }
-
-    // Contact selection bottom sheet
-    if (showContactBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                showContactBottomSheet = false
-                searchQuery = ""
-            },
-            sheetState = bottomSheetState
-        ) {
-            ContactSelectionBottomSheet(
-                allAvailableContacts = allAvailableContacts,
-                selectedContactIds = selectedContactIds,
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it },
-                onContactSelectionChanged = { contactId, isSelected ->
-                    selectedContactIds = if (isSelected) {
-                        selectedContactIds + contactId
-                    } else {
-                        selectedContactIds - contactId
-                    }
-                },
-                onDismiss = {
-                    showContactBottomSheet = false
-                    searchQuery = ""
-                }
-            )
         }
     }
 
@@ -402,113 +356,7 @@ fun ContactGroupEditScreen(
     }
 }
 
-@Composable
-fun ContactSelectionBottomSheet(
-    allAvailableContacts: List<Contact>,
-    selectedContactIds: Set<String>,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    onContactSelectionChanged: (String, Boolean) -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // Filter contacts based on search query
-    val filteredContacts = remember(allAvailableContacts, searchQuery) {
-        if (searchQuery.isBlank()) {
-            allAvailableContacts
-        } else {
-            allAvailableContacts.filter { contact ->
-                contact.name.contains(searchQuery, ignoreCase = true) ||
-                        contact.phoneNumber.contains(searchQuery, ignoreCase = true)
-            }
-        }
-    }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.select_contacts),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
-            )
-
-            IconButton(onClick = onDismiss) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.close)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Search field
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = onSearchQueryChange,
-            label = { Text(stringResource(R.string.search_contacts)) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Selected count
-        Text(
-            text = stringResource(R.string.contacts_selected, selectedContactIds.size),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (filteredContacts.isEmpty()) {
-            if (allAvailableContacts.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.no_contacts_available),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 32.dp)
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.no_contacts_match_search),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 32.dp)
-                )
-            }
-        } else {
-            // Contact list
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                items(filteredContacts) { contact ->
-                    ContactSelectionItem(
-                        contact = contact,
-                        isSelected = selectedContactIds.contains(contact.id),
-                        onSelectionChanged = { isSelected ->
-                            onContactSelectionChanged(contact.id, isSelected)
-                        }
-                    )
-                }
-            }
-        }
-
-        // Add some bottom padding for the last item
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
 
 @Composable
 fun SelectedContactItem(
@@ -554,46 +402,3 @@ fun SelectedContactItem(
     }
 }
 
-@Composable
-fun ContactSelectionItem(
-    contact: Contact,
-    isSelected: Boolean,
-    onSelectionChanged: (Boolean) -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onSelectionChanged(!isSelected) },
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 3.dp else 1.dp),
-        border = if (isSelected)
-            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-        else BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = contact.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = contact.phoneNumber,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}

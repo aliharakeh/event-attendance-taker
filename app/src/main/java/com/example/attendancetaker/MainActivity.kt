@@ -52,6 +52,8 @@ import com.example.attendancetaker.ui.navigation.Screen
 import com.example.attendancetaker.ui.screens.AttendanceScreen
 import com.example.attendancetaker.ui.screens.ContactGroupDetailsScreen
 import com.example.attendancetaker.ui.screens.ContactGroupEditScreen
+import com.example.attendancetaker.ui.screens.ContactGroupSelectionScreen
+import com.example.attendancetaker.ui.screens.ContactSelectionScreen
 import com.example.attendancetaker.ui.screens.ContactsScreen
 import com.example.attendancetaker.ui.screens.EventEditScreen
 import com.example.attendancetaker.ui.screens.EventHistoryScreen
@@ -307,6 +309,14 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                     repository = repository,
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onNavigateToContactSelection = { groupId ->
+                        val route = if (groupId == null) {
+                            Screen.ContactSelection.createRouteForNew()
+                        } else {
+                            Screen.ContactSelection.createRoute(groupId)
+                        }
+                        navController.navigate(route)
                     }
                 )
             }
@@ -322,6 +332,28 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
+            composable(Screen.ContactSelection.route) { backStackEntry ->
+                val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
+                ContactSelectionScreen(
+                    groupId = if (groupId == "new") null else groupId,
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.ContactGroupSelection.route) { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
+                ContactGroupSelectionScreen(
+                    eventId = if (eventId == "new") null else eventId,
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
             composable(Screen.EventEdit.route) { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
                 EventEditScreen(
@@ -329,6 +361,14 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                     repository = repository,
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onNavigateToContactGroupSelection = { eventId ->
+                        val route = if (eventId == null) {
+                            Screen.ContactGroupSelection.createRouteForNew()
+                        } else {
+                            Screen.ContactGroupSelection.createRoute(eventId)
+                        }
+                        navController.navigate(route)
                     }
                 )
             }

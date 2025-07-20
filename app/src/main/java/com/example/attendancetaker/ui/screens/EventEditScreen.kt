@@ -20,11 +20,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,10 +50,10 @@ fun EventEditScreen(
     eventId: String?,
     repository: AttendanceRepository,
     onNavigateBack: () -> Unit,
+    onNavigateToContactGroupSelection: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val bottomSheetState = rememberModalBottomSheetState()
 
     var event by remember { mutableStateOf<Event?>(null) }
     var eventName by remember { mutableStateOf("") }
@@ -63,11 +61,9 @@ fun EventEditScreen(
     var eventDate by remember { mutableStateOf(LocalDate.now()) }
     var eventTime by remember { mutableStateOf(LocalTime.now()) }
     var selectedGroupIds by remember { mutableStateOf(emptySet<String>()) }
-    var searchQuery by remember { mutableStateOf("") }
     var showSaveConfirmation by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var showContactGroupBottomSheet by remember { mutableStateOf(false) }
 
     // Recurring event state
     var isRecurring by remember { mutableStateOf(false) }
@@ -235,34 +231,10 @@ fun EventEditScreen(
                 selectedGroupIds = selectedGroupIds,
                 selectedContactGroups = selectedContactGroups,
                 contactsForGroups = contactsForGroups,
-                onAddGroupsClick = { showContactGroupBottomSheet = true },
+                onAddGroupsClick = { onNavigateToContactGroupSelection(eventId) },
                 onRemoveGroup = { groupId ->
                     selectedGroupIds = selectedGroupIds - groupId
                 }
-            )
-        }
-    }
-
-    // Contact Groups Bottom Sheet using shared component
-    if (showContactGroupBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showContactGroupBottomSheet = false },
-            sheetState = bottomSheetState
-        ) {
-            ContactGroupSelectionBottomSheet(
-                allContactGroups = contactGroups,
-                selectedGroupIds = selectedGroupIds,
-                contactsForGroups = contactsForGroups,
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it },
-                onGroupSelectionChanged = { groupId, isSelected ->
-                    selectedGroupIds = if (isSelected) {
-                        selectedGroupIds + groupId
-                    } else {
-                        selectedGroupIds - groupId
-                    }
-                },
-                onDismiss = { showContactGroupBottomSheet = false }
             )
         }
     }
