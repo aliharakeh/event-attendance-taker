@@ -175,7 +175,7 @@ fun AttendanceScreen(
             }
             IconButton(onClick = { showSummaryDialog = true }) {
                 Icon(
-                    Icons.Default.Share,
+                    Icons.Default.Summarize,
                     contentDescription = stringResource(R.string.summary),
                     tint = MaterialTheme.colorScheme.primary
                 )
