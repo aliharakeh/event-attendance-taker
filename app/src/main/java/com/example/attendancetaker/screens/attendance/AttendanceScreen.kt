@@ -67,9 +67,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
-import com.example.attendancetaker.data.AttendanceRecord
-import com.example.attendancetaker.data.AttendanceRepository
-import com.example.attendancetaker.data.Contact
+import com.example.attendancetaker.data.entity.AttendanceRecord
+import com.example.attendancetaker.data.repository.AttendanceRepository
+import com.example.attendancetaker.data.entity.Contact
+import com.example.attendancetaker.data.entity.ContactGroup
+import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import kotlinx.coroutines.launch
@@ -87,10 +89,10 @@ fun AttendanceScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var event by remember { mutableStateOf<com.example.attendancetaker.data.Event?>(null) }
+    var event by remember { mutableStateOf<Event?>(null) }
     var selectedContact by remember { mutableStateOf<Contact?>(null) }
     var eventContacts by remember { mutableStateOf(emptyList<Contact>()) }
-    var selectedGroups by remember { mutableStateOf(emptyList<com.example.attendancetaker.data.ContactGroup>()) }
+    var selectedGroups by remember { mutableStateOf(emptyList<ContactGroup>()) }
     var searchQuery by remember { mutableStateOf("") }
     var showSummaryDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -255,7 +257,7 @@ fun AttendanceScreen(
             ) {
                 items(filteredContacts) { contact ->
                     val attendanceRecord = attendanceRecords.find { it.contactId == contact.id }
-                    var contactGroups by remember { mutableStateOf(emptyList<com.example.attendancetaker.data.ContactGroup>()) }
+                    var contactGroups by remember { mutableStateOf(emptyList<ContactGroup>()) }
 
                     // Load contact groups for each contact
                     LaunchedEffect(contact.id, event!!.contactGroupIds) {
@@ -321,7 +323,7 @@ fun AttendanceScreen(
 @Composable
 fun AttendanceItem(
     contact: Contact,
-    contactGroups: List<com.example.attendancetaker.data.ContactGroup>,
+    contactGroups: List<ContactGroup>,
     attendanceRecord: AttendanceRecord?,
     onAttendanceChange: (Boolean) -> Unit,
     onEditNotes: () -> Unit

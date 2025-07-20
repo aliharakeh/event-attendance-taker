@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.ContactsContract
 import androidx.core.content.ContextCompat
-import com.example.attendancetaker.data.Contact
+import com.example.attendancetaker.data.entity.Contact
 import java.security.MessageDigest
 
 object ContactUtils {

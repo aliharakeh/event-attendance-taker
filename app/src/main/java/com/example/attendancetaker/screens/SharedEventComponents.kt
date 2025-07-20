@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,7 +33,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -42,7 +40,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -52,7 +49,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
-import com.example.attendancetaker.data.ContactGroup
+import com.example.attendancetaker.data.entity.ContactGroup
+import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import java.time.LocalDate
@@ -195,7 +193,7 @@ fun DateTimeSelectionRow(
 fun ContactGroupSelectionCard(
     selectedGroupIds: Set<String>,
     selectedContactGroups: List<ContactGroup>,
-    contactsForGroups: Map<String, List<com.example.attendancetaker.data.Contact>>,
+    contactsForGroups: Map<String, List<Contact>>,
     onAddGroupsClick: () -> Unit,
     onRemoveGroup: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -277,7 +275,7 @@ fun SimpleContactGroupSelectionCard(
     onSearchQueryChange: (String) -> Unit,
     filteredGroups: List<ContactGroup>,
     selectedGroupIds: Set<String>,
-    contactsForGroups: Map<String, List<com.example.attendancetaker.data.Contact>>,
+    contactsForGroups: Map<String, List<Contact>>,
     onGroupSelectionChanged: (String, Boolean) -> Unit,
     allContactGroups: List<ContactGroup>,
     modifier: Modifier = Modifier
@@ -358,7 +356,7 @@ fun SimpleContactGroupSelectionCard(
 fun ContactGroupSelectionBottomSheet(
     allContactGroups: List<ContactGroup>,
     selectedGroupIds: Set<String>,
-    contactsForGroups: Map<String, List<com.example.attendancetaker.data.Contact>>,
+    contactsForGroups: Map<String, List<Contact>>,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     onGroupSelectionChanged: (String, Boolean) -> Unit,
@@ -467,7 +465,7 @@ fun ContactGroupSelectionBottomSheet(
 @Composable
 fun SelectedContactGroupItem(
     group: ContactGroup,
-    contacts: List<com.example.attendancetaker.data.Contact>,
+    contacts: List<Contact>,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -519,7 +517,7 @@ fun SelectedContactGroupItem(
 @Composable
 fun ContactGroupSelectionItem(
     group: ContactGroup,
-    contacts: List<com.example.attendancetaker.data.Contact>,
+    contacts: List<Contact>,
     isSelected: Boolean,
     onSelectionChanged: (Boolean) -> Unit
 ) {

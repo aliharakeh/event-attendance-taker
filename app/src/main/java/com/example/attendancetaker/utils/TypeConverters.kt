@@ -1,4 +1,4 @@
-package com.example.attendancetaker.data
+package com.example.attendancetaker.utils
 
 import androidx.room.TypeConverter
 import java.time.DayOfWeek

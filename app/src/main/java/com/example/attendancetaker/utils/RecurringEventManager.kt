@@ -1,7 +1,7 @@
 package com.example.attendancetaker.utils
 
-import com.example.attendancetaker.data.AttendanceRepository
-import com.example.attendancetaker.data.Event
+import com.example.attendancetaker.data.repository.AttendanceRepository
+import com.example.attendancetaker.data.entity.Event
 import kotlinx.coroutines.flow.first
 import java.time.DayOfWeek
 import java.time.LocalDate

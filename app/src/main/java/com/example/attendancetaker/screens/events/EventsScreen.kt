@@ -52,9 +52,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
-import com.example.attendancetaker.data.AttendanceRepository
-import com.example.attendancetaker.data.ContactGroup
-import com.example.attendancetaker.data.Event
+import com.example.attendancetaker.data.repository.AttendanceRepository
+import com.example.attendancetaker.data.entity.ContactGroup
+import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.EditIconBlue

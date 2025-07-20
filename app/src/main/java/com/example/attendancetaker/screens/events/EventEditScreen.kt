@@ -36,8 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
-import com.example.attendancetaker.data.AttendanceRepository
-import com.example.attendancetaker.data.Event
+import com.example.attendancetaker.data.repository.AttendanceRepository
+import com.example.attendancetaker.data.entity.Contact
+import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.screens.CheckboxRow
 import com.example.attendancetaker.screens.ContactGroupSelectionCard
 import com.example.attendancetaker.screens.DatePickerDialog
@@ -79,7 +80,7 @@ fun EventEditScreen(
     var hasEndDate by remember { mutableStateOf(false) }
 
     val contactGroups by repository.getAllContactGroups().collectAsState(initial = emptyList())
-    var contactsForGroups by remember { mutableStateOf(mapOf<String, List<com.example.attendancetaker.data.Contact>>()) }
+    var contactsForGroups by remember { mutableStateOf(mapOf<String, List<Contact>>()) }
 
     // Load event data if editing
     LaunchedEffect(eventId) {
@@ -107,7 +108,7 @@ fun EventEditScreen(
 
     // Load contacts for each group
     LaunchedEffect(contactGroups) {
-        val contactsMap = mutableMapOf<String, List<com.example.attendancetaker.data.Contact>>()
+        val contactsMap = mutableMapOf<String, List<Contact>>()
         contactGroups.forEach { group ->
             contactsMap[group.id] = repository.getContactsFromGroups(listOf(group.id))
         }

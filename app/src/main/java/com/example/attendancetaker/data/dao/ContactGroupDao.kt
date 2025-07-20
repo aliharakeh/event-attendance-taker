@@ -1,6 +1,7 @@
-package com.example.attendancetaker.data
+package com.example.attendancetaker.data.dao
 
 import androidx.room.*
+import com.example.attendancetaker.data.entity.ContactGroup
 import kotlinx.coroutines.flow.Flow
 
 @Dao

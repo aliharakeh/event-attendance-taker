@@ -32,9 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
-import com.example.attendancetaker.data.AttendanceRepository
-import com.example.attendancetaker.data.Contact
-import com.example.attendancetaker.data.Event
+import com.example.attendancetaker.data.repository.AttendanceRepository
+import com.example.attendancetaker.data.entity.Contact
+import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.screens.ContactGroupSelectionItem
 import kotlinx.coroutines.launch
 

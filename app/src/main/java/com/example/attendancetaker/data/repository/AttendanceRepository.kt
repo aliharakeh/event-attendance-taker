@@ -1,15 +1,18 @@
-package com.example.attendancetaker.data
+package com.example.attendancetaker.data.repository
 
 import android.content.Context
+import com.example.attendancetaker.data.AppDatabase
+import com.example.attendancetaker.data.entity.AttendanceRecord
+import com.example.attendancetaker.data.entity.Contact
+import com.example.attendancetaker.data.entity.ContactGroup
+import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.utils.ContactUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 class AttendanceRepository(private val context: Context) {
-    private val database = AttendanceDatabase.getDatabase(context)
+    private val database = AppDatabase.getDatabase(context)
     private val contactDao = database.contactDao()
     private val contactGroupDao = database.contactGroupDao()
     private val eventDao = database.eventDao()

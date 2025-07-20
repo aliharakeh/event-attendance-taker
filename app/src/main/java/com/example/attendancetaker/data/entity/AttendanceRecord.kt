@@ -1,4 +1,4 @@
-package com.example.attendancetaker.data
+package com.example.attendancetaker.data.entity
 
 import androidx.room.Entity
 

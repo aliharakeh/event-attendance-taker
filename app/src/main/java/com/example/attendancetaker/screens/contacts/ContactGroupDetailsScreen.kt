@@ -43,8 +43,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
-import com.example.attendancetaker.data.AttendanceRepository
-import com.example.attendancetaker.data.Contact
+import com.example.attendancetaker.data.repository.AttendanceRepository
+import com.example.attendancetaker.data.entity.Contact
+import com.example.attendancetaker.data.entity.ContactGroup
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +56,7 @@ fun ContactGroupDetailsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    var group by remember { mutableStateOf<com.example.attendancetaker.data.ContactGroup?>(null) }
+    var group by remember { mutableStateOf<ContactGroup?>(null) }
     var contacts by remember { mutableStateOf(emptyList<Contact>()) }
 
     // Load group and contacts data

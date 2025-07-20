@@ -7,6 +7,15 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.attendancetaker.data.dao.AttendanceRecordDao
+import com.example.attendancetaker.data.dao.ContactDao
+import com.example.attendancetaker.data.dao.ContactGroupDao
+import com.example.attendancetaker.data.dao.EventDao
+import com.example.attendancetaker.data.entity.AttendanceRecord
+import com.example.attendancetaker.data.entity.Contact
+import com.example.attendancetaker.data.entity.ContactGroup
+import com.example.attendancetaker.data.entity.Event
+import com.example.attendancetaker.utils.Converters
 
 @Database(
     entities = [
@@ -19,7 +28,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     exportSchema = false
 )
 @TypeConverters(Converters::class)
-abstract class AttendanceDatabase : RoomDatabase() {
+abstract class AppDatabase : RoomDatabase() {
 
     abstract fun contactDao(): ContactDao
     abstract fun contactGroupDao(): ContactGroupDao
@@ -28,7 +37,7 @@ abstract class AttendanceDatabase : RoomDatabase() {
 
     companion object {
         @Volatile
-        private var INSTANCE: AttendanceDatabase? = null
+        private var INSTANCE: AppDatabase? = null
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
@@ -76,11 +85,11 @@ abstract class AttendanceDatabase : RoomDatabase() {
             }
         }
 
-        fun getDatabase(context: Context): AttendanceDatabase {
+        fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    AttendanceDatabase::class.java,
+                    AppDatabase::class.java,
                     "attendance_database"
                 ).addMigrations(MIGRATION_1_2).build()
                 INSTANCE = instance

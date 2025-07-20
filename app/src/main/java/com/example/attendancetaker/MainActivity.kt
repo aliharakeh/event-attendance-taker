@@ -54,7 +54,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.attendancetaker.data.AttendanceRepository
+import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.navigation.Screen
 import com.example.attendancetaker.screens.attendance.AttendanceScreen
 import com.example.attendancetaker.screens.contacts.ContactGroupDetailsScreen
