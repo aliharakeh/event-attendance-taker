@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -88,124 +89,102 @@ fun ContactSelectionScreen(
         }
     }
 
-    // Handle save and navigate back
-    val handleSave: () -> Unit = {
-        coroutineScope.launch {
-            if (group != null) {
-                // Update existing group
-                val updatedGroup = group!!.copy(
-                    contactIds = selectedContactIds.toList()
-                )
-                repository.updateContactGroup(updatedGroup)
+    // Save data when the screen is disposed (user navigates back)
+    DisposableEffect(Unit) {
+        onDispose {
+            coroutineScope.launch {
+                if (group != null) {
+                    // Update existing group
+                    val updatedGroup = group!!.copy(
+                        contactIds = selectedContactIds.toList()
+                    )
+                    repository.updateContactGroup(updatedGroup)
 
-                // Add new contacts to repository if they don't exist
-                selectedContactIds.forEach { contactId ->
-                    val existingContact = repository.getContactById(contactId)
-                    if (existingContact == null) {
-                        val availableContact = allAvailableContacts.find { it.id == contactId }
-                        availableContact?.let { repository.addContact(it) }
+                    // Add new contacts to repository if they don't exist
+                    selectedContactIds.forEach { contactId ->
+                        val existingContact = repository.getContactById(contactId)
+                        if (existingContact == null) {
+                            val availableContact = allAvailableContacts.find { it.id == contactId }
+                            availableContact?.let { repository.addContact(it) }
+                        }
                     }
                 }
             }
-            onNavigateBack()
         }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.select_contacts),
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = handleSave) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Search field
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = { Text(stringResource(R.string.search_contacts)) },
+            leadingIcon = {
+                Icon(Icons.Default.Search, contentDescription = null)
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear_search)
                         )
                     }
                 }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-        ) {
-            // Search field
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                label = { Text(stringResource(R.string.search_contacts)) },
-                leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = null)
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(
-                                Icons.Default.Clear,
-                                contentDescription = stringResource(R.string.clear_search)
-                            )
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            // Selected count
-            Text(
-                text = stringResource(R.string.contacts_selected, selectedContactIds.size),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+        // Selected count
+        Text(
+            text = stringResource(R.string.contacts_selected, selectedContactIds.size),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            if (filteredContacts.isEmpty()) {
-                if (allAvailableContacts.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.no_contacts_available),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 32.dp)
-                    )
-                } else {
-                    Text(
-                        text = stringResource(R.string.no_contacts_match_search),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 32.dp)
-                    )
-                }
+        if (filteredContacts.isEmpty()) {
+            if (allAvailableContacts.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.no_contacts_available),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 32.dp)
+                )
             } else {
-                // Contact list
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    items(filteredContacts) { contact ->
-                        ContactSelectionItem(
-                            contact = contact,
-                            isSelected = selectedContactIds.contains(contact.id),
-                            onSelectionChanged = { isSelected ->
-                                selectedContactIds = if (isSelected) {
-                                    selectedContactIds + contact.id
-                                } else {
-                                    selectedContactIds - contact.id
-                                }
+                Text(
+                    text = stringResource(R.string.no_contacts_match_search),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 32.dp)
+                )
+            }
+        } else {
+            // Contact list
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                items(filteredContacts) { contact ->
+                    ContactSelectionItem(
+                        contact = contact,
+                        isSelected = selectedContactIds.contains(contact.id),
+                        onSelectionChanged = { isSelected ->
+                            selectedContactIds = if (isSelected) {
+                                selectedContactIds + contact.id
+                            } else {
+                                selectedContactIds - contact.id
                             }
-                        )
-                    }
+                        }
+                    )
                 }
             }
         }

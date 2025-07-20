@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Language
@@ -140,10 +141,18 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
         Screen.Contacts.route
     )
 
+    // Check if we should show top app bar
+    val showTopAppBar = currentDestination?.route in listOf(
+        Screen.Events.route,
+        Screen.Contacts.route,
+        Screen.ContactSelection.route,
+        Screen.ContactGroupSelection.route
+    )
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            if (showBottomNav) {
+            if (showTopAppBar) {
                 TopAppBar(
                     title = {
                         Row(
@@ -154,6 +163,8 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                                 text = when (currentDestination?.route) {
                                     Screen.Contacts.route -> stringResource(R.string.nav_contacts)
                                     Screen.Events.route -> stringResource(R.string.nav_events)
+                                    Screen.ContactSelection.route -> stringResource(R.string.select_contacts)
+                                    Screen.ContactGroupSelection.route -> stringResource(R.string.select_contact_groups)
                                     else -> stringResource(R.string.app_name)
                                 },
                                 fontWeight = FontWeight.Bold
@@ -191,6 +202,21 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                                         )
                                     }
                                 }
+                            }
+                        }
+                    },
+                                        navigationIcon = {
+                        if (currentDestination?.route == Screen.ContactSelection.route ||
+                            currentDestination?.route == Screen.ContactGroupSelection.route) {
+                            IconButton(onClick = {
+                                // Save the selection before navigating back
+                                // This will be handled by the screen's DisposableEffect
+                                navController.popBackStack()
+                            }) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(R.string.back)
+                                )
                             }
                         }
                     },
@@ -577,6 +603,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                     groupId = if (groupId == "new") null else groupId,
                     repository = repository,
                     onNavigateBack = {
+                        // The save logic is handled within the ContactSelectionScreen
                         navController.popBackStack()
                     }
                 )
