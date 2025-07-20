@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -56,21 +55,20 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.attendancetaker.data.AttendanceRepository
-import com.example.attendancetaker.ui.navigation.Screen
-import com.example.attendancetaker.ui.screens.AttendanceScreen
-import com.example.attendancetaker.ui.screens.ContactGroupDetailsScreen
-import com.example.attendancetaker.ui.screens.ContactGroupEditScreen
-import com.example.attendancetaker.ui.screens.ContactGroupSelectionScreen
-import com.example.attendancetaker.ui.screens.ContactSelectionScreen
-import com.example.attendancetaker.ui.screens.ContactsScreen
-import com.example.attendancetaker.ui.screens.EventEditScreen
-import com.example.attendancetaker.ui.screens.EventHistoryScreen
-import com.example.attendancetaker.ui.screens.EventsScreen
-import com.example.attendancetaker.ui.screens.RecurringTemplatesScreen
+import com.example.attendancetaker.navigation.Screen
+import com.example.attendancetaker.screens.attendance.AttendanceScreen
+import com.example.attendancetaker.screens.contacts.ContactGroupDetailsScreen
+import com.example.attendancetaker.screens.contacts.ContactGroupEditScreen
+import com.example.attendancetaker.screens.contacts.ContactGroupSelectionScreen
+import com.example.attendancetaker.screens.contacts.ContactSelectionScreen
+import com.example.attendancetaker.screens.contacts.ContactsScreen
+import com.example.attendancetaker.screens.events.EventEditScreen
+import com.example.attendancetaker.screens.events.EventHistoryScreen
+import com.example.attendancetaker.screens.events.EventsScreen
+import com.example.attendancetaker.screens.events.RecurringTemplatesScreen
 import com.example.attendancetaker.ui.theme.AttendanceTakerTheme
 import com.example.attendancetaker.utils.LanguageManager
 import com.example.attendancetaker.utils.RecurringEventManager
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var languageManager: LanguageManager

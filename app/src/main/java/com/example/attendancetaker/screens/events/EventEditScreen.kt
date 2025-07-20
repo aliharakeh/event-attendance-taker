@@ -1,4 +1,4 @@
-package com.example.attendancetaker.ui.screens
+package com.example.attendancetaker.screens.events
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +38,13 @@ import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
 import com.example.attendancetaker.data.AttendanceRepository
 import com.example.attendancetaker.data.Event
+import com.example.attendancetaker.screens.CheckboxRow
+import com.example.attendancetaker.screens.ContactGroupSelectionCard
+import com.example.attendancetaker.screens.DatePickerDialog
+import com.example.attendancetaker.screens.DateTimeSelectionRow
+import com.example.attendancetaker.screens.EventDetailsCard
+import com.example.attendancetaker.screens.SaveConfirmationDialog
+import com.example.attendancetaker.screens.TimePickerDialog
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import kotlinx.coroutines.launch
 import java.time.LocalDate

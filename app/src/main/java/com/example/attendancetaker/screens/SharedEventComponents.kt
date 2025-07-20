@@ -1,4 +1,4 @@
-package com.example.attendancetaker.ui.screens
+package com.example.attendancetaker.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable

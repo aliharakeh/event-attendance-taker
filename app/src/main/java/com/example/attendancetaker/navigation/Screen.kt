@@ -1,4 +1,4 @@
-package com.example.attendancetaker.ui.navigation
+package com.example.attendancetaker.navigation
 
 sealed class Screen(val route: String) {
     object Contacts : Screen("contacts")

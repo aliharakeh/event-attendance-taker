@@ -1,4 +1,4 @@
-package com.example.attendancetaker.ui.screens
+package com.example.attendancetaker.screens.attendance
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Summarize
