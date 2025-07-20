@@ -149,9 +149,12 @@ A comprehensive list component with search, selection, and editing capabilities.
 
 -   Built-in search functionality
 -   Toggle item selection with checkboxes
+-   **Click-to-toggle selection** when in selectable mode
 -   Edit and delete buttons
 -   Empty state handling
 -   Flexible item rendering through data mapping
+-   Clear all selection functionality
+-   Selection count display
 
 **Usage:**
 
@@ -161,6 +164,7 @@ data class Contact(val id: String, val name: String, val email: String)
 val contacts = listOf(/* your contacts */)
 var selectedItems by remember { mutableStateOf(emptySet<String>()) }
 
+// Basic selectable list with click-to-toggle
 AppList(
     title = "Contacts",
     items = contacts,
@@ -180,15 +184,119 @@ AppList(
         } else {
             selectedItems - id
         }
+    }
+)
+
+// Editable list with actions
+AppList(
+    title = "Contacts",
+    items = contacts,
+    onItemToListItem = { contact ->
+        AppListItem(
+            id = contact.id,
+            title = contact.name,
+            subtitle = contact.email
+        )
     },
     isEditable = true,
     onEdit = { contact -> /* handle edit */ },
-    onDelete = { contact -> /* handle delete */ },
+    onDelete = { contact -> /* handle delete */ }
+)
+
+// Regular list with item clicks
+AppList(
+    title = "Contacts",
+    items = contacts,
+    onItemToListItem = { contact ->
+        AppListItem(
+            id = contact.id,
+            title = contact.name,
+            subtitle = contact.email
+        )
+    },
     onItemClick = { contact -> /* handle click */ }
 )
 ```
 
-### 7. AppActionRow
+**Selection Behavior:**
+- When `isSelectable = true`, users can click anywhere on the item to toggle selection
+- Checkboxes are still available for explicit selection
+- Selection count is displayed when items are selected
+- "Clear All" button appears to deselect all items
+- When `isEditable = true`, item clicks are disabled to prevent conflicts with action buttons
+
+### 7. AppToolbar
+
+A flexible and reusable toolbar component for pages with title, navigation, and action buttons.
+
+**Features:**
+
+-   Configurable title and optional subtitle
+-   Navigation icon (back button by default)
+-   Multiple action buttons support
+-   Custom colors and styling
+-   Built-in action presets for common actions
+-   Consistent with Material Design 3
+
+**Usage:**
+
+```kotlin
+// Simple toolbar with title and back navigation
+AppToolbar(
+    title = "Contact Details",
+    onNavigationClick = { /* handle back */ }
+)
+
+// Toolbar with subtitle and actions
+AppToolbar(
+    title = "Events",
+    subtitle = "5 upcoming events",
+    actions = listOf(
+        ToolbarActionPresets.searchAction(onClick = { /* handle search */ }),
+        ToolbarActionPresets.addAction(onClick = { /* handle add */ })
+    )
+)
+
+// Custom toolbar with custom navigation icon and actions
+AppToolbar(
+    title = "Settings",
+    navigationIcon = Icons.Default.Menu,
+    onNavigationClick = { /* open menu */ },
+    actions = listOf(
+        ToolbarAction(
+            icon = Icons.Default.Save,
+            contentDescription = "Save",
+            onClick = { /* handle save */ }
+        )
+    )
+)
+
+// Toolbar without navigation icon
+AppToolbar(
+    title = "Main Screen",
+    showNavigationIcon = false,
+    actions = listOf(
+        ToolbarActionPresets.menuAction(onClick = { /* handle menu */ })
+    )
+)
+```
+
+**ToolbarAction Properties:**
+
+-   `icon`: Vector icon to display
+-   `contentDescription`: Accessibility description
+-   `onClick`: Click handler
+-   `enabled`: Whether the action is enabled (default: true)
+-   `tint`: Custom color for the icon (optional)
+
+**ToolbarActionPresets:**
+
+-   `searchAction()`: Standard search icon
+-   `menuAction()`: Three-dot menu icon
+-   `addAction()`: Plus/add icon
+-   `filterAction()`: Filter list icon
+
+### 8. AppActionRow
 
 A configurable row of action buttons (edit, delete, etc.) with flexible customization options.
 
@@ -295,5 +403,6 @@ To migrate existing screens to use these components:
 4. Replace AlertDialog confirmations with `AppConfirmDialog`
 5. Replace custom list implementations with `AppList`
 6. Replace manual action button rows with `AppActionRow`
+7. Replace TopAppBar implementations with `AppToolbar`
 
 This will ensure consistent styling and behavior across the app.

@@ -9,13 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,11 +25,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
-import com.example.attendancetaker.ui.theme.ButtonRed
 import com.example.attendancetaker.ui.theme.CheckboxSelected
 import com.example.attendancetaker.ui.theme.CheckboxUnselected
-import com.example.attendancetaker.ui.theme.EditIconBlue
 
+/**
+ * Data class representing an item in the AppList
+ */
 data class AppListItem(
     val id: String,
     val title: String,
@@ -43,9 +39,37 @@ data class AppListItem(
     val content: @Composable (() -> Unit)? = null
 )
 
+/**
+ * A reusable list component with search, selection, and action capabilities.
+ *
+ * Features:
+ * - Search functionality with customizable placeholder
+ * - Selectable mode with checkbox selection
+ * - Editable mode with edit/delete actions
+ * - Click-to-toggle selection when in selectable mode
+ * - Clear all selection functionality
+ * - Empty state handling
+ * - Global action beside the title
+ *
+ * @param title The title displayed at the top of the list (optional)
+ * @param items The list of items to display
+ * @param onItemToListItem Function to convert items to AppListItem
+ * @param modifier Modifier for styling
+ * @param searchPlaceholder Placeholder text for the search field
+ * @param showSearch Whether to show the search field
+ * @param isSelectable Whether the list supports selection mode
+ * @param selectedItems Set of selected item IDs
+ * @param onSelectionChange Callback when selection changes (itemId, isSelected)
+ * @param isEditable Whether the list supports edit/delete actions
+ * @param onEdit Callback for edit action
+ * @param onDelete Callback for delete action
+ * @param onItemClick Callback for item click (only when not in selectable or editable mode)
+ * @param emptyStateMessage Message to display when no items are found
+ * @param globalAction Optional list of ActionItem objects to display beside the title
+ */
 @Composable
 fun <T> AppList(
-    title: String,
+    title: String? = null,
     items: List<T>,
     onItemToListItem: (T) -> AppListItem,
     modifier: Modifier = Modifier,
@@ -55,10 +79,12 @@ fun <T> AppList(
     selectedItems: Set<String> = emptySet(),
     onSelectionChange: ((String, Boolean) -> Unit)? = null,
     isEditable: Boolean = false,
+    isDeletable: Boolean = false,
     onEdit: ((T) -> Unit)? = null,
     onDelete: ((T) -> Unit)? = null,
     onItemClick: ((T) -> Unit)? = null,
-    emptyStateMessage: String = "No items found"
+    emptyStateMessage: String = "No items found",
+    globalAction: List<ActionItem>? = null
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var showDeleteConfirmation by remember { mutableStateOf<T?>(null) }
@@ -77,13 +103,31 @@ fun <T> AppList(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Title
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+        // Title and Global Action Row (only show if title is provided or global actions exist)
+        if (title != null || globalAction != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                title?.let { titleText ->
+                    Text(
+                        text = titleText,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                } ?: run {
+                    // If no title but global actions exist, add a spacer to push actions to the right
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
+                }
+                globalAction?.let { actionItems ->
+                    AppActionRow(actions = actionItems)
+                }
+            }
+        }
 
         // Search Bar
         if (showSearch) {
@@ -145,60 +189,29 @@ fun <T> AppList(
             ) {
                 items(filteredItems) { item ->
                     val listItem = onItemToListItem(item)
+                    val isItemSelected = selectedItems.contains(listItem.id)
 
                     AppCard(
                         title = listItem.title,
                         subtitle = listItem.subtitle,
                         onClick = {
-                            if (!isSelectable && !isEditable) {
-                                { onItemClick?.invoke(item) }
-                            } else null
+                            when {
+                                isSelectable -> {
+                                    // Toggle selection when clicking on the item
+                                    onSelectionChange?.invoke(listItem.id, !isItemSelected)
+                                }
+                                !isEditable -> {
+                                    // Regular item click when not in edit mode
+                                    onItemClick?.invoke(item)
+                                }
+                                // If editable but not selectable, don't handle clicks (let actions handle it)
+                            }
                         },
                         content = {
                             listItem.content?.invoke()
                         },
-                        actions = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // Selection checkbox
-                                if (isSelectable) {
-                                    Checkbox(
-                                        checked = selectedItems.contains(listItem.id),
-                                        onCheckedChange = { checked ->
-                                            onSelectionChange?.invoke(listItem.id, checked)
-                                        },
-                                        colors = CheckboxDefaults.colors(
-                                            checkedColor = CheckboxSelected,
-                                            uncheckedColor = CheckboxUnselected,
-                                            checkmarkColor = MaterialTheme.colorScheme.onPrimary
-                                        )
-                                    )
-                                }
-
-                                // Edit button
-                                if (isEditable && onEdit != null) {
-                                    IconButton(onClick = { onEdit(item) }) {
-                                        Icon(
-                                            Icons.Default.Edit,
-                                            contentDescription = "Edit",
-                                            tint = EditIconBlue
-                                        )
-                                    }
-                                }
-
-                                // Delete button
-                                if (isEditable && onDelete != null) {
-                                    IconButton(onClick = { showDeleteConfirmation = item }) {
-                                        Icon(
-                                            Icons.Default.Delete,
-                                            contentDescription = "Delete",
-                                            tint = ButtonRed
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                        showEditAction =  isEditable,
+                        showDeleteAction = isDeletable
                     )
                 }
             }

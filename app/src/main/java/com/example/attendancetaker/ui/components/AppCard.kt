@@ -3,7 +3,9 @@ package com.example.attendancetaker.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,7 +24,11 @@ fun AppCard(
     subtitle: String? = null,
     onClick: (() -> Unit) = {},
     content: @Composable () -> Unit = {},
-    actions: @Composable () -> Unit = {}
+    actions: List<ActionItem> = emptyList(),
+    showEditAction: Boolean = true,
+    showDeleteAction: Boolean = true,
+    onEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -39,7 +45,7 @@ fun AppCard(
                 .padding(16.dp)
         ) {
             // Header with title, subtitle and actions
-            if (title != null || subtitle != null || actions != {}) {
+            if (title != null || subtitle != null || actions.isNotEmpty() || onEdit != null || onDelete != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -61,9 +67,17 @@ fun AppCard(
                             )
                         }
                     }
-                    actions()
+                    AppActionRow(
+                        actions = actions,
+                        showEditAction = showEditAction,
+                        showDeleteAction = showDeleteAction,
+                        onEdit = onEdit,
+                        onDelete = onDelete
+                    )
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Content
             content()

@@ -1,0 +1,41 @@
+---
+alwaysApply: true
+---
+
+# App
+
+This app is a mobile application for Android. it uses kotlin, jetpack compose, and room sqlite.
+
+# Structure
+
+## App Structure
+
+-   data (data layer)
+    -   entity (data model)
+    -   dao (data access object)
+    -   repository (data source)
+-   navigation (app navigation)
+-   screens (app screens and pages)
+-   ui
+    -   components (shared components to use in the app)
+    -   theme
+-   utils (utils functions)
+
+## Structure Rules
+
+-   do not add more than on composable component in the same file, use separate files
+-   minimize the addition of new composable components, use existing components from the ui/components directory if possible
+
+# UI
+
+-   the ui should only use components from the ui/components directory
+-   if there is not suitable component, create a new one in the ui/components directory
+-   the created components should be reusable and generic with configurable parameters
+-   each new component should be in a separate file
+-   components can use other components from the ui/components directory to create more complex components
+
+# Data Manipulation
+
+-   data manipulation should not be done in the ui layer, it should be done in the data layer
+-   create the necessary function in the data layer and then use them in the ui layer and screens
+-   try to reuse the data layer functions in other parts of the app as much as possible
