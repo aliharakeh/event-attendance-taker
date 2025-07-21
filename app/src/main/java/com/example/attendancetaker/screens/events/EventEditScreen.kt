@@ -12,16 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,13 +38,15 @@ import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.screens.CheckboxRow
-import com.example.attendancetaker.screens.ContactGroupSelectionCard
 import com.example.attendancetaker.screens.DatePickerDialog
-import com.example.attendancetaker.screens.DateTimeSelectionRow
-import com.example.attendancetaker.screens.EventDetailsCard
-import com.example.attendancetaker.screens.SaveConfirmationDialog
+import com.example.attendancetaker.screens.SelectedContactGroupItem
 import com.example.attendancetaker.screens.TimePickerDialog
-import com.example.attendancetaker.ui.theme.ButtonBlue
+import com.example.attendancetaker.ui.components.ActionPresets
+import com.example.attendancetaker.ui.components.AppActionRow
+import com.example.attendancetaker.ui.components.AppCard
+import com.example.attendancetaker.ui.components.AppTextField
+import com.example.attendancetaker.ui.components.AppToolbar
+import com.example.attendancetaker.ui.components.ToolbarActionPresets
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -69,7 +69,6 @@ fun EventEditScreen(
     var eventDate by remember { mutableStateOf(LocalDate.now()) }
     var eventTime by remember { mutableStateOf(LocalTime.now()) }
     var selectedGroupIds by remember { mutableStateOf(emptySet<String>()) }
-    var showSaveConfirmation by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
@@ -123,34 +122,55 @@ fun EventEditScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Header with back button and save button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
-            }
+        // App Toolbar
+        AppToolbar(
+            title = if (event == null) stringResource(R.string.add_event_title) else stringResource(R.string.edit_event_title),
+            onNavigationClick = onNavigateBack,
+            actions = listOf(
+                ToolbarActionPresets.saveAction(
+                    onClick = {
+                        coroutineScope.launch {
+                            val updatedEvent = if (event == null) {
+                                Event(
+                                    name = eventName.trim(),
+                                    description = eventDescription.trim(),
+                                    date = if (isRecurring) null else eventDate,
+                                    time = eventTime,
+                                    isRecurring = isRecurring,
+                                    dayOfWeek = if (isRecurring) eventDate.dayOfWeek else null,
+                                    startDate = if (isRecurring) eventDate else null,
+                                    endDate = if (isRecurring && hasEndDate) recurringEndDate else null,
+                                    isActive = true,
+                                    contactGroupIds = selectedGroupIds.toList()
+                                )
+                            } else {
+                                event!!.copy(
+                                    name = eventName.trim(),
+                                    description = eventDescription.trim(),
+                                    date = if (isRecurring) null else eventDate,
+                                    time = eventTime,
+                                    isRecurring = isRecurring,
+                                    dayOfWeek = if (isRecurring) eventDate.dayOfWeek else null,
+                                    startDate = if (isRecurring) eventDate else null,
+                                    endDate = if (isRecurring && hasEndDate) recurringEndDate else null,
+                                    isActive = true,
+                                    contactGroupIds = selectedGroupIds.toList()
+                                )
+                            }
 
-            Text(
-                text = if (event == null) stringResource(R.string.add_event_title) else stringResource(R.string.edit_event_title),
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp)
+                            if (event == null) {
+                                repository.addEvent(updatedEvent)
+                            } else {
+                                repository.updateEvent(updatedEvent)
+                            }
+
+                            onNavigateBack()
+                        }
+                    },
+                    enabled = eventName.isNotBlank()
+                )
             )
-
-            Button(
-                onClick = { showSaveConfirmation = true },
-                enabled = eventName.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = ButtonBlue)
-            ) {
-                Text(stringResource(R.string.save))
-            }
-        }
+        )
 
         // Scrollable content
         Column(
@@ -159,73 +179,117 @@ fun EventEditScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
-            // Event details section using shared component
-            EventDetailsCard(
+            // Event details section
+            AppCard(
                 title = stringResource(R.string.event_details),
-                eventName = eventName,
-                onEventNameChange = { eventName = it },
-                eventDescription = eventDescription,
-                onEventDescriptionChange = { eventDescription = it },
-                additionalContent = {
-                    // Date and Time Selection using shared component
-                    DateTimeSelectionRow(
-                        selectedDate = eventDate,
-                        onDateClick = { showDatePicker = true },
-                        selectedTime = eventTime,
-                        onTimeClick = { showTimePicker = true }
-                    )
-
-                    // Recurring event option - only show for new events or recurring templates
-                    val shouldShowRecurringSettings = event == null || event!!.isRecurring
-
-                    if (shouldShowRecurringSettings) {
-                        CheckboxRow(
-                            text = stringResource(R.string.make_recurring_event),
-                            checked = isRecurring,
-                            onCheckedChange = { isRecurring = it }
+                content = {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        AppTextField(
+                            value = eventName,
+                            onValueChange = { eventName = it },
+                            label = stringResource(R.string.event_name),
+                            modifier = Modifier.fillMaxWidth()
                         )
 
-                        if (isRecurring) {
-                            // Show which day it will repeat on
-                            Text(
-                                text = stringResource(R.string.will_repeat_every, eventDate.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                        AppTextField(
+                            value = eventDescription,
+                            onValueChange = { eventDescription = it },
+                            label = stringResource(R.string.description_optional),
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 2,
+                            singleLine = false
+                        )
 
-                            // End date option using shared component
-                            CheckboxRow(
-                                text = stringResource(R.string.set_end_date),
-                                checked = hasEndDate,
-                                onCheckedChange = {
-                                    hasEndDate = it
-                                    if (!it) {
-                                        recurringEndDate = null
-                                    }
-                                }
-                            )
-
-                            if (hasEndDate) {
-                                // End date selection
-                                OutlinedTextField(
-                                    value = recurringEndDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "",
-                                    onValueChange = { },
-                                    label = { Text(stringResource(R.string.end_date)) },
-                                    readOnly = true,
-                                    leadingIcon = {
-                                        Icon(
-                                            Icons.Default.CalendarToday,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { showRecurringEndDatePicker = true },
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                        // Date and Time Selection Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Date selection
+                            AppTextField(
+                                value = eventDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
+                                onValueChange = { },
+                                label = stringResource(R.string.date),
+                                readOnly = true,
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.CalendarToday,
+                                        contentDescription = null
                                     )
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { showDatePicker = true }
+                            )
+
+                            // Time selection
+                            AppTextField(
+                                value = eventTime.format(DateTimeFormatter.ofPattern("h:mm a")),
+                                onValueChange = { },
+                                label = stringResource(R.string.time),
+                                readOnly = true,
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Schedule,
+                                        contentDescription = null
+                                    )
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { showTimePicker = true }
+                            )
+                        }
+
+                        // Recurring event option - only show for new events or recurring templates
+                        val shouldShowRecurringSettings = event == null || event!!.isRecurring
+
+                        if (shouldShowRecurringSettings) {
+                            CheckboxRow(
+                                text = stringResource(R.string.make_recurring_event),
+                                checked = isRecurring,
+                                onCheckedChange = { isRecurring = it }
+                            )
+
+                            if (isRecurring) {
+                                // Show which day it will repeat on
+                                Text(
+                                    text = stringResource(R.string.will_repeat_every, eventDate.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
+
+                                // End date option
+                                CheckboxRow(
+                                    text = stringResource(R.string.set_end_date),
+                                    checked = hasEndDate,
+                                    onCheckedChange = {
+                                        hasEndDate = it
+                                        if (!it) {
+                                            recurringEndDate = null
+                                        }
+                                    }
+                                )
+
+                                if (hasEndDate) {
+                                    // End date selection
+                                    AppTextField(
+                                        value = recurringEndDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "",
+                                        onValueChange = { },
+                                        label = stringResource(R.string.end_date),
+                                        readOnly = true,
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Default.CalendarToday,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { showRecurringEndDatePicker = true }
+                                    )
+                                }
                             }
                         }
                     }
@@ -234,20 +298,48 @@ fun EventEditScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Contact groups selection section using shared component
-            ContactGroupSelectionCard(
-                selectedGroupIds = selectedGroupIds,
-                selectedContactGroups = selectedContactGroups,
-                contactsForGroups = contactsForGroups,
-                onAddGroupsClick = { onNavigateToContactGroupSelection(eventId) },
-                onRemoveGroup = { groupId ->
-                    selectedGroupIds = selectedGroupIds - groupId
+            // Contact groups selection section
+            AppCard(
+                title = stringResource(R.string.select_contact_groups),
+                actions = listOf(
+                    ActionPresets.addAction(
+                        onClick = { onNavigateToContactGroupSelection(eventId) }
+                    )
+                ),
+                content = {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.contact_groups_selected, selectedGroupIds.size),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        if (selectedContactGroups.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            selectedContactGroups.forEach { group ->
+                                SelectedContactGroupItem(
+                                    group = group,
+                                    contacts = contactsForGroups[group.id] ?: emptyList(),
+                                    onRemove = { selectedGroupIds = selectedGroupIds - group.id }
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.no_contact_groups_selected_for_event),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             )
         }
     }
 
-    // Date Picker using shared component
+    // Date Picker
     if (showDatePicker) {
         DatePickerDialog(
             onDateSelected = { date ->
@@ -258,7 +350,7 @@ fun EventEditScreen(
         )
     }
 
-    // Time Picker using shared component
+    // Time Picker
     if (showTimePicker) {
         TimePickerDialog(
             onTimeSelected = { time ->
@@ -269,7 +361,7 @@ fun EventEditScreen(
         )
     }
 
-    // Recurring End Date Picker using shared component
+    // Recurring End Date Picker
     if (showRecurringEndDatePicker) {
         DatePickerDialog(
             onDateSelected = { date ->
@@ -280,51 +372,5 @@ fun EventEditScreen(
         )
     }
 
-    // Save confirmation dialog using shared component
-    SaveConfirmationDialog(
-        showDialog = showSaveConfirmation,
-        title = stringResource(R.string.save_event),
-        message = stringResource(R.string.save_event_question),
-        onConfirm = {
-            coroutineScope.launch {
-                val updatedEvent = if (event == null) {
-                    Event(
-                        name = eventName.trim(),
-                        description = eventDescription.trim(),
-                        date = if (isRecurring) null else eventDate,
-                        time = eventTime,
-                        isRecurring = isRecurring,
-                        dayOfWeek = if (isRecurring) eventDate.dayOfWeek else null,
-                        startDate = if (isRecurring) eventDate else null,
-                        endDate = if (isRecurring && hasEndDate) recurringEndDate else null,
-                        isActive = true,
-                        contactGroupIds = selectedGroupIds.toList()
-                    )
-                } else {
-                    event!!.copy(
-                        name = eventName.trim(),
-                        description = eventDescription.trim(),
-                        date = if (isRecurring) null else eventDate,
-                        time = eventTime,
-                        isRecurring = isRecurring,
-                        dayOfWeek = if (isRecurring) eventDate.dayOfWeek else null,
-                        startDate = if (isRecurring) eventDate else null,
-                        endDate = if (isRecurring && hasEndDate) recurringEndDate else null,
-                        isActive = true,
-                        contactGroupIds = selectedGroupIds.toList()
-                    )
-                }
 
-                if (event == null) {
-                    repository.addEvent(updatedEvent)
-                } else {
-                    repository.updateEvent(updatedEvent)
-                }
-
-                showSaveConfirmation = false
-                onNavigateBack()
-            }
-        },
-        onDismiss = { showSaveConfirmation = false }
-    )
 }

@@ -209,7 +209,7 @@ fun <T> AppList(
                             listItem.content?.invoke()
                         },
                         actions = cardActions ?: emptyList(),
-                        isClickable = isItemClickable,
+                        isClickable = isSelectable || isItemClickable,
                         showEditAction = isEditable,
                         showDeleteAction = isDeletable,
                         selected = isItemSelected, // <-- pass selected state,
