@@ -30,21 +30,22 @@ fun AppCard(
     showDeleteAction: Boolean = true,
     onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
-    selected: Boolean = false
+    selected: Boolean = false,
+    isClickable: Boolean = false
 ) {
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val backgroundColor = when {
-        selected && isDark -> com.example.attendancetaker.ui.theme.SelectionDark
-        selected && !isDark -> com.example.attendancetaker.ui.theme.SelectionLight
+        isClickable && selected && isDark -> com.example.attendancetaker.ui.theme.SelectionDark
+        isClickable && selected && !isDark -> com.example.attendancetaker.ui.theme.SelectionLight
         else -> MaterialTheme.colorScheme.surface
     }
-    val borderColor = if (selected) com.example.attendancetaker.ui.theme.SelectionBorder else null
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .let { if (selected) it else it }
             .then(
-                if (selected) androidx.compose.ui.Modifier.border(
+                if (isClickable && selected) androidx.compose.ui.Modifier.border(
                     width = 2.dp,
                     color = com.example.attendancetaker.ui.theme.SelectionBorder,
                     shape = MaterialTheme.shapes.medium

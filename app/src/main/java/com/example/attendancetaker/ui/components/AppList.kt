@@ -207,6 +207,7 @@ fun <T> AppList(
                         content = {
                             listItem.content?.invoke()
                         },
+                        isClickable = isSelectable,
                         showEditAction = isEditable,
                         showDeleteAction = isDeletable,
                         selected = isItemSelected // <-- pass selected state

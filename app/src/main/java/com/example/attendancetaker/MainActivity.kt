@@ -143,7 +143,6 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
     val showTopAppBar = currentDestination?.route in listOf(
         Screen.Events.route,
         Screen.Contacts.route,
-        Screen.ContactSelection.route,
         Screen.ContactGroupSelection.route
     )
 
@@ -161,7 +160,6 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                                 text = when (currentDestination?.route) {
                                     Screen.Contacts.route -> stringResource(R.string.nav_contacts)
                                     Screen.Events.route -> stringResource(R.string.nav_events)
-                                    Screen.ContactSelection.route -> stringResource(R.string.select_contacts)
                                     Screen.ContactGroupSelection.route -> stringResource(R.string.select_contact_groups)
                                     else -> stringResource(R.string.app_name)
                                 },
@@ -204,8 +202,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                         }
                     },
                                         navigationIcon = {
-                        if (currentDestination?.route == Screen.ContactSelection.route ||
-                            currentDestination?.route == Screen.ContactGroupSelection.route) {
+                        if (currentDestination?.route == Screen.ContactGroupSelection.route) {
                             IconButton(onClick = {
                                 // Save the selection before navigating back
                                 // This will be handled by the screen's DisposableEffect
@@ -599,7 +596,10 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
                 ContactSelectionScreen(
                     groupId = if (groupId == "new") null else groupId,
-                    repository = repository
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
                 )
             }
 

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +21,8 @@ import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.ui.components.AppList
 import com.example.attendancetaker.ui.components.AppListItem
+import com.example.attendancetaker.ui.components.AppToolbar
+import com.example.attendancetaker.ui.components.ToolbarActionPresets
 import com.example.attendancetaker.utils.ContactUtils
 import kotlinx.coroutines.launch
 
@@ -30,6 +31,7 @@ import kotlinx.coroutines.launch
 fun ContactSelectionScreen(
     groupId: String?,
     repository: AttendanceRepository,
+    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -51,59 +53,70 @@ fun ContactSelectionScreen(
         allAvailableContacts = ContactUtils.getPhoneContacts(context)
     }
 
-    // Save data when the screen is disposed (user navigates back)
-    DisposableEffect(Unit) {
-        onDispose {
-            coroutineScope.launch {
-                if (group != null) {
-                    // Update existing group
-                    val updatedGroup = group!!.copy(
-                        contactIds = selectedContactIds.toList()
-                    )
-                    repository.updateContactGroup(updatedGroup)
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        // Toolbar
+        AppToolbar(
+            title = stringResource(R.string.select_contacts),
+            onNavigationClick = onNavigateBack,
+            actions = listOf(
+                ToolbarActionPresets.saveAction(
+                    onClick = {
+                        coroutineScope.launch {
+                            if (group != null) {
+                                // Update existing group
+                                val updatedGroup = group!!.copy(
+                                    contactIds = selectedContactIds.toList()
+                                )
+                                repository.updateContactGroup(updatedGroup)
 
-                    // Add new contacts to repository if they don't exist
-                    selectedContactIds.forEach { contactId ->
-                        val existingContact = repository.getContactById(contactId)
-                        if (existingContact == null) {
-                            val availableContact = allAvailableContacts.find { it.id == contactId }
-                            availableContact?.let { repository.addContact(it) }
+                                // Add new contacts to repository if they don't exist
+                                selectedContactIds.forEach { contactId ->
+                                    val existingContact = repository.getContactById(contactId)
+                                    if (existingContact == null) {
+                                        val availableContact = allAvailableContacts.find { it.id == contactId }
+                                        availableContact?.let { repository.addContact(it) }
+                                    }
+                                }
+                            }
+                            onNavigateBack()
                         }
                     }
-                }
-            }
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Contact list using AppList component
-        AppList(
-            items = allAvailableContacts,
-            onItemToListItem = { contact ->
-                AppListItem(
-                    id = contact.id,
-                    title = contact.name,
-                    subtitle = contact.phoneNumber,
-                    isSelected = selectedContactIds.contains(contact.id)
                 )
-            },
-            searchPlaceholder = stringResource(R.string.search_contacts),
-            showSearch = true,
-            isSelectable = true,
-            selectedItems = selectedContactIds,
-            onSelectionChange = { contactId, isSelected ->
-                selectedContactIds = if (isSelected) {
-                    selectedContactIds + contactId
-                } else {
-                    selectedContactIds - contactId
-                }
-            },
-            emptyStateMessage = stringResource(R.string.no_contacts_available),
-            modifier = Modifier.fillMaxSize()
+            )
         )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            // Contact list using AppList component
+            AppList(
+                items = allAvailableContacts,
+                onItemToListItem = { contact ->
+                    AppListItem(
+                        id = contact.id,
+                        title = contact.name,
+                        subtitle = contact.phoneNumber,
+                        isSelected = selectedContactIds.contains(contact.id)
+                    )
+                },
+                searchPlaceholder = stringResource(R.string.search_contacts),
+                showSearch = true,
+                isSelectable = true,
+                selectedItems = selectedContactIds,
+                onSelectionChange = { contactId, isSelected ->
+                    selectedContactIds = if (isSelected) {
+                        selectedContactIds + contactId
+                    } else {
+                        selectedContactIds - contactId
+                    }
+                },
+                emptyStateMessage = stringResource(R.string.no_contacts_available),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
