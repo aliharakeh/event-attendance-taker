@@ -105,6 +105,16 @@ fun EventEditScreen(
         }
     }
 
+    // Refresh event data periodically to sync with database changes
+    LaunchedEffect(eventId, contactGroups) {
+        if (eventId != null && eventId != "new") {
+            val refreshedEvent = repository.getEventById(eventId)
+            refreshedEvent?.let {
+                selectedGroupIds = it.contactGroupIds.toSet()
+            }
+        }
+    }
+
     // Load contacts for each group
     LaunchedEffect(contactGroups) {
         val contactsMap = mutableMapOf<String, List<Contact>>()
@@ -321,7 +331,19 @@ fun EventEditScreen(
                                 SelectedContactGroupItem(
                                     group = group,
                                     contacts = contactsForGroups[group.id] ?: emptyList(),
-                                    onRemove = { selectedGroupIds = selectedGroupIds - group.id }
+                                    onRemove = {
+                                        selectedGroupIds = selectedGroupIds - group.id
+                                        // Immediately persist the change to database if editing existing event
+                                        if (event != null) {
+                                            coroutineScope.launch {
+                                                val updatedEvent = event!!.copy(
+                                                    contactGroupIds = (selectedGroupIds - group.id).toList()
+                                                )
+                                                repository.updateEvent(updatedEvent)
+                                                event = updatedEvent
+                                            }
+                                        }
+                                    }
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                             }

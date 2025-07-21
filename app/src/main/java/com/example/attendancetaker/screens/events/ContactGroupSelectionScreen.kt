@@ -87,7 +87,6 @@ fun ContactGroupSelectionScreen(
                         contactGroupIds = selectedGroupIds.toList()
                     )
                     repository.updateEvent(updatedEvent)
-                    snackbarHostState.showSnackbar("Contact groups updated successfully")
                     onNavigateBack()
                 } else {
                     snackbarHostState.showSnackbar("No event found to update")
