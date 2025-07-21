@@ -62,12 +62,13 @@ data class AppListItem(
  * @param onItemClick Callback for item click (only when not in selectable or editable mode)
  * @param emptyStateMessage Message to display when no items are found
  * @param globalAction Optional list of ActionItem objects to display beside the title
+ * @param cardActions Optional list of ActionItem objects to display in each card
  */
 @Composable
 fun <T> AppList(
     title: String? = null,
     items: List<T>,
-    onItemToListItem: (T) -> AppListItem,
+    onItemToListItem: @Composable (T) -> AppListItem,
     modifier: Modifier = Modifier,
     searchPlaceholder: String = "Search...",
     showSearch: Boolean = true,
@@ -80,7 +81,8 @@ fun <T> AppList(
     onDelete: ((T) -> Unit)? = null,
     onItemClick: ((T) -> Unit)? = null,
     emptyStateMessage: String = "No items found",
-    globalAction: List<ActionItem>? = null
+    globalAction: List<ActionItem>? = null,
+    cardActions: List<ActionItem>? = null,
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var showDeleteConfirmation by remember { mutableStateOf<T?>(null) }
@@ -207,10 +209,17 @@ fun <T> AppList(
                         content = {
                             listItem.content?.invoke()
                         },
+                        actions = cardActions ?: emptyList(),
                         isClickable = isSelectable,
                         showEditAction = isEditable,
                         showDeleteAction = isDeletable,
-                        selected = isItemSelected // <-- pass selected state
+                        selected = isItemSelected, // <-- pass selected state,
+                        onEdit = {
+                            onEdit?.invoke(item)
+                        },
+                        onDelete = {
+                            showDeleteConfirmation = item
+                        }
                     )
                 }
             }
