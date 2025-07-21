@@ -106,6 +106,7 @@ fun ContactSelectionScreen(
                 searchPlaceholder = stringResource(R.string.search_contacts),
                 showSearch = true,
                 isSelectable = true,
+                isItemClickable = true,
                 selectedItems = selectedContactIds,
                 onSelectionChange = { contactId, isSelected ->
                     selectedContactIds = if (isSelected) {

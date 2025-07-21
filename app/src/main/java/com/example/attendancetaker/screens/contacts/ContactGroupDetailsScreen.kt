@@ -12,21 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Whatsapp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,8 +39,10 @@ import com.example.attendancetaker.R
 import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.ContactGroup
+import com.example.attendancetaker.ui.components.AppList
+import com.example.attendancetaker.ui.components.AppListItem
+import com.example.attendancetaker.ui.components.AppToolbar
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactGroupDetailsScreen(
     groupId: String,
@@ -74,171 +69,82 @@ fun ContactGroupDetailsScreen(
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
+        modifier = modifier.fillMaxSize()
     ) {
-        // Header with back button and group info
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-            }
+        // App Toolbar with group info
+        AppToolbar(
+            title = group!!.name,
+            subtitle = if (group!!.description.isNotEmpty()) {
+                "${group!!.description} • ${contacts.size} members"
+            } else {
+                "${contacts.size} members"
+            },
+            onNavigationClick = onNavigateBack
+        )
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp)
-            ) {
-                Text(
-                    text = group!!.name,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+        // Contacts List
+        AppList(
+            items = contacts,
+            onItemToListItem = { contact ->
+                AppListItem(
+                    id = contact.id,
+                    title = contact.name,
+                    subtitle = contact.phoneNumber,
+                    content = {
+                        ContactWhatsAppActions(
+                            contact = contact,
+                            context = context
+                        )
+                    }
                 )
-                if (group!!.description.isNotEmpty()) {
-                    Text(
-                        text = group!!.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Text(
-                    text = "${contacts.size} members",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        if (contacts.isEmpty()) {
-            // Empty state
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        Icons.Default.People,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(R.string.no_contacts_in_group),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = stringResource(R.string.add_contacts_to_start_messaging),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        } else {
-            // Contacts list
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(contacts) { contact ->
-                    ContactItemWithWhatsApp(
-                        contact = contact,
-                        context = context
-                    )
-                }
-            }
-        }
+            },
+            showSearch = false,
+            emptyStateMessage = stringResource(R.string.no_contacts_in_group),
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
 @Composable
-fun ContactItemWithWhatsApp(
+private fun ContactWhatsAppActions(
     contact: Contact,
     context: Context
 ) {
-    Card(
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // WhatsApp action buttons
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+        // Message button
+        Button(
+            onClick = { openWhatsAppMessage(context, contact.phoneNumber) },
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF25D366) // WhatsApp green
+            )
         ) {
-            // Contact info
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = contact.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = contact.phoneNumber,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            Icon(
+                Icons.Default.Whatsapp,
+                contentDescription = "Send WhatsApp Message",
+                modifier = Modifier.size(22.dp)
+            )
+        }
 
-                Icon(
-                    Icons.Default.Person,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // WhatsApp buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Message button
-                Button(
-                    onClick = { openWhatsAppMessage(context, contact.phoneNumber) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF25D366) // WhatsApp green
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Whatsapp,
-                        contentDescription = null,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-
-                // Call button
-                Button(
-                    onClick = { openWhatsAppCall(context, contact.phoneNumber) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF0B5D9C)
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Call,
-                        contentDescription = null,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-            }
+        // Call button
+        Button(
+            onClick = { openWhatsAppCall(context, contact.phoneNumber) },
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF0B5D9C)
+            )
+        ) {
+            Icon(
+                Icons.Default.Call,
+                contentDescription = "WhatsApp Call",
+                modifier = Modifier.size(22.dp)
+            )
         }
     }
 }

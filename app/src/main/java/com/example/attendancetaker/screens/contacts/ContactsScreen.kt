@@ -77,7 +77,7 @@ fun ContactsScreen(
             showSearch = true,
             isEditable = true,
             isDeletable = true,
-            isSelectable = true,
+            isItemClickable = true,
             onEdit = { group -> onNavigateToGroupEdit(group) },
             onDelete = { group ->
                 coroutineScope.launch {

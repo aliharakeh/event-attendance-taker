@@ -73,6 +73,7 @@ fun <T> AppList(
     searchPlaceholder: String = "Search...",
     showSearch: Boolean = true,
     isSelectable: Boolean = false,
+    isItemClickable: Boolean = false,
     selectedItems: Set<String> = emptySet(),
     onSelectionChange: ((String, Boolean) -> Unit)? = null,
     isEditable: Boolean = false,
@@ -197,7 +198,8 @@ fun <T> AppList(
                                 isSelectable -> {
                                     // Toggle selection when clicking on the item
                                     onSelectionChange?.invoke(listItem.id, !isItemSelected)
-
+                                }
+                                isItemClickable -> {
                                     // Regular item click when not in edit mode
                                     onItemClick?.invoke(item)
                                 }
@@ -207,7 +209,7 @@ fun <T> AppList(
                             listItem.content?.invoke()
                         },
                         actions = cardActions ?: emptyList(),
-                        isClickable = isSelectable,
+                        isClickable = isItemClickable,
                         showEditAction = isEditable,
                         showDeleteAction = isDeletable,
                         selected = isItemSelected, // <-- pass selected state,

@@ -233,7 +233,6 @@ fun ContactGroupEditScreen(
                                 .fillMaxWidth()
                                 .weight(1f),
                             showSearch = true,
-                            isSelectable = false,
                             selectedItems = selectedContactIds,
                             onSelectionChange = { contactId, isSelected ->
                                 selectedContactIds = if (isSelected) {
