@@ -200,7 +200,7 @@ fun ContactGroupEditScreen(
                     .fillMaxWidth()
                     .weight(1f),
                 actions = listOf(
-                    ActionPresets.addAction(
+                    ActionPresets.editAction(
                         onClick = {
                             if (hasContactsPermission) {
                                 onNavigateToContactSelection(groupId)

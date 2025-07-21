@@ -111,4 +111,15 @@ object ActionPresets {
         onClick = onClick,
         enabled = enabled
     )
+
+    fun editAction(
+        onClick: () -> Unit,
+        enabled: Boolean = true
+    ) = ActionItem(
+        icon = Icons.Default.Edit,
+        contentDescription = "Edit",
+        tint = ButtonBlue,
+        onClick = onClick,
+        enabled = enabled
+    )
 }

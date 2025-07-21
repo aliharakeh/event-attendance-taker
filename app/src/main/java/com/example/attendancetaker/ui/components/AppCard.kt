@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -43,15 +44,23 @@ fun AppCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .let { if (selected) it else it }
+            .let { if (isClickable && selected) it else it }
             .then(
                 if (isClickable && selected) androidx.compose.ui.Modifier.border(
                     width = 2.dp,
                     color = com.example.attendancetaker.ui.theme.SelectionBorder,
                     shape = MaterialTheme.shapes.medium
                 ) else androidx.compose.ui.Modifier
+            ).then(
+                if (isClickable) {
+                    androidx.compose.ui.Modifier.clickable(
+                        enabled = true,
+                        onClick = onClick
+                    )
+                } else {
+                    androidx.compose.ui.Modifier
+                }
             ),
-        onClick = onClick,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor,
@@ -95,8 +104,6 @@ fun AppCard(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             // Content
             content()
