@@ -1,4 +1,4 @@
-package com.example.attendancetaker.screens.contacts
+package com.example.attendancetaker.screens.events
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

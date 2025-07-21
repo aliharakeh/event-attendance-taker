@@ -59,7 +59,7 @@ import com.example.attendancetaker.navigation.Screen
 import com.example.attendancetaker.screens.attendance.AttendanceScreen
 import com.example.attendancetaker.screens.contacts.ContactGroupDetailsScreen
 import com.example.attendancetaker.screens.contacts.ContactGroupEditScreen
-import com.example.attendancetaker.screens.contacts.ContactGroupSelectionScreen
+import com.example.attendancetaker.screens.events.ContactGroupSelectionScreen
 import com.example.attendancetaker.screens.contacts.ContactSelectionScreen
 import com.example.attendancetaker.screens.contacts.ContactsScreen
 import com.example.attendancetaker.screens.events.EventEditScreen

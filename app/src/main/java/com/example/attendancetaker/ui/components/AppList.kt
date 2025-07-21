@@ -197,13 +197,10 @@ fun <T> AppList(
                                 isSelectable -> {
                                     // Toggle selection when clicking on the item
                                     onSelectionChange?.invoke(listItem.id, !isItemSelected)
-                                }
 
-                                !isEditable -> {
                                     // Regular item click when not in edit mode
                                     onItemClick?.invoke(item)
                                 }
-                                // If editable but not selectable, don't handle clicks (let actions handle it)
                             }
                         },
                         content = {
