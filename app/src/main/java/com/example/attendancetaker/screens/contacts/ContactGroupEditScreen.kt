@@ -232,8 +232,8 @@ fun ContactGroupEditScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f),
-                            showSearch = false,
-                            isSelectable = true,
+                            showSearch = true,
+                            isSelectable = false,
                             selectedItems = selectedContactIds,
                             onSelectionChange = { contactId, isSelected ->
                                 selectedContactIds = if (isSelected) {

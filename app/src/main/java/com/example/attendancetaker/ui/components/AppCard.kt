@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.border
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -28,14 +29,31 @@ fun AppCard(
     showEditAction: Boolean = true,
     showDeleteAction: Boolean = true,
     onEdit: (() -> Unit)? = null,
-    onDelete: (() -> Unit)? = null
+    onDelete: (() -> Unit)? = null,
+    selected: Boolean = false
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val backgroundColor = when {
+        selected && isDark -> com.example.attendancetaker.ui.theme.SelectionDark
+        selected && !isDark -> com.example.attendancetaker.ui.theme.SelectionLight
+        else -> MaterialTheme.colorScheme.surface
+    }
+    val borderColor = if (selected) com.example.attendancetaker.ui.theme.SelectionBorder else null
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .let { if (selected) it else it }
+            .then(
+                if (selected) androidx.compose.ui.Modifier.border(
+                    width = 2.dp,
+                    color = com.example.attendancetaker.ui.theme.SelectionBorder,
+                    shape = MaterialTheme.shapes.medium
+                ) else androidx.compose.ui.Modifier
+            ),
         onClick = onClick,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = backgroundColor,
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {

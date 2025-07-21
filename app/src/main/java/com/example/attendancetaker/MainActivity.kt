@@ -599,11 +599,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
                 ContactSelectionScreen(
                     groupId = if (groupId == "new") null else groupId,
-                    repository = repository,
-                    onNavigateBack = {
-                        // The save logic is handled within the ContactSelectionScreen
-                        navController.popBackStack()
-                    }
+                    repository = repository
                 )
             }
 

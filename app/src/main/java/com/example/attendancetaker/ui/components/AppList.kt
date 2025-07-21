@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,8 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
-import com.example.attendancetaker.ui.theme.CheckboxSelected
-import com.example.attendancetaker.ui.theme.CheckboxUnselected
 
 /**
  * Data class representing an item in the AppList
@@ -96,7 +92,7 @@ fun <T> AppList(
         } else {
             val listItem = onItemToListItem(item)
             listItem.title.contains(searchQuery, ignoreCase = true) ||
-            (listItem.subtitle?.contains(searchQuery, ignoreCase = true) == true)
+                    (listItem.subtitle?.contains(searchQuery, ignoreCase = true) == true)
         }
     }
 
@@ -108,7 +104,7 @@ fun <T> AppList(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -137,16 +133,16 @@ fun <T> AppList(
                 placeholder = searchPlaceholder,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(vertical = 8.dp)
             )
         }
 
         // Selection Mode Controls
-        if (isSelectable && selectedItems.isNotEmpty()) {
+        if (isSelectable) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                    .padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -184,7 +180,7 @@ fun <T> AppList(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(filteredItems) { item ->
@@ -200,6 +196,7 @@ fun <T> AppList(
                                     // Toggle selection when clicking on the item
                                     onSelectionChange?.invoke(listItem.id, !isItemSelected)
                                 }
+
                                 !isEditable -> {
                                     // Regular item click when not in edit mode
                                     onItemClick?.invoke(item)
@@ -210,8 +207,9 @@ fun <T> AppList(
                         content = {
                             listItem.content?.invoke()
                         },
-                        showEditAction =  isEditable,
-                        showDeleteAction = isDeletable
+                        showEditAction = isEditable,
+                        showDeleteAction = isDeletable,
+                        selected = isItemSelected // <-- pass selected state
                     )
                 }
             }
