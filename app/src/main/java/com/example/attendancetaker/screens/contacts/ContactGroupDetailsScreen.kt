@@ -14,31 +14,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Whatsapp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
 import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.ContactGroup
+import com.example.attendancetaker.ui.components.AppIconButton
+import com.example.attendancetaker.ui.components.AppIconButtonStyle
 import com.example.attendancetaker.ui.components.AppList
 import com.example.attendancetaker.ui.components.AppListItem
 import com.example.attendancetaker.ui.components.AppToolbar
@@ -98,7 +91,7 @@ fun ContactGroupDetailsScreen(
                     }
                 )
             },
-            showSearch = false,
+            showSearch = true,
             emptyStateMessage = stringResource(R.string.no_contacts_in_group),
             modifier = Modifier.padding(16.dp)
         )
@@ -118,34 +111,30 @@ private fun ContactWhatsAppActions(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Message button
-        Button(
+        AppIconButton(
+            style = AppIconButtonStyle.ROUNDED_ICON_ONLY,
             onClick = { openWhatsAppMessage(context, contact.phoneNumber) },
             modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF25D366) // WhatsApp green
-            )
-        ) {
-            Icon(
-                Icons.Default.Whatsapp,
-                contentDescription = "Send WhatsApp Message",
-                modifier = Modifier.size(22.dp)
-            )
-        }
+            icon = Icons.Default.Whatsapp,
+            backgroundColor = Color(0xFF25D366), // WhatsApp green
+            contentColor = Color.White,
+            contentDescription = "Send WhatsApp Message",
+            iconSize = 22.dp,
+            verticalPadding = 0.dp,
+        )
 
         // Call button
-        Button(
+        AppIconButton(
+            style = AppIconButtonStyle.ROUNDED_ICON_ONLY,
             onClick = { openWhatsAppCall(context, contact.phoneNumber) },
             modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF0B5D9C)
-            )
-        ) {
-            Icon(
-                Icons.Default.Call,
-                contentDescription = "WhatsApp Call",
-                modifier = Modifier.size(22.dp)
-            )
-        }
+            icon = Icons.Default.Call,
+            backgroundColor = Color(0xFF0B5D9C),
+            contentColor = Color.White,
+            contentDescription = "WhatsApp Call",
+            iconSize = 22.dp,
+            verticalPadding = 0.dp,
+        )
     }
 }
 

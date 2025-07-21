@@ -4,6 +4,57 @@ This folder contains reusable UI components that provide a consistent and modern
 
 ## Components
 
+### 0. AppIconButton
+
+A versatile icon button component that supports multiple visual styles including rounded backgrounds and text combinations.
+
+**Features:**
+
+-   6 different visual styles (rounded/no background, icon/text/both combinations)
+-   Customizable colors, sizes, and spacing
+-   Accessibility support with proper roles and descriptions
+-   Disabled state handling with alpha transparency
+-   Minimum touch target compliance for icon-only buttons
+-   Theme-aware default colors
+
+**Styles:**
+
+-   `ROUNDED_ICON_ONLY` - Rounded background with icon only
+-   `ROUNDED_ICON_TEXT` - Rounded background with icon and text
+-   `ROUNDED_TEXT_ONLY` - Rounded background with text only
+-   `NO_BACKGROUND_TEXT_ONLY` - No background with text only
+-   `NO_BACKGROUND_ICON_ONLY` - No background with icon only
+-   `NO_BACKGROUND_ICON_TEXT` - No background with icon and text
+
+**Usage:**
+
+```kotlin
+// Rounded button with icon only
+AppIconButton(
+    style = AppIconButtonStyle.ROUNDED_ICON_ONLY,
+    icon = Icons.Default.Add,
+    onClick = { /* handle click */ },
+    contentDescription = "Add item"
+)
+
+// Rounded button with icon and text
+AppIconButton(
+    style = AppIconButtonStyle.ROUNDED_ICON_TEXT,
+    icon = Icons.Default.Save,
+    text = "Save",
+    onClick = { /* handle click */ },
+    backgroundColor = MaterialTheme.colorScheme.primary
+)
+
+// No background text button
+AppIconButton(
+    style = AppIconButtonStyle.NO_BACKGROUND_TEXT_ONLY,
+    text = "Cancel",
+    onClick = { /* handle click */ },
+    contentColor = MaterialTheme.colorScheme.error
+)
+```
+
 ### 1. AppCard
 
 A flexible card component with title, subtitle, content, and actions.
