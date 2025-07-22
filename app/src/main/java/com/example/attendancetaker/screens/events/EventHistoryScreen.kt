@@ -2,7 +2,6 @@ package com.example.attendancetaker.screens.events
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,13 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Group
@@ -25,19 +19,11 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -57,12 +43,20 @@ import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.screens.DatePickerDialog
 import com.example.attendancetaker.screens.DateRangeFilterCard
+import com.example.attendancetaker.ui.components.ActionItem
+import com.example.attendancetaker.ui.components.AppCard
+import com.example.attendancetaker.ui.components.AppConfirmDialog
+import com.example.attendancetaker.ui.components.AppIconButton
+import com.example.attendancetaker.ui.components.AppIconButtonStyle
+import com.example.attendancetaker.ui.components.AppList
+import com.example.attendancetaker.ui.components.AppListItem
+import com.example.attendancetaker.ui.components.AppSearchField
+import com.example.attendancetaker.ui.components.AppToolbar
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 import kotlinx.coroutines.launch
-import com.example.attendancetaker.ui.theme.ButtonNeutral
 import com.example.attendancetaker.ui.theme.ButtonRed
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,158 +96,67 @@ fun EventHistoryScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Header with back button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(R.string.event_history),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        // Header with back button using AppToolbar
+        AppToolbar(
+            title = stringResource(R.string.event_history),
+            onNavigationClick = onNavigateBack
+        )
 
-        // Search Bar
-        TextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = { Text(stringResource(R.string.search_events)) },
-            leadingIcon = {
-                Icon(
-                    Icons.Default.Search,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { searchQuery = "" }) {
-                        Icon(
-                            Icons.Default.Clear,
-                            contentDescription = stringResource(R.string.clear_search),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
-            ),
-            shape = RoundedCornerShape(28.dp),
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 8.dp),
-            singleLine = true
-        )
+        ) {
 
-        // Date Range Filter
-        DateRangeFilterCard(
-            isDateFilterEnabled = isDateFilterEnabled,
-            fromDate = fromDate,
-            toDate = toDate,
-            onDateFilterToggle = { isDateFilterEnabled = it },
-            onFromDateClick = { showFromDatePicker = true },
-            onToDateClick = { showToDatePicker = true },
-            onClearDateFilter = {
-                isDateFilterEnabled = false
-                fromDate = null
-                toDate = null
-            },
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
+            // Date Range Filter
+            DateRangeFilterCard(
+                isDateFilterEnabled = isDateFilterEnabled,
+                fromDate = fromDate,
+                toDate = toDate,
+                onDateFilterToggle = { isDateFilterEnabled = it },
+                onFromDateClick = { showFromDatePicker = true },
+                onToDateClick = { showToDatePicker = true },
+                onClearDateFilter = {
+                    isDateFilterEnabled = false
+                    fromDate = null
+                    toDate = null
+                },
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
 
-        if (filteredPastEvents.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                when {
-                    // No results from search query
-                    pastEvents.isNotEmpty() && searchQuery.isNotBlank() -> {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.no_search_results),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                    }
-                    // No results from date range filter
-                    pastEvents.isEmpty() && isDateFilterEnabled && fromDate != null && toDate != null -> {
-                        Icon(
-                            Icons.Default.DateRange,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.no_events_in_date_range),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                    }
-                    // No past events at all
-                    else -> {
-                        Icon(
-                            Icons.Default.CalendarToday,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.no_past_events),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.no_past_events_description),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                    }
-                }
-            }
-        } else {
-            // Past Events List
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(filteredPastEvents) { event ->
-                    PastEventItem(
-                        event = event,
-                        repository = repository,
-                        onViewAttendance = { onNavigateToAttendance(event.id) }
+            // Events List using AppList
+            AppList(
+                items = filteredPastEvents,
+                onItemToListItem = { event ->
+                    AppListItem(
+                        id = event.id,
+                        title = event.name,
+                        subtitle = if (event.description.isNotBlank()) event.description else null,
+                        content = {
+                            PastEventContent(
+                                event = event,
+                                repository = repository,
+                                onViewAttendance = { onNavigateToAttendance(event.id) }
+                            )
+                        }
                     )
+                },
+                showSearch = true, // We already have search above
+                emptyStateMessage = when {
+                    // No results from search query
+                    pastEvents.isNotEmpty() && searchQuery.isNotBlank() ->
+                        stringResource(R.string.no_search_results)
+                    // No results from date range filter
+                    pastEvents.isEmpty() && isDateFilterEnabled && fromDate != null && toDate != null ->
+                        stringResource(R.string.no_events_in_date_range)
+                    // No past events at all
+                    else -> stringResource(R.string.no_past_events)
+                },
+                isDeletable = true,
+                onDelete = { event ->
+                    // Delete will be handled by the confirmation dialog in the card content
                 }
-            }
+            )
         }
     }
 
@@ -280,7 +183,7 @@ fun EventHistoryScreen(
 }
 
 @Composable
-fun PastEventItem(
+fun PastEventContent(
     event: Event,
     repository: AttendanceRepository,
     onViewAttendance: () -> Unit
@@ -298,223 +201,171 @@ fun PastEventItem(
         totalContacts = repository.getContactsForEvent(event.id).size
     }
 
-    Card(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        )
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+        // Event status and metadata
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = event.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        if (event.isRecurring) {
-                            Icon(
-                                Icons.Default.Repeat,
-                                contentDescription = stringResource(R.string.cd_recurring_event),
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        } else if (event.isGeneratedFromRecurring) {
-                            Icon(
-                                Icons.Default.Repeat,
-                                contentDescription = stringResource(R.string.cd_recurring_event),
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                    if (event.description.isNotBlank()) {
-                        Text(
-                            text = event.description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // Date and Time Display - different for regular vs recurring events
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (event.isRecurring) {
-                            // Show day of week and time for recurring events
-                            Icon(
-                                Icons.Default.Repeat,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = event.dayOfWeek?.getDisplayName(
-                                    TextStyle.FULL,
-                                    Locale.getDefault()
-                                ) ?: "Unknown",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Icon(
-                                Icons.Default.Schedule,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = event.time.format(DateTimeFormatter.ofPattern("HH:mm")),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else {
-                            // Show fixed date and time for regular events
-                            Icon(
-                                Icons.Default.CalendarToday,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = event.date?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
-                                    ?: "No date",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Icon(
-                                Icons.Default.Schedule,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = event.time.format(DateTimeFormatter.ofPattern("HH:mm")),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    // Contact Groups Display
-                    if (selectedGroups.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.Group,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = stringResource(
-                                    R.string.selected_groups_contacts,
-                                    selectedGroups.joinToString(", ") { it.name },
-                                    totalContacts
-                                ),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
+                if (event.isRecurring || event.isGeneratedFromRecurring) {
+                    Icon(
+                        Icons.Default.Repeat,
+                        contentDescription = stringResource(R.string.cd_recurring_event),
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
+            }
 
-                // Past Event Badge and Delete Button
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Past Event Badge
+                AppIconButton(
+                    style = AppIconButtonStyle.ROUNDED_TEXT_ONLY,
+                    text = stringResource(R.string.past_event_badge),
+                    onClick = { },
+                    enabled = false,
+                    backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                    horizontalPadding = 8.dp,
+                    verticalPadding = 4.dp
+                )
+
+                // Delete Button
+                AppIconButton(
+                    style = AppIconButtonStyle.NO_BACKGROUND_ICON_ONLY,
+                    icon = Icons.Default.Delete,
+                    onClick = { showDeleteConfirmation = true },
+                    contentColor = ButtonRed,
+                    contentDescription = stringResource(R.string.cd_delete),
+                    iconSize = 20.dp
+                )
+            }
+        }
+
+        // Date and Time Display
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (event.isRecurring) {
+                // Show day of week and time for recurring events
                 Row(
-                    modifier = Modifier.padding(start = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    ) {
-                        Text(
-                            text = stringResource(R.string.past_event_badge),
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    IconButton(onClick = { showDeleteConfirmation = true }) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.cd_delete),
-                            tint = ButtonRed,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    Icon(
+                        Icons.Default.Repeat,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = event.dayOfWeek?.getDisplayName(
+                            TextStyle.FULL,
+                            Locale.getDefault()
+                        ) ?: "Unknown",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                // Show fixed date for regular events
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = event.date?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                            ?: "No date",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            Button(
-                onClick = onViewAttendance,
-                modifier = Modifier.fillMaxWidth()
+            // Time
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Icon(Icons.Default.People, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.view_attendance))
+                Icon(
+                    Icons.Default.Schedule,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = event.time.format(DateTimeFormatter.ofPattern("HH:mm")),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+        }
+
+        // Contact Groups Display
+        if (selectedGroups.isNotEmpty()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    Icons.Default.Group,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = stringResource(
+                        R.string.selected_groups_contacts,
+                        selectedGroups.joinToString(", ") { it.name },
+                        totalContacts
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        // View Attendance Button
+        Button(
+            onClick = onViewAttendance,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.People, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.view_attendance))
         }
     }
 
-    // Delete Confirmation Dialog
-    if (showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text(stringResource(R.string.delete_event)) },
-            text = { Text(stringResource(R.string.delete_event_confirmation, event.name)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            repository.removeEvent(event.id)
-                        }
-                        showDeleteConfirmation = false
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonRed
-                    )
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDeleteConfirmation = false },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = ButtonNeutral
-                    )
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
+    // Delete Confirmation Dialog using AppConfirmDialog
+    AppConfirmDialog(
+        isVisible = showDeleteConfirmation,
+        title = stringResource(R.string.delete_event),
+        message = stringResource(R.string.delete_event_confirmation, event.name),
+        onConfirm = {
+            coroutineScope.launch {
+                repository.removeEvent(event.id)
             }
-        )
-    }
+        },
+        onDismiss = { showDeleteConfirmation = false },
+        isDestructive = true
+    )
 }
