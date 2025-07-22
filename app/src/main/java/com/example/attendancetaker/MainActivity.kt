@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -59,6 +60,7 @@ import com.example.attendancetaker.navigation.Screen
 import com.example.attendancetaker.screens.attendance.AttendanceScreen
 import com.example.attendancetaker.screens.contacts.ContactGroupDetailsScreen
 import com.example.attendancetaker.screens.contacts.ContactGroupEditScreen
+import com.example.attendancetaker.screens.contacts.ContactSelectionViewModel
 import com.example.attendancetaker.screens.events.ContactGroupSelectionScreen
 import com.example.attendancetaker.screens.contacts.ContactSelectionScreen
 import com.example.attendancetaker.screens.contacts.ContactsScreen
@@ -101,6 +103,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
     val context = LocalContext.current
     val repository = remember { AttendanceRepository(context) }
     val coroutineScope = rememberCoroutineScope()
+    val contactSelectionViewModel: ContactSelectionViewModel = viewModel()
 
     // Initialize database with sample data and create recurring events when app starts
     LaunchedEffect(repository) {
@@ -515,6 +518,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 ContactGroupEditScreen(
                     groupId = if (groupId == "new") null else groupId,
                     repository = repository,
+                    contactSelectionViewModel = contactSelectionViewModel,
                     onNavigateBack = {
                         navController.popBackStack()
                     },
@@ -597,6 +601,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 ContactSelectionScreen(
                     groupId = if (groupId == "new") null else groupId,
                     repository = repository,
+                    contactSelectionViewModel = contactSelectionViewModel,
                     onNavigateBack = {
                         navController.popBackStack()
                     }

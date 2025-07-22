@@ -44,6 +44,7 @@ import kotlinx.coroutines.launch
 fun ContactGroupEditScreen(
     groupId: String?,
     repository: AttendanceRepository,
+    contactSelectionViewModel: ContactSelectionViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToContactSelection: (String?) -> Unit,
     modifier: Modifier = Modifier
@@ -53,7 +54,6 @@ fun ContactGroupEditScreen(
     var group by remember { mutableStateOf<ContactGroup?>(null) }
     var groupName by remember { mutableStateOf("") }
     var groupDescription by remember { mutableStateOf("") }
-    var selectedContactIds by remember { mutableStateOf(emptySet<String>()) }
     var phoneContacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
     var hasContactsPermission by remember {
         mutableStateOf(
@@ -64,15 +64,17 @@ fun ContactGroupEditScreen(
     }
     val contacts by repository.getAllContacts().collectAsState(initial = emptyList())
 
-    // Load group data if editing existing group
+        // Load group data if editing existing group
     LaunchedEffect(groupId) {
         if (groupId != null) {
             group = repository.getContactGroup(groupId)
             group?.let {
                 groupName = it.name
                 groupDescription = it.description
-                selectedContactIds = it.contactIds.toSet()
             }
+        } else {
+            // Clear selection for new group
+            contactSelectionViewModel.clearSelection()
         }
     }
 
@@ -103,10 +105,21 @@ fun ContactGroupEditScreen(
         combinedMap.values.toList()
     }
 
-    // Get selected contacts for display
-    val selectedContacts = remember(selectedContactIds, allAvailableContacts) {
-        allAvailableContacts.filter { selectedContactIds.contains(it.id) }
+    // Load existing group contacts into ViewModel when all data is ready
+    LaunchedEffect(group, allAvailableContacts, contacts) {
+        if (group != null && (allAvailableContacts.isNotEmpty() || contacts.isNotEmpty())) {
+            // Combine all available contacts including repository contacts
+            val allContacts = (allAvailableContacts + contacts).distinctBy { it.id }
+            val existingContacts = allContacts.filter { contact ->
+                group!!.contactIds.contains(contact.id)
+            }
+            contactSelectionViewModel.updateSelectedContacts(existingContacts)
+        }
     }
+
+    // Get selected contacts from ViewModel
+    val selectedContacts = contactSelectionViewModel.selectedContacts
+    val selectedContactIds = contactSelectionViewModel.selectedContactIds
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -121,18 +134,21 @@ fun ContactGroupEditScreen(
                 ToolbarActionPresets.saveAction(
                     onClick = {
                         coroutineScope.launch {
+                            // Get selected contact IDs from ViewModel
+                            val selectedIds = contactSelectionViewModel.selectedContactIds.toList()
+
                             // Save the group
                             val updatedGroup = if (group == null) {
                                 ContactGroup(
                                     name = groupName.trim(),
                                     description = groupDescription.trim(),
-                                    contactIds = selectedContactIds.toList()
+                                    contactIds = selectedIds
                                 )
                             } else {
                                 group!!.copy(
                                     name = groupName.trim(),
                                     description = groupDescription.trim(),
-                                    contactIds = selectedContactIds.toList()
+                                    contactIds = selectedIds
                                 )
                             }
 
@@ -143,12 +159,10 @@ fun ContactGroupEditScreen(
                             }
 
                             // Add new contacts to repository if they don't exist
-                            selectedContactIds.forEach { contactId ->
-                                val existingContact = contacts.find { it.id == contactId }
+                            contactSelectionViewModel.selectedContacts.forEach { contact ->
+                                val existingContact = contacts.find { it.id == contact.id }
                                 if (existingContact == null) {
-                                    val availableContact =
-                                        allAvailableContacts.find { it.id == contactId }
-                                    availableContact?.let { repository.addContact(it) }
+                                    repository.addContact(contact)
                                 }
                             }
 
@@ -235,10 +249,13 @@ fun ContactGroupEditScreen(
                             showSearch = true,
                             selectedItems = selectedContactIds,
                             onSelectionChange = { contactId, isSelected ->
-                                selectedContactIds = if (isSelected) {
-                                    selectedContactIds + contactId
-                                } else {
-                                    selectedContactIds - contactId
+                                val contact = allAvailableContacts.find { it.id == contactId }
+                                contact?.let {
+                                    if (isSelected) {
+                                        contactSelectionViewModel.addContact(it)
+                                    } else {
+                                        contactSelectionViewModel.removeContact(contactId)
+                                    }
                                 }
                             },
                             isEditable = false,

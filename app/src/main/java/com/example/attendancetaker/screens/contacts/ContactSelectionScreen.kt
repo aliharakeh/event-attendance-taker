@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,27 +32,39 @@ import kotlinx.coroutines.launch
 fun ContactSelectionScreen(
     groupId: String?,
     repository: AttendanceRepository,
+    contactSelectionViewModel: ContactSelectionViewModel,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var group by remember { mutableStateOf<ContactGroup?>(null) }
-    var selectedContactIds by remember { mutableStateOf(emptySet<String>()) }
-    var allAvailableContacts by remember { mutableStateOf(emptyList<Contact>()) }
+    var phoneContacts by remember { mutableStateOf(emptyList<Contact>()) }
+    val repositoryContacts by repository.getAllContacts().collectAsState(initial = emptyList())
 
     // Load group data if editing existing group
     LaunchedEffect(groupId) {
         if (groupId != null && groupId != "new") {
             group = repository.getContactGroup(groupId)
-            selectedContactIds = group?.contactIds?.toSet() ?: emptySet()
         }
     }
 
     // Load available contacts from phone
     LaunchedEffect(Unit) {
-        allAvailableContacts = ContactUtils.getPhoneContacts(context)
+        phoneContacts = ContactUtils.getPhoneContacts(context)
     }
+
+    // Combine phone contacts with repository contacts
+    val allAvailableContacts = remember(phoneContacts, repositoryContacts) {
+        val phoneContactMap = phoneContacts.associateBy { it.id }
+        val repoContactMap = repositoryContacts.associateBy { it.id }
+        // Merge both lists, prioritizing repository contacts for duplicates
+        val combinedMap = phoneContactMap + repoContactMap
+        combinedMap.values.toList()
+    }
+
+    // Get selected data from ViewModel
+    val selectedContactIds = contactSelectionViewModel.selectedContactIds
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -63,25 +76,9 @@ fun ContactSelectionScreen(
             actions = listOf(
                 ToolbarActionPresets.saveAction(
                     onClick = {
-                        coroutineScope.launch {
-                            if (group != null) {
-                                // Update existing group
-                                val updatedGroup = group!!.copy(
-                                    contactIds = selectedContactIds.toList()
-                                )
-                                repository.updateContactGroup(updatedGroup)
-
-                                // Add new contacts to repository if they don't exist
-                                selectedContactIds.forEach { contactId ->
-                                    val existingContact = repository.getContactById(contactId)
-                                    if (existingContact == null) {
-                                        val availableContact = allAvailableContacts.find { it.id == contactId }
-                                        availableContact?.let { repository.addContact(it) }
-                                    }
-                                }
-                            }
-                            onNavigateBack()
-                        }
+                        // The selection is already saved in the ViewModel
+                        // and will be persisted when the group is saved in ContactGroupEditScreen
+                        onNavigateBack()
                     }
                 )
             )
@@ -109,10 +106,9 @@ fun ContactSelectionScreen(
                 isItemClickable = true,
                 selectedItems = selectedContactIds,
                 onSelectionChange = { contactId, isSelected ->
-                    selectedContactIds = if (isSelected) {
-                        selectedContactIds + contactId
-                    } else {
-                        selectedContactIds - contactId
+                    val contact = allAvailableContacts.find { it.id == contactId }
+                    contact?.let {
+                        contactSelectionViewModel.toggleContact(it)
                     }
                 },
                 emptyStateMessage = stringResource(R.string.no_contacts_available),
