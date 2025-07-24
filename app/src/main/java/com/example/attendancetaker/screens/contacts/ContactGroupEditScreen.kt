@@ -72,9 +72,6 @@ fun ContactGroupEditScreen(
                 groupName = it.name
                 groupDescription = it.description
             }
-        } else {
-            // Clear selection for new group
-            contactSelectionViewModel.clearSelection()
         }
     }
 
