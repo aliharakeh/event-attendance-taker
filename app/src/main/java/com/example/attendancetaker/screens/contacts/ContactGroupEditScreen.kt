@@ -95,31 +95,8 @@ fun ContactGroupEditScreen(
         }
     }
 
-    // Combine phone contacts with existing repository contacts
-    val allAvailableContacts = remember(phoneContacts, contacts) {
-        val phoneContactMap = phoneContacts.associateBy { it.id }
-        val repoContactMap = contacts.associateBy { it.id }
-
-        // Merge both lists, prioritizing repository contacts for duplicates
-        val combinedMap = phoneContactMap + repoContactMap
-        combinedMap.values.toList()
-    }
-
-    // Load existing group contacts into ViewModel when all data is ready
-    LaunchedEffect(group, allAvailableContacts, contacts) {
-        if (group != null && (allAvailableContacts.isNotEmpty() || contacts.isNotEmpty())) {
-            // Combine all available contacts including repository contacts
-            val allContacts = (allAvailableContacts + contacts).distinctBy { it.id }
-            val existingContacts = allContacts.filter { contact ->
-                group!!.contactIds.contains(contact.id)
-            }
-            contactSelectionViewModel.updateSelectedContacts(existingContacts)
-        }
-    }
-
     // Get selected contacts from ViewModel
     val selectedContacts = contactSelectionViewModel.selectedContacts
-    val selectedContactIds = contactSelectionViewModel.selectedContactIds
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -209,7 +186,7 @@ fun ContactGroupEditScreen(
             // Contact selection section
             AppCard(
                 title = stringResource(R.string.select_contacts),
-                subtitle = stringResource(R.string.contacts_selected, selectedContactIds.size),
+                subtitle = stringResource(R.string.contacts_selected, selectedContacts.size),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -219,7 +196,7 @@ fun ContactGroupEditScreen(
                             if (hasContactsPermission) {
                                 onNavigateToContactSelection(groupId)
                             } else {
-                                permissionLauncher.launch(Manifest.permission.READ_CONTACTS).apply {
+                                permissionLauncher.launch(Manifest.permission.READ_CONTACTS).also {
                                     onNavigateToContactSelection(groupId)
                                 }
                             }
@@ -247,22 +224,7 @@ fun ContactGroupEditScreen(
                                 .fillMaxWidth()
                                 .weight(1f),
                             showSearch = true,
-                            selectedItems = selectedContactIds,
-                            onSelectionChange = { contactId, isSelected ->
-                                val contact = allAvailableContacts.find { it.id == contactId }
-                                contact?.let {
-                                    if (isSelected) {
-                                        contactSelectionViewModel.addContact(it)
-                                    } else {
-                                        contactSelectionViewModel.removeContact(contactId)
-                                    }
-                                }
-                            },
-                            isEditable = false,
                             emptyStateMessage = stringResource(R.string.no_contacts_selected_for_group),
-                            onItemClick = {
-                                // Optional: Navigate to contact details or edit
-                            }
                         )
                     }
                 }
