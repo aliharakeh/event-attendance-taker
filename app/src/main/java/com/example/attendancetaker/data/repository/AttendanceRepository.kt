@@ -52,6 +52,10 @@ class AttendanceRepository(private val context: Context) {
         return contactDao.getContactById(contactId)
     }
 
+    suspend fun getContactsByIds(contactIds: List<String>): List<Contact> {
+        return contactDao.getContactsByIds(contactIds)
+    }
+
     /**
      * Sync all existing contacts in contact groups with phone contacts
      * Only updates names for contacts that already exist in the database

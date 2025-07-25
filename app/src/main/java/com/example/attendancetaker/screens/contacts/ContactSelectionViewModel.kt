@@ -13,10 +13,7 @@ class ContactSelectionViewModel : ViewModel() {
     var selectedContactIds by mutableStateOf<Set<String>>(emptySet())
         private set
 
-    fun updateSelectedContacts(contacts: List<Contact>) {
-        selectedContacts = contacts
-        selectedContactIds = contacts.map { it.id }.toSet()
-    }
+    var groupContactsAdded by mutableStateOf(false)
 
     fun addContact(contact: Contact) {
         if (!selectedContactIds.contains(contact.id)) {
@@ -41,5 +38,6 @@ class ContactSelectionViewModel : ViewModel() {
     fun clearSelection() {
         selectedContacts = emptyList()
         selectedContactIds = emptySet()
+        groupContactsAdded = false
     }
 }

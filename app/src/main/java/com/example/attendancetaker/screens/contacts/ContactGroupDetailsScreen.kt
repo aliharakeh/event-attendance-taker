@@ -2,7 +2,6 @@ package com.example.attendancetaker.screens.contacts
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Whatsapp
@@ -26,10 +24,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import com.example.attendancetaker.R
-import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.ContactGroup
+import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.ui.components.AppIconButton
 import com.example.attendancetaker.ui.components.AppIconButtonStyle
 import com.example.attendancetaker.ui.components.AppList
@@ -145,7 +144,7 @@ private fun openWhatsAppMessage(context: Context, phoneNumber: String) {
 
         // Try to open WhatsApp directly
         val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("https://wa.me/$cleanedNumber")
+            data = "https://wa.me/$cleanedNumber".toUri()
             setPackage("com.whatsapp")
         }
 
@@ -155,7 +154,7 @@ private fun openWhatsAppMessage(context: Context, phoneNumber: String) {
         } else {
             // Fallback to web WhatsApp
             val webIntent = Intent(Intent.ACTION_VIEW).apply {
-                data = Uri.parse("https://wa.me/$cleanedNumber")
+                data = "https://wa.me/$cleanedNumber".toUri()
             }
             context.startActivity(webIntent)
         }
@@ -163,7 +162,7 @@ private fun openWhatsAppMessage(context: Context, phoneNumber: String) {
         e.printStackTrace()
         // Fallback to regular SMS
         val smsIntent = Intent(Intent.ACTION_SENDTO).apply {
-            data = Uri.parse("smsto:$phoneNumber")
+            data = "smsto:$phoneNumber".toUri()
         }
         try {
             context.startActivity(smsIntent)
@@ -180,7 +179,7 @@ private fun openWhatsAppCall(context: Context, phoneNumber: String) {
 
         // Try to open WhatsApp call directly
         val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("https://wa.me/$cleanedNumber?call")
+            data = "https://wa.me/$cleanedNumber?call".toUri()
             setPackage("com.whatsapp")
         }
 
@@ -190,7 +189,7 @@ private fun openWhatsAppCall(context: Context, phoneNumber: String) {
         } else {
             // Fallback to regular phone call
             val callIntent = Intent(Intent.ACTION_DIAL).apply {
-                data = Uri.parse("tel:$phoneNumber")
+                data = "tel:$phoneNumber".toUri()
             }
             context.startActivity(callIntent)
         }
@@ -198,7 +197,7 @@ private fun openWhatsAppCall(context: Context, phoneNumber: String) {
         e.printStackTrace()
         // Fallback to regular phone call
         val callIntent = Intent(Intent.ACTION_DIAL).apply {
-            data = Uri.parse("tel:$phoneNumber")
+            data = "tel:$phoneNumber".toUri()
         }
         try {
             context.startActivity(callIntent)

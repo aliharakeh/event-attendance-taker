@@ -64,13 +64,22 @@ fun ContactGroupEditScreen(
     }
     val contacts by repository.getAllContacts().collectAsState(initial = emptyList())
 
-        // Load group data if editing existing group
+    // Load group data if editing existing group
     LaunchedEffect(groupId) {
         if (groupId != null) {
             group = repository.getContactGroup(groupId)
             group?.let {
                 groupName = it.name
                 groupDescription = it.description
+                // Fetch group contacts and add to ViewModel without duplication
+                val groupContactIds = it.contactIds
+                if (groupContactIds.isNotEmpty() && !contactSelectionViewModel.groupContactsAdded) {
+                    contactSelectionViewModel.groupContactsAdded = true
+                    val groupContacts = repository.getContactsByIds(groupContactIds)
+                    groupContacts.forEach { contact ->
+                        contactSelectionViewModel.addContact(contact)
+                    }
+                }
             }
         }
     }

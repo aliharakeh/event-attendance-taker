@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Save
@@ -149,7 +150,7 @@ object ToolbarActionPresets {
         onClick: () -> Unit,
         enabled: Boolean = true
     ) = ToolbarAction(
-        icon = Icons.Default.Save,
+        icon = Icons.Default.Check,
         contentDescription = "Save",
         onClick = onClick,
         enabled = enabled

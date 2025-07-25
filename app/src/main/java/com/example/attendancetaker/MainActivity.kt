@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.example.attendancetaker.navigation.NavigationAnimations
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,14 +50,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.attendancetaker.data.repository.AttendanceRepository
+import com.example.attendancetaker.navigation.NavigationAnimations
 import com.example.attendancetaker.navigation.Screen
 import com.example.attendancetaker.screens.attendance.AttendanceScreen
 import com.example.attendancetaker.screens.contacts.ContactGroupDetailsScreen
 import com.example.attendancetaker.screens.contacts.ContactGroupEditScreen
-import com.example.attendancetaker.screens.contacts.ContactSelectionViewModel
-import com.example.attendancetaker.screens.events.ContactGroupSelectionScreen
 import com.example.attendancetaker.screens.contacts.ContactSelectionScreen
+import com.example.attendancetaker.screens.contacts.ContactSelectionViewModel
 import com.example.attendancetaker.screens.contacts.ContactsScreen
+import com.example.attendancetaker.screens.events.ContactGroupSelectionScreen
 import com.example.attendancetaker.screens.events.EventEditScreen
 import com.example.attendancetaker.screens.events.EventHistoryScreen
 import com.example.attendancetaker.screens.events.EventsScreen
@@ -199,7 +199,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                             }
                         }
                     },
-                                        navigationIcon = {
+                    navigationIcon = {
                         if (currentDestination?.route == Screen.ContactGroupSelection.route) {
                             IconButton(onClick = {
                                 // Save the selection before navigating back
@@ -269,69 +269,6 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(route = Screen.Events.route) {
-                EventsScreen(
-                    repository = repository,
-                    onNavigateToAttendance = { eventId ->
-                        navController.navigate(Screen.AttendanceList.createRoute(eventId))
-                    },
-                    onNavigateToEventEdit = { event ->
-                        val route = if (event == null) {
-                            Screen.EventEdit.createRouteForNew()
-                        } else {
-                            Screen.EventEdit.createRoute(event.id)
-                        }
-                        navController.navigate(route)
-                    },
-                    onNavigateToHistory = {
-                        navController.navigate(Screen.EventHistory.route)
-                    },
-                    onNavigateToRecurringTemplates = {
-                        navController.navigate(Screen.RecurringTemplates.route)
-                    }
-                )
-            }
-
-            composable(route = Screen.EventHistory.route) {
-                EventHistoryScreen(
-                    repository = repository,
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    },
-                    onNavigateToAttendance = { eventId ->
-                        navController.navigate(Screen.AttendanceList.createRoute(eventId))
-                    }
-                )
-            }
-
-            composable(route = Screen.RecurringTemplates.route) {
-                RecurringTemplatesScreen(
-                    repository = repository,
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    },
-                    onNavigateToEventEdit = { event ->
-                        val route = if (event == null) {
-                            Screen.EventEdit.createRouteForNew()
-                        } else {
-                            Screen.EventEdit.createRoute(event.id)
-                        }
-                        navController.navigate(route)
-                    }
-                )
-            }
-
-            composable(route = Screen.AttendanceList.route) { backStackEntry ->
-                val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
-                AttendanceScreen(
-                    eventId = eventId,
-                    repository = repository,
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    }
-                )
-            }
-
             composable(route = Screen.ContactGroupEdit.route) { backStackEntry ->
                 val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
                 ContactGroupEditScreen(
@@ -339,6 +276,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                     repository = repository,
                     contactSelectionViewModel = contactSelectionViewModel,
                     onNavigateBack = {
+                        contactSelectionViewModel.clearSelection()
                         navController.popBackStack()
                     },
                     onNavigateToContactSelection = { groupId ->
@@ -375,13 +313,25 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(route = Screen.ContactGroupSelection.route) { backStackEntry ->
-                val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
-                ContactGroupSelectionScreen(
-                    eventId = if (eventId == "new") null else eventId,
+            composable(route = Screen.Events.route) {
+                EventsScreen(
                     repository = repository,
-                    onNavigateBack = {
-                        navController.popBackStack()
+                    onNavigateToAttendance = { eventId ->
+                        navController.navigate(Screen.AttendanceList.createRoute(eventId))
+                    },
+                    onNavigateToEventEdit = { event ->
+                        val route = if (event == null) {
+                            Screen.EventEdit.createRouteForNew()
+                        } else {
+                            Screen.EventEdit.createRoute(event.id)
+                        }
+                        navController.navigate(route)
+                    },
+                    onNavigateToHistory = {
+                        navController.navigate(Screen.EventHistory.route)
+                    },
+                    onNavigateToRecurringTemplates = {
+                        navController.navigate(Screen.RecurringTemplates.route)
                     }
                 )
             }
@@ -399,6 +349,57 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                             Screen.ContactGroupSelection.createRouteForNew()
                         } else {
                             Screen.ContactGroupSelection.createRoute(eventId)
+                        }
+                        navController.navigate(route)
+                    }
+                )
+            }
+
+            composable(route = Screen.ContactGroupSelection.route) { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
+                ContactGroupSelectionScreen(
+                    eventId = if (eventId == "new") null else eventId,
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(route = Screen.AttendanceList.route) { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
+                AttendanceScreen(
+                    eventId = eventId,
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(route = Screen.EventHistory.route) {
+                EventHistoryScreen(
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToAttendance = { eventId ->
+                        navController.navigate(Screen.AttendanceList.createRoute(eventId))
+                    }
+                )
+            }
+
+            composable(route = Screen.RecurringTemplates.route) {
+                RecurringTemplatesScreen(
+                    repository = repository,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToEventEdit = { event ->
+                        val route = if (event == null) {
+                            Screen.EventEdit.createRouteForNew()
+                        } else {
+                            Screen.EventEdit.createRoute(event.id)
                         }
                         navController.navigate(route)
                     }
