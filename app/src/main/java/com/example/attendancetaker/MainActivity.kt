@@ -38,6 +38,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +60,7 @@ import com.example.attendancetaker.screens.contacts.ContactSelectionScreen
 import com.example.attendancetaker.screens.contacts.ContactSelectionViewModel
 import com.example.attendancetaker.screens.contacts.ContactsScreen
 import com.example.attendancetaker.screens.events.ContactGroupSelectionScreen
+import com.example.attendancetaker.screens.events.ContactGroupSelectionViewModel
 import com.example.attendancetaker.screens.events.EventEditScreen
 import com.example.attendancetaker.screens.events.EventHistoryScreen
 import com.example.attendancetaker.screens.events.EventsScreen
@@ -99,6 +101,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
     val repository = remember { AttendanceRepository(context) }
     val coroutineScope = rememberCoroutineScope()
     val contactSelectionViewModel: ContactSelectionViewModel = viewModel()
+    val contactGroupSelectionViewModel: ContactGroupSelectionViewModel = viewModel()
 
     // Initialize database with sample data and create recurring events when app starts
     LaunchedEffect(repository) {
@@ -342,6 +345,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                     eventId = if (eventId == "new") null else eventId,
                     repository = repository,
                     onNavigateBack = {
+                        contactGroupSelectionViewModel.clearSelection()
                         navController.popBackStack()
                     },
                     onNavigateToContactGroupSelection = { eventId ->
@@ -351,7 +355,8 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                             Screen.ContactGroupSelection.createRoute(eventId)
                         }
                         navController.navigate(route)
-                    }
+                    },
+                    contactGroupSelectionViewModel = contactGroupSelectionViewModel
                 )
             }
 
@@ -362,7 +367,8 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                     repository = repository,
                     onNavigateBack = {
                         navController.popBackStack()
-                    }
+                    },
+                    contactGroupSelectionViewModel = contactGroupSelectionViewModel
                 )
             }
 
@@ -490,6 +496,6 @@ fun LanguageSelectionDialog(
 
 data class BottomNavItem(
     val screen: Screen,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val icon: ImageVector,
     val label: String
 )

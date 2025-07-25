@@ -28,11 +28,13 @@ import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.entity.Event
+import com.example.attendancetaker.screens.events.ContactGroupSelectionViewModel
 import com.example.attendancetaker.ui.components.ActionItem
 import com.example.attendancetaker.ui.components.AppList
 import com.example.attendancetaker.ui.components.AppListItem
 import com.example.attendancetaker.ui.components.AppToolbar
 import com.example.attendancetaker.ui.components.ToolbarAction
+import com.example.attendancetaker.ui.components.ToolbarActionPresets
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,30 +42,26 @@ import kotlinx.coroutines.launch
 fun ContactGroupSelectionScreen(
     eventId: String?,
     repository: AttendanceRepository,
+    contactGroupSelectionViewModel: ContactGroupSelectionViewModel,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
-
     var event by remember { mutableStateOf<Event?>(null) }
-    var selectedGroupIds by remember { mutableStateOf(emptySet<String>()) }
     var contactsForGroups by remember { mutableStateOf(mapOf<String, List<Contact>>()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var isSaving by remember { mutableStateOf(false) }
 
     val allContactGroups by repository.getAllContactGroups().collectAsState(initial = emptyList())
 
     // Load event data if editing existing event
     LaunchedEffect(eventId) {
-        isLoading = true
-        try {
-            if (eventId != null && eventId != "new") {
-                event = repository.getEventById(eventId)
-                selectedGroupIds = event?.contactGroupIds?.toSet() ?: emptySet()
+        if (eventId != null && eventId != "new") {
+            event = repository.getEventById(eventId)
+            if (event != null) {
+                val eventGroupIds = event!!.contactGroupIds
+                if (eventGroupIds.isNotEmpty()) {
+                    val eventGroups = allContactGroups.filter { eventGroupIds.contains(it.id) }
+                    contactGroupSelectionViewModel.setSelectedGroups(eventGroups)
+                }
             }
-        } finally {
-            isLoading = false
         }
     }
 
@@ -76,46 +74,31 @@ fun ContactGroupSelectionScreen(
         contactsForGroups = contactsMap
     }
 
-    // Save function
-    val saveSelection: () -> Unit = {
-        coroutineScope.launch {
-            isSaving = true
-            try {
-                if (event != null) {
-                    // Update existing event
-                    val updatedEvent = event!!.copy(
-                        contactGroupIds = selectedGroupIds.toList()
-                    )
-                    repository.updateEvent(updatedEvent)
-                    onNavigateBack()
-                } else {
-                    snackbarHostState.showSnackbar("No event found to update")
-                }
-            } catch (e: Exception) {
-                snackbarHostState.showSnackbar("Failed to save: ${e.message}")
-            } finally {
-                isSaving = false
-            }
-        }
-    }
+    // Get selected data from ViewModel
+    val selectedGroupIds = contactGroupSelectionViewModel.selectedGroupIds
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier = modifier
-    ) { paddingValues ->
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        // Toolbar
+        AppToolbar(
+            title = stringResource(R.string.select_contact_groups),
+            onNavigationClick = onNavigateBack,
+            actions = listOf(
+                ToolbarActionPresets.saveAction(
+                    onClick = {
+                        // The selection is already saved in the ViewModel
+                        onNavigateBack()
+                    }
+                )
+            )
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+                .padding(16.dp)
         ) {
-            if (isLoading) {
-                Text(
-                    text = "Loading...",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(vertical = 32.dp)
-                )
-            } else {
                 AppList(
                     items = allContactGroups,
                     onItemToListItem = { group ->
@@ -134,20 +117,10 @@ fun ContactGroupSelectionScreen(
                     searchPlaceholder = stringResource(R.string.search_contact_groups),
                     isSelectable = true,
                     selectedItems = selectedGroupIds,
-                    globalAction = listOf(
-                        ActionItem(
-                            icon = Icons.Default.Save,
-                            contentDescription = "Save",
-                            onClick = saveSelection,
-                            enabled = selectedGroupIds.isNotEmpty(),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    ),
                     onSelectionChange = { groupId, isSelected ->
-                        selectedGroupIds = if (isSelected) {
-                            selectedGroupIds + groupId
-                        } else {
-                            selectedGroupIds - groupId
+                        val group = allContactGroups.find { it.id == groupId }
+                        group?.let {
+                            contactGroupSelectionViewModel.toggleGroup(it)
                         }
                     },
                     emptyStateMessage = if (allContactGroups.isEmpty()) {
@@ -156,7 +129,6 @@ fun ContactGroupSelectionScreen(
                         stringResource(R.string.no_contact_groups_match_search)
                     }
                 )
-            }
         }
     }
 }

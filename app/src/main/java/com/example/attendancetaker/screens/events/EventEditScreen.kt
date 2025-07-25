@@ -37,6 +37,7 @@ import com.example.attendancetaker.R
 import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.Event
+import com.example.attendancetaker.screens.events.ContactGroupSelectionViewModel
 import com.example.attendancetaker.screens.CheckboxRow
 import com.example.attendancetaker.screens.DatePickerDialog
 import com.example.attendancetaker.screens.SelectedContactGroupItem
@@ -57,6 +58,7 @@ import java.time.format.DateTimeFormatter
 fun EventEditScreen(
     eventId: String?,
     repository: AttendanceRepository,
+    contactGroupSelectionViewModel: ContactGroupSelectionViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToContactGroupSelection: (String?) -> Unit,
     modifier: Modifier = Modifier
@@ -68,7 +70,6 @@ fun EventEditScreen(
     var eventDescription by remember { mutableStateOf("") }
     var eventDate by remember { mutableStateOf(LocalDate.now()) }
     var eventTime by remember { mutableStateOf(LocalTime.now()) }
-    var selectedGroupIds by remember { mutableStateOf(emptySet<String>()) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
@@ -100,7 +101,14 @@ fun EventEditScreen(
                     eventDate = it.date ?: LocalDate.now()
                     eventTime = it.time
                 }
-                selectedGroupIds = it.contactGroupIds.toSet()
+                if (!contactGroupSelectionViewModel.eventGroupsAdded) {
+                    contactGroupSelectionViewModel.eventGroupsAdded = true
+                    val eventGroupIds = it.contactGroupIds
+                    if (eventGroupIds.isNotEmpty()) {
+                        val eventGroups = contactGroups.filter { group -> eventGroupIds.contains(group.id) }
+                        contactGroupSelectionViewModel.setSelectedGroups(eventGroups)
+                    }
+                }
             }
         }
     }
@@ -110,7 +118,14 @@ fun EventEditScreen(
         if (eventId != null && eventId != "new") {
             val refreshedEvent = repository.getEventById(eventId)
             refreshedEvent?.let {
-                selectedGroupIds = it.contactGroupIds.toSet()
+                if (!contactGroupSelectionViewModel.eventGroupsAdded) {
+                    contactGroupSelectionViewModel.eventGroupsAdded = true
+                    val eventGroupIds = it.contactGroupIds
+                    if (eventGroupIds.isNotEmpty()) {
+                        val eventGroups = contactGroups.filter { group -> eventGroupIds.contains(group.id) }
+                        contactGroupSelectionViewModel.setSelectedGroups(eventGroups)
+                    }
+                }
             }
         }
     }
@@ -125,8 +140,8 @@ fun EventEditScreen(
     }
 
     // Get selected contact groups for display
-    val selectedContactGroups = remember(selectedGroupIds, contactGroups) {
-        contactGroups.filter { selectedGroupIds.contains(it.id) }
+    val selectedContactGroups = remember(contactGroupSelectionViewModel.selectedGroupIds, contactGroups) {
+        contactGroups.filter { contactGroupSelectionViewModel.selectedGroupIds.contains(it.id) }
     }
 
     Column(
@@ -151,7 +166,7 @@ fun EventEditScreen(
                                     startDate = if (isRecurring) eventDate else null,
                                     endDate = if (isRecurring && hasEndDate) recurringEndDate else null,
                                     isActive = true,
-                                    contactGroupIds = selectedGroupIds.toList()
+                                    contactGroupIds = contactGroupSelectionViewModel.selectedGroupIds.toList()
                                 )
                             } else {
                                 event!!.copy(
@@ -164,7 +179,7 @@ fun EventEditScreen(
                                     startDate = if (isRecurring) eventDate else null,
                                     endDate = if (isRecurring && hasEndDate) recurringEndDate else null,
                                     isActive = true,
-                                    contactGroupIds = selectedGroupIds.toList()
+                                    contactGroupIds = contactGroupSelectionViewModel.selectedGroupIds.toList()
                                 )
                             }
 
@@ -319,7 +334,7 @@ fun EventEditScreen(
                 content = {
                     Column {
                         Text(
-                            text = stringResource(R.string.contact_groups_selected, selectedGroupIds.size),
+                            text = stringResource(R.string.contact_groups_selected, contactGroupSelectionViewModel.selectedGroupIds.size),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -332,12 +347,12 @@ fun EventEditScreen(
                                     group = group,
                                     contacts = contactsForGroups[group.id] ?: emptyList(),
                                     onRemove = {
-                                        selectedGroupIds = selectedGroupIds - group.id
+                                        contactGroupSelectionViewModel.removeGroup(group.id)
                                         // Immediately persist the change to database if editing existing event
                                         if (event != null) {
                                             coroutineScope.launch {
                                                 val updatedEvent = event!!.copy(
-                                                    contactGroupIds = (selectedGroupIds - group.id).toList()
+                                                    contactGroupIds = contactGroupSelectionViewModel.selectedGroupIds.toList()
                                                 )
                                                 repository.updateEvent(updatedEvent)
                                                 event = updatedEvent

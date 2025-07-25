@@ -37,7 +37,6 @@ fun ContactSelectionScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     var group by remember { mutableStateOf<ContactGroup?>(null) }
     var phoneContacts by remember { mutableStateOf(emptyList<Contact>()) }
     val repositoryContacts by repository.getAllContacts().collectAsState(initial = emptyList())
