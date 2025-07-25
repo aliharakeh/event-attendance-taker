@@ -4,12 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.EaseInOut
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import com.example.attendancetaker.navigation.NavigationAnimations
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -252,58 +247,12 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
             navController = navController,
             startDestination = Screen.Events.route,
             modifier = Modifier.padding(innerPadding),
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { it },
-                    animationSpec = tween(300, easing = EaseInOut)
-                ) + fadeIn(animationSpec = tween(300))
-            },
-            exitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { -it },
-                    animationSpec = tween(300, easing = EaseInOut)
-                ) + fadeOut(animationSpec = tween(300))
-            },
-            popEnterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { -it },
-                    animationSpec = tween(300, easing = EaseInOut)
-                ) + fadeIn(animationSpec = tween(300))
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(300, easing = EaseInOut)
-                ) + fadeOut(animationSpec = tween(300))
-            }
+            enterTransition = NavigationAnimations.enterTransition,
+            exitTransition = NavigationAnimations.exitTransition,
+            popEnterTransition = NavigationAnimations.popEnterTransition,
+            popExitTransition = NavigationAnimations.popExitTransition
         ) {
-            composable(
-                route = Screen.Contacts.route,
-                enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                }
-            ) {
+            composable(route = Screen.Contacts.route) {
                 ContactsScreen(
                     repository = repository,
                     onNavigateToGroupDetails = { group ->
@@ -320,33 +269,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(
-                route = Screen.Events.route,
-                enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                }
-            ) {
+            composable(route = Screen.Events.route) {
                 EventsScreen(
                     repository = repository,
                     onNavigateToAttendance = { eventId ->
@@ -369,33 +292,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(
-                route = Screen.EventHistory.route,
-                enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                }
-            ) {
+            composable(route = Screen.EventHistory.route) {
                 EventHistoryScreen(
                     repository = repository,
                     onNavigateBack = {
@@ -407,33 +304,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(
-                route = Screen.RecurringTemplates.route,
-                enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                }
-            ) {
+            composable(route = Screen.RecurringTemplates.route) {
                 RecurringTemplatesScreen(
                     repository = repository,
                     onNavigateBack = {
@@ -450,33 +321,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(
-                route = Screen.AttendanceList.route,
-                enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                }
-            ) { backStackEntry ->
+            composable(route = Screen.AttendanceList.route) { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
                 AttendanceScreen(
                     eventId = eventId,
@@ -487,33 +332,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(
-                route = Screen.ContactGroupEdit.route,
-                enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                }
-            ) { backStackEntry ->
+            composable(route = Screen.ContactGroupEdit.route) { backStackEntry ->
                 val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
                 ContactGroupEditScreen(
                     groupId = if (groupId == "new") null else groupId,
@@ -533,33 +352,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(
-                route = Screen.ContactGroupDetails.route,
-                enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                }
-            ) { backStackEntry ->
+            composable(route = Screen.ContactGroupDetails.route) { backStackEntry ->
                 val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
                 ContactGroupDetailsScreen(
                     groupId = groupId,
@@ -570,33 +363,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(
-                route = Screen.ContactSelection.route,
-                enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                }
-            ) { backStackEntry ->
+            composable(route = Screen.ContactSelection.route) { backStackEntry ->
                 val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
                 ContactSelectionScreen(
                     groupId = if (groupId == "new") null else groupId,
@@ -608,33 +375,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(
-                route = Screen.ContactGroupSelection.route,
-                enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                }
-            ) { backStackEntry ->
+            composable(route = Screen.ContactGroupSelection.route) { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
                 ContactGroupSelectionScreen(
                     eventId = if (eventId == "new") null else eventId,
@@ -645,33 +386,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                 )
             }
 
-            composable(
-                route = Screen.EventEdit.route,
-                enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeIn(animationSpec = tween(300))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300, easing = EaseInOut)
-                    ) + fadeOut(animationSpec = tween(300))
-                }
-            ) { backStackEntry ->
+            composable(route = Screen.EventEdit.route) { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
                 EventEditScreen(
                     eventId = if (eventId == "new") null else eventId,
