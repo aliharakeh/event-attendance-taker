@@ -41,7 +41,7 @@ import com.example.attendancetaker.R
 import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.entity.Event
-import com.example.attendancetaker.screens.DatePickerDialog
+import com.example.attendancetaker.ui.components.AppDatePickerDialog
 import com.example.attendancetaker.screens.DateRangeFilterCard
 import com.example.attendancetaker.ui.components.ActionItem
 import com.example.attendancetaker.ui.components.AppCard
@@ -162,7 +162,7 @@ fun EventHistoryScreen(
 
     // Date Picker Dialogs
     if (showFromDatePicker) {
-        DatePickerDialog(
+        AppDatePickerDialog(
             onDateSelected = { date ->
                 fromDate = date
                 showFromDatePicker = false
@@ -172,7 +172,7 @@ fun EventHistoryScreen(
     }
 
     if (showToDatePicker) {
-        DatePickerDialog(
+        AppDatePickerDialog(
             onDateSelected = { date ->
                 toDate = date
                 showToDatePicker = false

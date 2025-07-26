@@ -14,23 +14,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,117 +29,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
-import com.example.attendancetaker.ui.theme.ButtonBlue
-import com.example.attendancetaker.ui.theme.ButtonNeutral
+import com.example.attendancetaker.ui.components.AppDatePickerDialog
+import com.example.attendancetaker.ui.components.AppTimePickerDialog
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DatePickerDialog(
-    onDateSelected: (LocalDate) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = System.currentTimeMillis()
-    )
 
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        val date = java.time.Instant.ofEpochMilli(millis)
-                            .atZone(java.time.ZoneId.systemDefault())
-                            .toLocalDate()
-                        onDateSelected(date)
-                    }
-                },
-                colors = ButtonDefaults.textButtonColors(contentColor = ButtonBlue)
-            ) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(contentColor = ButtonNeutral)
-            ) {
-                Text("Cancel")
-            }
-        }
-    ) {
-        DatePicker(state = datePickerState)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TimePickerDialog(
-    onTimeSelected: (LocalTime) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val timePickerState = rememberTimePickerState(
-        initialHour = LocalTime.now().hour,
-        initialMinute = LocalTime.now().minute
-    )
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Select Time") },
-        text = {
-            TimePicker(state = timePickerState)
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val time = LocalTime.of(timePickerState.hour, timePickerState.minute)
-                    onTimeSelected(time)
-                },
-                colors = ButtonDefaults.textButtonColors(contentColor = ButtonBlue)
-            ) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(contentColor = ButtonNeutral)
-            ) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-
-/**
- * Shared checkbox component for recurring options
- */
-@Composable
-fun CheckboxRow(
-    text: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
 
 /**
  * Date range filter card component for filtering events by date

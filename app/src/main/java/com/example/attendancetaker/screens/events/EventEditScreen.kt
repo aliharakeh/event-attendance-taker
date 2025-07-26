@@ -34,8 +34,8 @@ import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.data.repository.AttendanceRepository
-import com.example.attendancetaker.screens.DatePickerDialog
-import com.example.attendancetaker.screens.TimePickerDialog
+import com.example.attendancetaker.ui.components.AppDatePickerDialog
+import com.example.attendancetaker.ui.components.AppTimePickerDialog
 import com.example.attendancetaker.ui.components.ActionPresets
 import com.example.attendancetaker.ui.components.AppCheckbox
 import com.example.attendancetaker.ui.components.AppCard
@@ -327,7 +327,7 @@ fun EventEditScreen(
 
     // Date Picker
     if (eventState.showDatePicker) {
-        DatePickerDialog(
+        AppDatePickerDialog(
             onDateSelected = { date ->
                 eventState.eventDate = date
                 eventState.showDatePicker = false
@@ -338,7 +338,7 @@ fun EventEditScreen(
 
     // Time Picker
     if (eventState.showTimePicker) {
-        TimePickerDialog(
+        AppTimePickerDialog(
             onTimeSelected = { time ->
                 eventState.eventTime = time
                 eventState.showTimePicker = false
@@ -349,7 +349,7 @@ fun EventEditScreen(
 
     // Recurring End Date Picker
     if (eventState.showRecurringEndDatePicker) {
-        DatePickerDialog(
+        AppDatePickerDialog(
             onDateSelected = { date ->
                 eventState.recurringEndDate = date
                 eventState.showRecurringEndDatePicker = false
