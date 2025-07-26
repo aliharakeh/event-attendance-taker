@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -21,49 +21,49 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun AppDateRangePicker(
-    startDate: LocalDate?,
-    endDate: LocalDate?,
-    onStartDateChange: (LocalDate?) -> Unit,
-    onEndDateChange: (LocalDate?) -> Unit,
+fun AppTimeRangePicker(
+    startTime: LocalTime?,
+    endTime: LocalTime?,
+    onStartTimeChange: (LocalTime?) -> Unit,
+    onEndTimeChange: (LocalTime?) -> Unit,
     modifier: Modifier = Modifier,
-    startDatePlaceholder: String = "Start Date",
-    endDatePlaceholder: String = "End Date",
+    startTimePlaceholder: String = "Start Time",
+    endTimePlaceholder: String = "End Time",
     enabled: Boolean = true
 ) {
-    val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-    var showStartDatePicker by remember { mutableStateOf(false) }
-    var showEndDatePicker by remember { mutableStateOf(false) }
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    var showEndTimePicker by remember { mutableStateOf(false) }
 
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Start Date Field
+        // Start Time Field
         OutlinedTextField(
-            value = startDate?.format(dateFormatter) ?: "",
+            value = startTime?.format(timeFormatter) ?: "",
             onValueChange = { /* Read-only field */ },
-            label = { Text(startDatePlaceholder) },
-            placeholder = { Text(startDatePlaceholder) },
+            label = { Text(startTimePlaceholder) },
+            placeholder = { Text(startTimePlaceholder) },
             readOnly = true,
             enabled = enabled,
             trailingIcon = {
                 Icon(
-                    Icons.Default.DateRange,
-                    contentDescription = "Select $startDatePlaceholder",
+                    Icons.Default.Schedule,
+                    contentDescription = "Select $startTimePlaceholder",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             modifier = Modifier
                 .weight(1f)
                 .clickable(enabled = enabled) {
-                    showStartDatePicker = true
+                    showStartTimePicker = true
                 },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -84,25 +84,25 @@ fun AppDateRangePicker(
             modifier = Modifier.padding(horizontal = 4.dp)
         )
 
-        // End Date Field
+        // End Time Field
         OutlinedTextField(
-            value = endDate?.format(dateFormatter) ?: "",
+            value = endTime?.format(timeFormatter) ?: "",
             onValueChange = { /* Read-only field */ },
-            label = { Text(endDatePlaceholder) },
-            placeholder = { Text(endDatePlaceholder) },
+            label = { Text(endTimePlaceholder) },
+            placeholder = { Text(endTimePlaceholder) },
             readOnly = true,
             enabled = enabled,
             trailingIcon = {
                 Icon(
-                    Icons.Default.DateRange,
-                    contentDescription = "Select $endDatePlaceholder",
+                    Icons.Default.Schedule,
+                    contentDescription = "Select $endTimePlaceholder",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             modifier = Modifier
                 .weight(1f)
                 .clickable(enabled = enabled) {
-                    showEndDatePicker = true
+                    showEndTimePicker = true
                 },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -116,33 +116,35 @@ fun AppDateRangePicker(
         )
     }
 
-    // Start Date Picker Dialog
-    if (showStartDatePicker) {
-        AppDatePickerDialog(
-            onDateSelected = { date ->
-                onStartDateChange(date)
-                showStartDatePicker = false
+    // Start Time Picker Dialog
+    if (showStartTimePicker) {
+        AppTimePickerDialog(
+            onTimeSelected = { time ->
+                onStartTimeChange(time)
+                showStartTimePicker = false
             },
             onDismiss = {
-                showStartDatePicker = false
+                showStartTimePicker = false
             },
-            initialDateMillis = startDate?.atStartOfDay(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
-                ?: System.currentTimeMillis()
+            initialHour = startTime?.hour ?: LocalTime.now().hour,
+            initialMinute = startTime?.minute ?: LocalTime.now().minute,
+            title = startTimePlaceholder
         )
     }
 
-    // End Date Picker Dialog
-    if (showEndDatePicker) {
-        AppDatePickerDialog(
-            onDateSelected = { date ->
-                onEndDateChange(date)
-                showEndDatePicker = false
+    // End Time Picker Dialog
+    if (showEndTimePicker) {
+        AppTimePickerDialog(
+            onTimeSelected = { time ->
+                onEndTimeChange(time)
+                showEndTimePicker = false
             },
             onDismiss = {
-                showEndDatePicker = false
+                showEndTimePicker = false
             },
-            initialDateMillis = endDate?.atStartOfDay(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
-                ?: System.currentTimeMillis()
+            initialHour = endTime?.hour ?: LocalTime.now().hour,
+            initialMinute = endTime?.minute ?: LocalTime.now().minute,
+            title = endTimePlaceholder
         )
     }
 }
