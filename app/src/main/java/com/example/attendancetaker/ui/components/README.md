@@ -270,11 +270,12 @@ AppList(
 ```
 
 **Selection Behavior:**
-- When `isSelectable = true`, users can click anywhere on the item to toggle selection
-- Checkboxes are still available for explicit selection
-- Selection count is displayed when items are selected
-- "Clear All" button appears to deselect all items
-- When `isEditable = true`, item clicks are disabled to prevent conflicts with action buttons
+
+-   When `isSelectable = true`, users can click anywhere on the item to toggle selection
+-   Checkboxes are still available for explicit selection
+-   Selection count is displayed when items are selected
+-   "Clear All" button appears to deselect all items
+-   When `isEditable = true`, item clicks are disabled to prevent conflicts with action buttons
 
 ### 7. AppToolbar
 
@@ -424,6 +425,68 @@ AppActionRow(
 -   `onClick`: Click handler
 -   `enabled`: Whether the action is enabled (default: true)
 
+### 9. AppCheckbox
+
+A reusable checkbox component with label that follows Material Design 3 principles.
+
+**Features:**
+
+-   Clean checkbox with label layout
+-   Clickable entire row for better UX
+-   Customizable colors for checkbox and label
+-   Disabled state support with proper visual feedback
+-   Text overflow handling with configurable max lines
+-   Accessibility support with proper touch targets
+-   Theme-aware default colors
+
+**Usage:**
+
+```kotlin
+// Basic checkbox
+AppCheckbox(
+    checked = isSelected,
+    onCheckedChange = { isSelected = it },
+    label = "Accept terms and conditions"
+)
+
+// Custom colors
+AppCheckbox(
+    checked = isEnabled,
+    onCheckedChange = { isEnabled = it },
+    label = "Enable notifications",
+    checkboxColor = MaterialTheme.colorScheme.primary,
+    labelColor = MaterialTheme.colorScheme.onSurface
+)
+
+// Disabled state
+AppCheckbox(
+    checked = false,
+    onCheckedChange = { },
+    label = "This option is not available",
+    enabled = false
+)
+
+// Multi-line label
+AppCheckbox(
+    checked = isAgreed,
+    onCheckedChange = { isAgreed = it },
+    label = "I agree to the very long terms and conditions that span multiple lines",
+    labelMaxLines = 3
+)
+```
+
+**Properties:**
+
+-   `checked`: Whether the checkbox is checked
+-   `onCheckedChange`: Callback when the checkbox state changes
+-   `label`: The text label for the checkbox
+-   `enabled`: Whether the checkbox is enabled (default: true)
+-   `labelColor`: The color of the label text (default: theme onSurface)
+-   `checkboxColor`: The color of the checkbox when checked (default: theme primary)
+-   `uncheckedColor`: The color of the checkbox when unchecked (default: theme outline)
+-   `labelMaxLines`: Maximum number of lines for the label text (default: unlimited)
+-   `labelOverflow`: How to handle text overflow in the label (default: ellipsis)
+
 ## Design Principles
 
 All components follow these design principles:
@@ -455,5 +518,6 @@ To migrate existing screens to use these components:
 5. Replace custom list implementations with `AppList`
 6. Replace manual action button rows with `AppActionRow`
 7. Replace TopAppBar implementations with `AppToolbar`
+8. Replace Checkbox implementations with `AppCheckbox`
 
 This will ensure consistent styling and behavior across the app.

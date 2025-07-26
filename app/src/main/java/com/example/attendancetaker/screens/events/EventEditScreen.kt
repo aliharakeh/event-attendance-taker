@@ -34,10 +34,10 @@ import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.data.repository.AttendanceRepository
-import com.example.attendancetaker.screens.CheckboxRow
 import com.example.attendancetaker.screens.DatePickerDialog
 import com.example.attendancetaker.screens.TimePickerDialog
 import com.example.attendancetaker.ui.components.ActionPresets
+import com.example.attendancetaker.ui.components.AppCheckbox
 import com.example.attendancetaker.ui.components.AppCard
 import com.example.attendancetaker.ui.components.AppList
 import com.example.attendancetaker.ui.components.AppListItem
@@ -221,8 +221,8 @@ fun EventEditScreen(
                         val shouldShowRecurringSettings = eventId == null || eventState.isRecurring
 
                         if (shouldShowRecurringSettings) {
-                            CheckboxRow(
-                                text = stringResource(R.string.make_recurring_event),
+                            AppCheckbox(
+                                label = stringResource(R.string.make_recurring_event),
                                 checked = eventState.isRecurring,
                                 onCheckedChange = { eventState.isRecurring = it }
                             )
@@ -239,8 +239,8 @@ fun EventEditScreen(
                                 )
 
                                 // End date option
-                                CheckboxRow(
-                                    text = stringResource(R.string.set_end_date),
+                                AppCheckbox(
+                                    label = stringResource(R.string.set_end_date),
                                     checked = eventState.hasEndDate,
                                     onCheckedChange = {
                                         eventState.hasEndDate = it
