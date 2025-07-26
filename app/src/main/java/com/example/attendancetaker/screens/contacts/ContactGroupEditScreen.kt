@@ -230,6 +230,10 @@ fun ContactGroupEditScreen(
                                 .fillMaxWidth()
                                 .weight(1f),
                             showSearch = true,
+                            isDeletable = true,
+                            onDelete = {
+                                contactGroupState.removeContact(it.id)
+                            },
                             emptyStateMessage = stringResource(R.string.no_contacts_selected_for_group),
                         )
                     }

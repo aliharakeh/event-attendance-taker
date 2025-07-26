@@ -288,7 +288,7 @@ fun EventEditScreen(
             AppCard(
                 title = stringResource(R.string.select_contact_groups),
                 actions = listOf(
-                    ActionPresets.addAction(
+                    ActionPresets.editAction(
                         onClick = { onNavigateToContactGroupSelection(eventId) }
                     )
                 ),
