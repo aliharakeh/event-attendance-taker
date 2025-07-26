@@ -10,7 +10,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -25,14 +24,13 @@ import com.example.attendancetaker.ui.components.AppListItem
 import com.example.attendancetaker.ui.components.AppToolbar
 import com.example.attendancetaker.ui.components.ToolbarActionPresets
 import com.example.attendancetaker.utils.ContactUtils
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactSelectionScreen(
     groupId: String?,
     repository: AttendanceRepository,
-    contactSelectionViewModel: ContactSelectionViewModel,
+    contactGroupState: ContactGroupState,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -63,7 +61,7 @@ fun ContactSelectionScreen(
     }
 
     // Get selected data from ViewModel
-    val selectedContactIds = contactSelectionViewModel.selectedContactIds
+    val selectedContactIds = contactGroupState.selectedContactIds
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -107,7 +105,7 @@ fun ContactSelectionScreen(
                 onSelectionChange = { contactId, isSelected ->
                     val contact = allAvailableContacts.find { it.id == contactId }
                     contact?.let {
-                        contactSelectionViewModel.toggleContact(it)
+                        contactGroupState.toggleContact(it)
                     }
                 },
                 emptyStateMessage = stringResource(R.string.no_contacts_available),

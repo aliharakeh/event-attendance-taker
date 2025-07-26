@@ -44,7 +44,7 @@ import kotlinx.coroutines.launch
 fun ContactGroupEditScreen(
     groupId: String?,
     repository: AttendanceRepository,
-    contactSelectionViewModel: ContactSelectionViewModel,
+    contactGroupState: ContactGroupState,
     onNavigateBack: () -> Unit,
     onNavigateToContactSelection: (String?) -> Unit,
     modifier: Modifier = Modifier
@@ -52,8 +52,6 @@ fun ContactGroupEditScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var group by remember { mutableStateOf<ContactGroup?>(null) }
-    var groupName by remember { mutableStateOf("") }
-    var groupDescription by remember { mutableStateOf("") }
     var phoneContacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
     var hasContactsPermission by remember {
         mutableStateOf(
@@ -66,18 +64,19 @@ fun ContactGroupEditScreen(
 
     // Load group data if editing existing group
     LaunchedEffect(groupId) {
-        if (groupId != null) {
+        if (groupId != null && !contactGroupState.hasState) {
+            contactGroupState.hasState = true
+
             group = repository.getContactGroup(groupId)
             group?.let {
-                groupName = it.name
-                groupDescription = it.description
-                // Fetch group contacts and add to ViewModel without duplication
+                contactGroupState.groupName = it.name
+                contactGroupState.groupDescription = it.description
+
                 val groupContactIds = it.contactIds
-                if (groupContactIds.isNotEmpty() && !contactSelectionViewModel.groupContactsAdded) {
-                    contactSelectionViewModel.groupContactsAdded = true
+                if (groupContactIds.isNotEmpty()) {
                     val groupContacts = repository.getContactsByIds(groupContactIds)
                     groupContacts.forEach { contact ->
-                        contactSelectionViewModel.addContact(contact)
+                        contactGroupState.addContact(contact)
                     }
                 }
             }
@@ -102,7 +101,7 @@ fun ContactGroupEditScreen(
     }
 
     // Get selected contacts from ViewModel
-    val selectedContacts = contactSelectionViewModel.selectedContacts
+    val selectedContacts = contactGroupState.selectedContacts
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -112,25 +111,27 @@ fun ContactGroupEditScreen(
             title = if (group == null) stringResource(R.string.add_contact_group_title) else stringResource(
                 R.string.edit_contact_group_title
             ),
-            onNavigationClick = onNavigateBack,
+            onNavigationClick = {
+                onNavigateBack()
+            },
             actions = listOf(
                 ToolbarActionPresets.saveAction(
                     onClick = {
                         coroutineScope.launch {
                             // Get selected contact IDs from ViewModel
-                            val selectedIds = contactSelectionViewModel.selectedContactIds.toList()
+                            val selectedIds = contactGroupState.selectedContactIds.toList()
 
                             // Save the group
                             val updatedGroup = if (group == null) {
                                 ContactGroup(
-                                    name = groupName.trim(),
-                                    description = groupDescription.trim(),
+                                    name = contactGroupState.groupName.trim(),
+                                    description = contactGroupState.groupDescription.trim(),
                                     contactIds = selectedIds
                                 )
                             } else {
                                 group!!.copy(
-                                    name = groupName.trim(),
-                                    description = groupDescription.trim(),
+                                    name = contactGroupState.groupName.trim(),
+                                    description = contactGroupState.groupDescription.trim(),
                                     contactIds = selectedIds
                                 )
                             }
@@ -142,7 +143,7 @@ fun ContactGroupEditScreen(
                             }
 
                             // Add new contacts to repository if they don't exist
-                            contactSelectionViewModel.selectedContacts.forEach { contact ->
+                            contactGroupState.selectedContacts.forEach { contact ->
                                 val existingContact = contacts.find { it.id == contact.id }
                                 if (existingContact == null) {
                                     repository.addContact(contact)
@@ -152,7 +153,7 @@ fun ContactGroupEditScreen(
                             onNavigateBack()
                         }
                     },
-                    enabled = groupName.isNotBlank()
+                    enabled = contactGroupState.groupName.isNotBlank()
                 )
             )
         )
@@ -171,15 +172,15 @@ fun ContactGroupEditScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         AppTextField(
-                            value = groupName,
-                            onValueChange = { groupName = it },
+                            value = contactGroupState.groupName,
+                            onValueChange = { contactGroupState.groupName = it },
                             label = stringResource(R.string.group_name),
                             modifier = Modifier.fillMaxWidth()
                         )
 
                         AppTextField(
-                            value = groupDescription,
-                            onValueChange = { groupDescription = it },
+                            value = contactGroupState.groupDescription,
+                            onValueChange = { contactGroupState.groupDescription = it },
                             label = stringResource(R.string.description_optional),
                             modifier = Modifier.fillMaxWidth()
                         )

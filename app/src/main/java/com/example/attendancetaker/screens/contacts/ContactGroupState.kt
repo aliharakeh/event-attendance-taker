@@ -6,14 +6,18 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.attendancetaker.data.entity.Contact
 
-class ContactSelectionViewModel : ViewModel() {
+class ContactGroupState : ViewModel() {
     var selectedContacts by mutableStateOf<List<Contact>>(emptyList())
         private set
 
     var selectedContactIds by mutableStateOf<Set<String>>(emptySet())
         private set
 
-    var groupContactsAdded by mutableStateOf(false)
+    var hasState by mutableStateOf(false)
+
+    var groupName by mutableStateOf("")
+
+    var groupDescription by mutableStateOf("")
 
     fun addContact(contact: Contact) {
         if (!selectedContactIds.contains(contact.id)) {
@@ -35,9 +39,11 @@ class ContactSelectionViewModel : ViewModel() {
         }
     }
 
-    fun clearSelection() {
+    fun clearState() {
         selectedContacts = emptyList()
         selectedContactIds = emptySet()
-        groupContactsAdded = false
+        hasState = false
+        groupName = ""
+        groupDescription = ""
     }
 }
