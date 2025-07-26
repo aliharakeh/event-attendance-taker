@@ -60,22 +60,25 @@ fun ContactGroupEditScreen(
         )
     }
     val contacts by repository.getAllContacts().collectAsState(initial = emptyList())
+    var group: ContactGroup? by remember { mutableStateOf(null) }
 
     // Load group data if editing existing group
     LaunchedEffect(groupId) {
-        if (groupId != null && !contactGroupState.hasState) {
-            contactGroupState.hasState = true
-
-            val group = repository.getContactGroup(groupId)
+        if (groupId != null) {
+            group = repository.getContactGroup(groupId)
             group?.let {
                 contactGroupState.groupName = it.name
                 contactGroupState.groupDescription = it.description
+            }
+        }
+    }
 
-                val groupContactIds = it.contactIds
-                if (groupContactIds.isNotEmpty()) {
-                    val groupContacts = contacts.filter { contact -> groupContactIds.contains(contact.id) }
-                    contactGroupState.updateSelectedContacts(groupContacts);
-                }
+    // Ensure selected contacts are loaded once the contact list is available
+    LaunchedEffect(group, contacts) {
+        if (group != null && contacts.isNotEmpty() && contactGroupState.selectedContactIds.isEmpty()) {
+            group?.let { grp ->
+                val groupContacts = contacts.filter { it.id in grp.contactIds }
+                contactGroupState.updateSelectedContacts(groupContacts)
             }
         }
     }
@@ -112,15 +115,22 @@ fun ContactGroupEditScreen(
                 ToolbarActionPresets.saveAction(
                     onClick = {
                         coroutineScope.launch {
-                            // Get selected contact IDs from ViewModel
                             val selectedIds = contactGroupState.selectedContactIds.toList()
 
-                            // Save the group
-                            val updatedGroup = ContactGroup(
-                                name = contactGroupState.groupName.trim(),
-                                description = contactGroupState.groupDescription.trim(),
-                                contactIds = selectedIds
-                            )
+                            val updatedGroup = if (groupId == null) {
+                                ContactGroup(
+                                    name = contactGroupState.groupName.trim(),
+                                    description = contactGroupState.groupDescription.trim(),
+                                    contactIds = selectedIds
+                                )
+                            } else {
+                                // Updating an existing group – preserve its id
+                                group!!.copy(
+                                    name = contactGroupState.groupName.trim(),
+                                    description = contactGroupState.groupDescription.trim(),
+                                    contactIds = selectedIds
+                                )
+                            }
 
                             if (groupId == null) {
                                 repository.addContactGroup(updatedGroup)
@@ -179,7 +189,10 @@ fun ContactGroupEditScreen(
             // Contact selection section
             AppCard(
                 title = stringResource(R.string.select_contacts),
-                subtitle = stringResource(R.string.contacts_selected, contactGroupState.selectedContacts.size),
+                subtitle = stringResource(
+                    R.string.contacts_selected,
+                    contactGroupState.selectedContacts.size
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),

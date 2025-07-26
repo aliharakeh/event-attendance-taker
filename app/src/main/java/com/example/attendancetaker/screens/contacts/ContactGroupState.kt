@@ -13,8 +13,6 @@ class ContactGroupState : ViewModel() {
     var selectedContactIds by mutableStateOf<Set<String>>(emptySet())
         private set
 
-    var hasState by mutableStateOf(false)
-
     var groupName by mutableStateOf("")
 
     var groupDescription by mutableStateOf("")
@@ -46,7 +44,6 @@ class ContactGroupState : ViewModel() {
     fun clearState() {
         selectedContacts = emptyList()
         selectedContactIds = emptySet()
-        hasState = false
         groupName = ""
         groupDescription = ""
     }

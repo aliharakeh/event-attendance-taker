@@ -64,21 +64,24 @@ fun EventEditScreen(
     val coroutineScope = rememberCoroutineScope()
     val contactGroups by repository.getAllContactGroups().collectAsState(initial = emptyList())
     var contactsForGroups by remember { mutableStateOf(mapOf<String, List<Contact>>()) }
+    var event: Event? by remember { mutableStateOf(null) }
 
     // Load event data
     LaunchedEffect(eventId) {
-        if (eventId != null && !eventState.hasState) {
-            eventState.hasState = true
-
-            val event = repository.getEventById(eventId)
+        if (eventId != null) {
+            event = repository.getEventById(eventId)
             event?.let {
                 eventState.initializeFromEvent(it)
-                val eventGroupIds = it.contactGroupIds
-                if (eventGroupIds.isNotEmpty()) {
-                    val eventGroups =
-                        contactGroups.filter { group -> eventGroupIds.contains(group.id) }
-                    eventState.updateSelectedGroups(eventGroups)
-                }
+            }
+        }
+    }
+
+    // Ensure selected groups are loaded once the contact groups list is available
+    LaunchedEffect(event, contactGroups) {
+        if (event != null && contactGroups.isNotEmpty() && eventState.selectedGroupIds.isEmpty()) {
+            event?.let { evt ->
+                val eventGroups = contactGroups.filter { it.id in evt.contactGroupIds }
+                eventState.updateSelectedGroups(eventGroups)
             }
         }
     }
@@ -105,18 +108,34 @@ fun EventEditScreen(
                 ToolbarActionPresets.saveAction(
                     onClick = {
                         coroutineScope.launch {
-                            val updatedEvent = Event(
-                                name = eventState.eventName.trim(),
-                                description = eventState.eventDescription.trim(),
-                                date = if (eventState.isRecurring) null else eventState.eventDate,
-                                time = eventState.eventTime,
-                                isRecurring = eventState.isRecurring,
-                                dayOfWeek = if (eventState.isRecurring) eventState.eventDate.dayOfWeek else null,
-                                startDate = if (eventState.isRecurring) eventState.eventDate else null,
-                                endDate = if (eventState.isRecurring && eventState.hasEndDate) eventState.recurringEndDate else null,
-                                isActive = true,
-                                contactGroupIds = eventState.selectedGroupIds.toList()
-                            )
+                            val updatedEvent = if (eventId == null) {
+                                Event(
+                                    name = eventState.eventName.trim(),
+                                    description = eventState.eventDescription.trim(),
+                                    date = if (eventState.isRecurring) null else eventState.eventDate,
+                                    time = eventState.eventTime,
+                                    isRecurring = eventState.isRecurring,
+                                    dayOfWeek = if (eventState.isRecurring) eventState.eventDate.dayOfWeek else null,
+                                    startDate = if (eventState.isRecurring) eventState.eventDate else null,
+                                    endDate = if (eventState.isRecurring && eventState.hasEndDate) eventState.recurringEndDate else null,
+                                    isActive = true,
+                                    contactGroupIds = eventState.selectedGroupIds.toList()
+                                )
+                            } else {
+                                // Updating an existing event – preserve its id & recurringEventId
+                                event!!.copy(
+                                    name = eventState.eventName.trim(),
+                                    description = eventState.eventDescription.trim(),
+                                    date = if (eventState.isRecurring) null else eventState.eventDate,
+                                    time = eventState.eventTime,
+                                    isRecurring = eventState.isRecurring,
+                                    dayOfWeek = if (eventState.isRecurring) eventState.eventDate.dayOfWeek else null,
+                                    startDate = if (eventState.isRecurring) eventState.eventDate else null,
+                                    endDate = if (eventState.isRecurring && eventState.hasEndDate) eventState.recurringEndDate else null,
+                                    isActive = true,
+                                    contactGroupIds = eventState.selectedGroupIds.toList()
+                                )
+                            }
 
                             if (eventId == null) {
                                 repository.addEvent(updatedEvent)

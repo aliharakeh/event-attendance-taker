@@ -14,8 +14,6 @@ class EventState : ViewModel() {
     var selectedGroupIds by mutableStateOf<Set<String>>(emptySet())
         private set
 
-    var hasState by mutableStateOf(false)
-    var event by mutableStateOf<Event?>(null)
     var eventName by mutableStateOf("")
     var eventDescription by mutableStateOf("")
     var eventDate by mutableStateOf(java.time.LocalDate.now())
@@ -52,7 +50,6 @@ class EventState : ViewModel() {
     }
 
     fun initializeFromEvent(event: Event) {
-        this.event = event
         eventName = event.name
         eventDescription = event.description
         if (event.isRecurring) {
@@ -73,8 +70,6 @@ class EventState : ViewModel() {
     fun clearState() {
         selectedGroups = emptyList()
         selectedGroupIds = emptySet()
-        hasState = false
-        event = null
         eventName = ""
         eventDescription = ""
         eventDate = java.time.LocalDate.now()
