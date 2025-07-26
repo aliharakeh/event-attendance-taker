@@ -28,23 +28,14 @@ import com.example.attendancetaker.utils.ContactUtils
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactSelectionScreen(
-    groupId: String?,
     repository: AttendanceRepository,
     contactGroupState: ContactGroupState,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    var group by remember { mutableStateOf<ContactGroup?>(null) }
     var phoneContacts by remember { mutableStateOf(emptyList<Contact>()) }
     val repositoryContacts by repository.getAllContacts().collectAsState(initial = emptyList())
-
-    // Load group data if editing existing group
-    LaunchedEffect(groupId) {
-        if (groupId != null && groupId != "new") {
-            group = repository.getContactGroup(groupId)
-        }
-    }
 
     // Load available contacts from phone
     LaunchedEffect(Unit) {
@@ -59,9 +50,6 @@ fun ContactSelectionScreen(
         val combinedMap = phoneContactMap + repoContactMap
         combinedMap.values.toList()
     }
-
-    // Get selected data from ViewModel
-    val selectedContactIds = contactGroupState.selectedContactIds
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -94,14 +82,14 @@ fun ContactSelectionScreen(
                         id = contact.id,
                         title = contact.name,
                         subtitle = contact.phoneNumber,
-                        isSelected = selectedContactIds.contains(contact.id)
+                        isSelected = contactGroupState.selectedContactIds.contains(contact.id)
                     )
                 },
                 searchPlaceholder = stringResource(R.string.search_contacts),
                 showSearch = true,
                 isSelectable = true,
                 isItemClickable = true,
-                selectedItems = selectedContactIds,
+                selectedItems = contactGroupState.selectedContactIds,
                 onSelectionChange = { contactId, isSelected ->
                     val contact = allAvailableContacts.find { it.id == contactId }
                     contact?.let {

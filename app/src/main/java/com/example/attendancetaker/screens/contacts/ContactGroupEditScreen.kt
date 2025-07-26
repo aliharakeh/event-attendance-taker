@@ -51,7 +51,6 @@ fun ContactGroupEditScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var group by remember { mutableStateOf<ContactGroup?>(null) }
     var phoneContacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
     var hasContactsPermission by remember {
         mutableStateOf(
@@ -67,17 +66,15 @@ fun ContactGroupEditScreen(
         if (groupId != null && !contactGroupState.hasState) {
             contactGroupState.hasState = true
 
-            group = repository.getContactGroup(groupId)
+            val group = repository.getContactGroup(groupId)
             group?.let {
                 contactGroupState.groupName = it.name
                 contactGroupState.groupDescription = it.description
 
                 val groupContactIds = it.contactIds
                 if (groupContactIds.isNotEmpty()) {
-                    val groupContacts = repository.getContactsByIds(groupContactIds)
-                    groupContacts.forEach { contact ->
-                        contactGroupState.addContact(contact)
-                    }
+                    val groupContacts = contacts.filter { contact -> groupContactIds.contains(contact.id) }
+                    contactGroupState.updateSelectedContacts(groupContacts);
                 }
             }
         }
@@ -100,15 +97,12 @@ fun ContactGroupEditScreen(
         }
     }
 
-    // Get selected contacts from ViewModel
-    val selectedContacts = contactGroupState.selectedContacts
-
     Column(
         modifier = modifier.fillMaxSize()
     ) {
         // Toolbar
         AppToolbar(
-            title = if (group == null) stringResource(R.string.add_contact_group_title) else stringResource(
+            title = if (groupId == null) stringResource(R.string.add_contact_group_title) else stringResource(
                 R.string.edit_contact_group_title
             ),
             onNavigationClick = {
@@ -122,21 +116,13 @@ fun ContactGroupEditScreen(
                             val selectedIds = contactGroupState.selectedContactIds.toList()
 
                             // Save the group
-                            val updatedGroup = if (group == null) {
-                                ContactGroup(
-                                    name = contactGroupState.groupName.trim(),
-                                    description = contactGroupState.groupDescription.trim(),
-                                    contactIds = selectedIds
-                                )
-                            } else {
-                                group!!.copy(
-                                    name = contactGroupState.groupName.trim(),
-                                    description = contactGroupState.groupDescription.trim(),
-                                    contactIds = selectedIds
-                                )
-                            }
+                            val updatedGroup = ContactGroup(
+                                name = contactGroupState.groupName.trim(),
+                                description = contactGroupState.groupDescription.trim(),
+                                contactIds = selectedIds
+                            )
 
-                            if (group == null) {
+                            if (groupId == null) {
                                 repository.addContactGroup(updatedGroup)
                             } else {
                                 repository.updateContactGroup(updatedGroup)
@@ -193,7 +179,7 @@ fun ContactGroupEditScreen(
             // Contact selection section
             AppCard(
                 title = stringResource(R.string.select_contacts),
-                subtitle = stringResource(R.string.contacts_selected, selectedContacts.size),
+                subtitle = stringResource(R.string.contacts_selected, contactGroupState.selectedContacts.size),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -219,7 +205,7 @@ fun ContactGroupEditScreen(
                         )
                     } else {
                         AppList(
-                            items = selectedContacts,
+                            items = contactGroupState.selectedContacts,
                             onItemToListItem = { contact ->
                                 AppListItem(
                                     id = contact.id,

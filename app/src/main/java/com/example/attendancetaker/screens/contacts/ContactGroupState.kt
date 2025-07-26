@@ -31,6 +31,11 @@ class ContactGroupState : ViewModel() {
         selectedContactIds = selectedContactIds - contactId
     }
 
+    fun updateSelectedContacts(contacts: List<Contact>) {
+        selectedContacts = contacts
+        selectedContactIds = contacts.map { it.id }.toSet()
+    }
+
     fun toggleContact(contact: Contact) {
         if (selectedContactIds.contains(contact.id)) {
             removeContact(contact.id)

@@ -60,7 +60,7 @@ import com.example.attendancetaker.screens.contacts.ContactSelectionScreen
 import com.example.attendancetaker.screens.contacts.ContactGroupState
 import com.example.attendancetaker.screens.contacts.ContactsScreen
 import com.example.attendancetaker.screens.events.ContactGroupSelectionScreen
-import com.example.attendancetaker.screens.events.ContactGroupSelectionViewModel
+import com.example.attendancetaker.screens.events.EventState
 import com.example.attendancetaker.screens.events.EventEditScreen
 import com.example.attendancetaker.screens.events.EventHistoryScreen
 import com.example.attendancetaker.screens.events.EventsScreen
@@ -101,7 +101,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
     val repository = remember { AttendanceRepository(context) }
     val coroutineScope = rememberCoroutineScope()
     val contactGroupState: ContactGroupState = viewModel()
-    val contactGroupSelectionViewModel: ContactGroupSelectionViewModel = viewModel()
+    val eventState: EventState = viewModel()
 
     // Initialize database with sample data and create recurring events when app starts
     LaunchedEffect(repository) {
@@ -305,9 +305,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
             }
 
             composable(route = Screen.ContactSelection.route) { backStackEntry ->
-                val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
                 ContactSelectionScreen(
-                    groupId = if (groupId == "new") null else groupId,
                     repository = repository,
                     contactGroupState = contactGroupState,
                     onNavigateBack = {
@@ -345,7 +343,7 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                     eventId = if (eventId == "new") null else eventId,
                     repository = repository,
                     onNavigateBack = {
-                        contactGroupSelectionViewModel.clearSelection()
+                        eventState.clearState()
                         navController.popBackStack()
                     },
                     onNavigateToContactGroupSelection = { eventId ->
@@ -356,19 +354,17 @@ fun AttendanceTakerApp(languageManager: LanguageManager) {
                         }
                         navController.navigate(route)
                     },
-                    contactGroupSelectionViewModel = contactGroupSelectionViewModel
+                    eventState = eventState
                 )
             }
 
             composable(route = Screen.ContactGroupSelection.route) { backStackEntry ->
-                val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
                 ContactGroupSelectionScreen(
-                    eventId = if (eventId == "new") null else eventId,
                     repository = repository,
                     onNavigateBack = {
                         navController.popBackStack()
                     },
-                    contactGroupSelectionViewModel = contactGroupSelectionViewModel
+                    eventState = eventState
                 )
             }
 
