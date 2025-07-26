@@ -41,8 +41,7 @@ import com.example.attendancetaker.R
 import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.entity.Event
-import com.example.attendancetaker.ui.components.AppDatePickerDialog
-import com.example.attendancetaker.screens.DateRangeFilterCard
+import com.example.attendancetaker.ui.components.AppDateRangePicker
 import com.example.attendancetaker.ui.components.ActionItem
 import com.example.attendancetaker.ui.components.AppCard
 import com.example.attendancetaker.ui.components.AppConfirmDialog
@@ -68,15 +67,12 @@ fun EventHistoryScreen(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var isDateFilterEnabled by remember { mutableStateOf(false) }
     var fromDate by remember { mutableStateOf<LocalDate?>(null) }
     var toDate by remember { mutableStateOf<LocalDate?>(null) }
-    var showFromDatePicker by remember { mutableStateOf(false) }
-    var showToDatePicker by remember { mutableStateOf(false) }
 
     // Get events based on whether date filter is enabled
-    val pastEvents by remember(isDateFilterEnabled, fromDate, toDate) {
-        if (isDateFilterEnabled && fromDate != null && toDate != null) {
+    val pastEvents by remember(fromDate, toDate) {
+        if (fromDate != null && toDate != null) {
             repository.getPastEventsInDateRange(fromDate!!, toDate!!)
         } else {
             repository.getPastEvents()
@@ -108,19 +104,14 @@ fun EventHistoryScreen(
                 .padding(horizontal = 16.dp)
         ) {
 
-            // Date Range Filter
-            DateRangeFilterCard(
-                isDateFilterEnabled = isDateFilterEnabled,
-                fromDate = fromDate,
-                toDate = toDate,
-                onDateFilterToggle = { isDateFilterEnabled = it },
-                onFromDateClick = { showFromDatePicker = true },
-                onToDateClick = { showToDatePicker = true },
-                onClearDateFilter = {
-                    isDateFilterEnabled = false
-                    fromDate = null
-                    toDate = null
-                },
+            // Date Range Filter using AppDateRangePicker
+            AppDateRangePicker(
+                startDate = fromDate,
+                endDate = toDate,
+                onStartDateChange = { fromDate = it },
+                onEndDateChange = { toDate = it },
+                startDatePlaceholder = stringResource(R.string.from_date),
+                endDatePlaceholder = stringResource(R.string.to_date),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -147,7 +138,7 @@ fun EventHistoryScreen(
                     pastEvents.isNotEmpty() && searchQuery.isNotBlank() ->
                         stringResource(R.string.no_search_results)
                     // No results from date range filter
-                    pastEvents.isEmpty() && isDateFilterEnabled && fromDate != null && toDate != null ->
+                    pastEvents.isEmpty() && fromDate != null && toDate != null ->
                         stringResource(R.string.no_events_in_date_range)
                     // No past events at all
                     else -> stringResource(R.string.no_past_events)
@@ -158,27 +149,6 @@ fun EventHistoryScreen(
                 }
             )
         }
-    }
-
-    // Date Picker Dialogs
-    if (showFromDatePicker) {
-        AppDatePickerDialog(
-            onDateSelected = { date ->
-                fromDate = date
-                showFromDatePicker = false
-            },
-            onDismiss = { showFromDatePicker = false }
-        )
-    }
-
-    if (showToDatePicker) {
-        AppDatePickerDialog(
-            onDateSelected = { date ->
-                toDate = date
-                showToDatePicker = false
-            },
-            onDismiss = { showToDatePicker = false }
-        )
     }
 }
 
