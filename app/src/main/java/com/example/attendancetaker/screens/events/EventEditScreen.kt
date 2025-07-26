@@ -13,9 +13,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,16 +30,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
 import com.example.attendancetaker.data.entity.Contact
+import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.screens.CheckboxRow
 import com.example.attendancetaker.screens.DatePickerDialog
-import com.example.attendancetaker.screens.SelectedContactGroupItem
 import com.example.attendancetaker.screens.TimePickerDialog
 import com.example.attendancetaker.ui.components.ActionPresets
 import com.example.attendancetaker.ui.components.AppCard
@@ -84,11 +90,6 @@ fun EventEditScreen(
             contactsMap[group.id] = repository.getContactsFromGroups(listOf(group.id))
         }
         contactsForGroups = contactsMap
-    }
-
-    // Get selected contact groups for display
-    val selectedContactGroups = remember(eventState.selectedGroupIds, contactGroups) {
-        contactGroups.filter { eventState.selectedGroupIds.contains(it.id) }
     }
 
     Column(
@@ -283,10 +284,10 @@ fun EventEditScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
 
-                        if (selectedContactGroups.isNotEmpty()) {
+                        if (eventState.selectedGroups.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            selectedContactGroups.forEach { group ->
+                            eventState.selectedGroups.forEach { group ->
                                 SelectedContactGroupItem(
                                     group = group,
                                     contacts = contactsForGroups[group.id] ?: emptyList(),
@@ -352,6 +353,56 @@ fun EventEditScreen(
             onDismiss = { eventState.showRecurringEndDatePicker = false }
         )
     }
+}
 
+@Composable
+fun SelectedContactGroupItem(
+    group: ContactGroup,
+    contacts: List<Contact>,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = group.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                if (group.description.isNotEmpty()) {
+                    Text(
+                        text = group.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.members_count, contacts.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
 
+            IconButton(onClick = onRemove) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.remove_contact_group),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
 }

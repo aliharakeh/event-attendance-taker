@@ -48,8 +48,7 @@ class EventState : ViewModel() {
     }
 
     fun updateSelectedGroups(groups: List<ContactGroup>) {
-        selectedGroups = groups
-        selectedGroupIds = groups.map { it.id }.toSet()
+        groups.forEach { addGroup(it) }
     }
 
     fun initializeFromEvent(event: Event) {

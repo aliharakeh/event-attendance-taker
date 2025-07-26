@@ -32,8 +32,7 @@ class ContactGroupState : ViewModel() {
     }
 
     fun updateSelectedContacts(contacts: List<Contact>) {
-        selectedContacts = contacts
-        selectedContactIds = contacts.map { it.id }.toSet()
+        contacts.forEach { addContact(it) }
     }
 
     fun toggleContact(contact: Contact) {
