@@ -147,14 +147,14 @@ fun EventEditScreen(
                     ) {
                         AppTextField(
                             value = eventState.eventName,
-                            onValueChange = { eventState.setEventName(it) },
+                            onValueChange = { eventState.eventName = it },
                             label = stringResource(R.string.event_name),
                             modifier = Modifier.fillMaxWidth()
                         )
 
                         AppTextField(
                             value = eventState.eventDescription,
-                            onValueChange = { eventState.setEventDescription(it) },
+                            onValueChange = { eventState.eventDescription = it },
                             label = stringResource(R.string.description_optional),
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 2,
@@ -180,7 +180,7 @@ fun EventEditScreen(
                                 },
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clickable { eventState.setShowDatePicker(true) }
+                                    .clickable { eventState.showDatePicker = true }
                             )
 
                             // Time selection
@@ -197,7 +197,7 @@ fun EventEditScreen(
                                 },
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clickable { eventState.setShowTimePicker(true) }
+                                    .clickable { eventState.showTimePicker = true }
                             )
                         }
 
@@ -208,7 +208,7 @@ fun EventEditScreen(
                             CheckboxRow(
                                 text = stringResource(R.string.make_recurring_event),
                                 checked = eventState.isRecurring,
-                                onCheckedChange = { eventState.setIsRecurring(it) }
+                                onCheckedChange = { eventState.isRecurring = it }
                             )
 
                             if (eventState.isRecurring) {
@@ -227,9 +227,9 @@ fun EventEditScreen(
                                     text = stringResource(R.string.set_end_date),
                                     checked = eventState.hasEndDate,
                                     onCheckedChange = {
-                                        eventState.setHasEndDate(it)
+                                        eventState.hasEndDate = it
                                         if (!it) {
-                                            eventState.setRecurringEndDate(null)
+                                            eventState.recurringEndDate = null
                                         }
                                     }
                                 )
@@ -237,7 +237,7 @@ fun EventEditScreen(
                                 if (eventState.hasEndDate) {
                                     // End date selection
                                     AppTextField(
-                                        value = reventState.ecurringEndDate?.format(
+                                        value = eventState.recurringEndDate?.format(
                                             DateTimeFormatter.ofPattern("MMM dd, yyyy")
                                         ) ?: "",
                                         onValueChange = { },
@@ -252,9 +252,7 @@ fun EventEditScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
-                                                eventState.setShowRecurringEndDatePicker(
-                                                    true
-                                                )
+                                                eventState.showRecurringEndDatePicker = true
                                             }
                                     )
                                 }
@@ -295,9 +293,9 @@ fun EventEditScreen(
                                     onRemove = {
                                         eventState.removeGroup(group.id)
                                         // Immediately persist the change to database if editing existing event
-                                        if (event != null) {
+                                        if (eventId != null) {
                                             coroutineScope.launch {
-                                                val updatedEvent = event!!.copy(
+                                                val updatedEvent = repository.getEventById(eventId)!!.copy(
                                                     contactGroupIds = eventState.selectedGroupIds.toList()
                                                 )
                                                 repository.updateEvent(updatedEvent)
@@ -326,10 +324,10 @@ fun EventEditScreen(
     if (eventState.showDatePicker) {
         DatePickerDialog(
             onDateSelected = { date ->
-                eventState.setEventDate(date)
-                eventState.setShowDatePicker(false)
+                eventState.eventDate = date
+                eventState.showDatePicker = false
             },
-            onDismiss = { eventState.setShowDatePicker(false) }
+            onDismiss = { eventState.showDatePicker = false }
         )
     }
 
@@ -337,10 +335,10 @@ fun EventEditScreen(
     if (eventState.showTimePicker) {
         TimePickerDialog(
             onTimeSelected = { time ->
-                eventState.setEventTime(time)
-                eventState.setShowTimePicker(false)
+                eventState.eventTime = time
+                eventState.showTimePicker = false
             },
-            onDismiss = { eventState.setShowTimePicker(false) }
+            onDismiss = { eventState.showTimePicker = false }
         )
     }
 
