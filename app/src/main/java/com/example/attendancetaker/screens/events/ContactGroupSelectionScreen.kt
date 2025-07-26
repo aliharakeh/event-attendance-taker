@@ -59,7 +59,7 @@ fun ContactGroupSelectionScreen(
                 val eventGroupIds = event!!.contactGroupIds
                 if (eventGroupIds.isNotEmpty()) {
                     val eventGroups = allContactGroups.filter { eventGroupIds.contains(it.id) }
-                    contactGroupSelectionViewModel.setSelectedGroups(eventGroups)
+                    contactGroupSelectionViewModel.updateSelectedGroups(eventGroups)
                 }
             }
         }

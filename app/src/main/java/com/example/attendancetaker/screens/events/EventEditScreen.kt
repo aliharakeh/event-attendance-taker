@@ -106,7 +106,7 @@ fun EventEditScreen(
                     val eventGroupIds = it.contactGroupIds
                     if (eventGroupIds.isNotEmpty()) {
                         val eventGroups = contactGroups.filter { group -> eventGroupIds.contains(group.id) }
-                        contactGroupSelectionViewModel.setSelectedGroups(eventGroups)
+                        contactGroupSelectionViewModel.updateSelectedGroups(eventGroups)
                     }
                 }
             }
@@ -123,7 +123,7 @@ fun EventEditScreen(
                     val eventGroupIds = it.contactGroupIds
                     if (eventGroupIds.isNotEmpty()) {
                         val eventGroups = contactGroups.filter { group -> eventGroupIds.contains(group.id) }
-                        contactGroupSelectionViewModel.setSelectedGroups(eventGroups)
+                        contactGroupSelectionViewModel.updateSelectedGroups(eventGroups)
                     }
                 }
             }

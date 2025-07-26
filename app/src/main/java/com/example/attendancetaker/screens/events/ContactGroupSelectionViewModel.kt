@@ -35,7 +35,7 @@ class ContactGroupSelectionViewModel : ViewModel() {
         }
     }
 
-    fun setSelectedGroups(groups: List<ContactGroup>) {
+    fun updateSelectedGroups(groups: List<ContactGroup>) {
         selectedGroups = groups
         selectedGroupIds = groups.map { it.id }.toSet()
     }
