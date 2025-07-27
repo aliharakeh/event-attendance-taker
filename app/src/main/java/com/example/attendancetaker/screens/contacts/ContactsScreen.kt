@@ -84,6 +84,10 @@ fun ContactsScreen(
                     repository.removeContactGroup(group.id)
                 }
             },
+            deleteConfirmationTitle = stringResource(R.string.delete_group),
+            deleteConfirmationMessage = { groupName ->
+                stringResource(R.string.delete_group_confirmation, groupName)
+            },
             onItemClick = { group -> onNavigateToGroupDetails(group) },
             emptyStateMessage = "No contact groups found",
             modifier = Modifier.fillMaxSize()

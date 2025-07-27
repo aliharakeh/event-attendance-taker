@@ -134,6 +134,10 @@ fun EventHistoryScreen(
                     coroutineScope.launch {
                         repository.removeEvent(event.id)
                     }
+                },
+                deleteConfirmationTitle = stringResource(R.string.delete_event),
+                deleteConfirmationMessage = { eventName ->
+                    stringResource(R.string.delete_event_confirmation, eventName)
                 }
             )
         }

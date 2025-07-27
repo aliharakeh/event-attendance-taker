@@ -19,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
@@ -63,6 +62,8 @@ data class AppListItem(
  * @param emptyStateMessage Message to display when no items are found
  * @param globalAction Optional list of ActionItem objects to display beside the title
  * @param cardActions Optional list of ActionItem objects to display in each card
+ * @param deleteConfirmationTitle Title for the delete confirmation dialog
+ * @param deleteConfirmationMessage Function to generate the delete confirmation message (receives the item title)
  */
 @Composable
 fun <T> AppList(
@@ -84,6 +85,8 @@ fun <T> AppList(
     emptyStateMessage: String = "No items found",
     globalAction: List<ActionItem>? = null,
     cardActions: List<ActionItem>? = null,
+    deleteConfirmationTitle: String = "Delete Item",
+    deleteConfirmationMessage: @Composable (String) -> String = { itemTitle -> "Are you sure you want to delete \"$itemTitle\"?" },
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var showDeleteConfirmation by remember { mutableStateOf<T?>(null) }
@@ -230,8 +233,8 @@ fun <T> AppList(
         val listItem = onItemToListItem(itemToDelete)
         AppConfirmDialog(
             isVisible = true,
-            title = stringResource(R.string.delete_group), // You may want to make this more generic
-            message = "Are you sure you want to delete \"${listItem.title}\"?",
+            title = deleteConfirmationTitle,
+            message = deleteConfirmationMessage(listItem.title),
             onConfirm = {
                 onDelete?.invoke(itemToDelete)
             },

@@ -318,6 +318,10 @@ fun EventEditScreen(
                         onDelete = { group ->
                             eventState.removeGroup(group.id)
                         },
+                        deleteConfirmationTitle = stringResource(R.string.remove_contact_group),
+                        deleteConfirmationMessage = { groupName ->
+                            stringResource(R.string.remove_contact_group_confirmation, groupName)
+                        },
                         emptyStateMessage = stringResource(R.string.no_contact_groups_selected_for_event),
                     )
                 }

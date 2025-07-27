@@ -88,6 +88,10 @@ fun RecurringTemplatesScreen(
                     repository.removeEvent(template.id)
                 }
             },
+            deleteConfirmationTitle = stringResource(R.string.delete_template),
+            deleteConfirmationMessage = { templateName ->
+                stringResource(R.string.delete_template_confirmation, templateName)
+            },
             emptyStateMessage = stringResource(R.string.no_recurring_templates),
             modifier = Modifier
                 .fillMaxSize()

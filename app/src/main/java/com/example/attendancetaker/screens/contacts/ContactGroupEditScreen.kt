@@ -234,6 +234,10 @@ fun ContactGroupEditScreen(
                             onDelete = {
                                 contactGroupState.removeContact(it.id)
                             },
+                            deleteConfirmationTitle = stringResource(R.string.remove_contact),
+                            deleteConfirmationMessage = { contactName ->
+                                stringResource(R.string.remove_contact_confirmation, contactName)
+                            },
                             emptyStateMessage = stringResource(R.string.no_contacts_selected_for_group),
                         )
                     }

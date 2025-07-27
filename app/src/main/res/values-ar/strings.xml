@@ -127,6 +127,7 @@
     <string name="select_contact_groups">اختر مجموعات الاتصال</string>
     <string name="no_contact_groups_selected_for_event">لم يتم اختيار أي مجموعات اتصال. انقر على \"إضافة مجموعات اتصال\" لاختيار مجموعات اتصال لهذا الحدث.</string>
     <string name="remove_contact_group">إزالة مجموعة الاتصال</string>
+    <string name="remove_contact_group_confirmation">هل أنت متأكد من إزالة &quot;%1$s&quot; من هذا الحدث؟</string>
     <string name="no_contact_groups_available">لا توجد مجموعات اتصال متاحة. أنشئ مجموعات اتصال أولاً.</string>
     <string name="no_contact_groups_match_search">لا توجد مجموعات اتصال مطابقة لبحثك.</string>
     <string name="selected_groups_contacts">%1$s (%2$d جهة اتصال)</string>
@@ -141,6 +142,7 @@
     <string name="allow_access">السماح بالوصول</string>
     <string name="no_contacts_selected_for_group">لم يتم اختيار أي جهات اتصال. انقر على \"إضافة جهات اتصال\" لاختيار جهات اتصال لهذه المجموعة.</string>
     <string name="remove_contact">إزالة جهة الاتصال</string>
+    <string name="remove_contact_confirmation">هل أنت متأكد من إزالة &quot;%1$s&quot; من هذه المجموعة؟</string>
     <string name="close">إغلاق</string>
     <string name="save_changes">حفظ التغييرات</string>
     <string name="save_changes_question">هل تريد حفظ التغييرات على هذه المجموعة؟</string>

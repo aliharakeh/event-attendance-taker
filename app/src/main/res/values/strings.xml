@@ -126,6 +126,7 @@
     <string name="select_contact_groups">Select Contact Groups</string>
     <string name="no_contact_groups_selected_for_event">No contact groups selected. Tap \"Add Contact Groups\" to select contact groups for this event.</string>
     <string name="remove_contact_group">Remove contact group</string>
+    <string name="remove_contact_group_confirmation">Are you sure you want to remove &quot;%1$s&quot; from this event?</string>
     <string name="no_contact_groups_available">No contact groups available. Create contact groups first.</string>
     <string name="no_contact_groups_match_search">No contact groups match your search.</string>
     <string name="selected_groups_contacts">%1$s (%2$d contacts)</string>
@@ -140,6 +141,7 @@
     <string name="allow_access">Allow Access</string>
     <string name="no_contacts_selected_for_group">No contacts selected. Tap \"Add Contacts\" to select contacts for this group.</string>
     <string name="remove_contact">Remove contact</string>
+    <string name="remove_contact_confirmation">Are you sure you want to remove &quot;%1$s&quot; from this group?</string>
     <string name="close">Close</string>
     <string name="save_changes">Save Changes</string>
     <string name="save_changes_question">Do you want to save the changes to this contact group?</string>
