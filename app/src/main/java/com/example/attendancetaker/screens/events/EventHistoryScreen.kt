@@ -68,6 +68,7 @@ fun EventHistoryScreen(
 ) {
     var fromDate by remember { mutableStateOf<LocalDate?>(null) }
     var toDate by remember { mutableStateOf<LocalDate?>(null) }
+    val coroutineScope = rememberCoroutineScope()
 
     // Get events based on whether date filter is enabled
     val pastEvents by remember(fromDate, toDate) {
@@ -129,8 +130,10 @@ fun EventHistoryScreen(
                     else -> stringResource(R.string.no_past_events)
                 },
                 isDeletable = true,
-                onDelete = { event ->
-                    // Delete will be handled by the confirmation dialog in the card content
+                onDelete = { event: Event ->
+                    coroutineScope.launch {
+                        repository.removeEvent(event.id)
+                    }
                 }
             )
         }
@@ -145,8 +148,6 @@ fun PastEventContent(
 ) {
     var selectedGroups by remember { mutableStateOf(emptyList<ContactGroup>()) }
     var totalContacts by remember { mutableStateOf(0) }
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
 
     // Load related data
     LaunchedEffect(event.contactGroupIds) {
@@ -160,55 +161,6 @@ fun PastEventContent(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Event status and metadata
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (event.isRecurring || event.isGeneratedFromRecurring) {
-                    Icon(
-                        Icons.Default.Repeat,
-                        contentDescription = stringResource(R.string.cd_recurring_event),
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Past Event Badge
-                AppIconButton(
-                    style = AppIconButtonStyle.ROUNDED_TEXT_ONLY,
-                    text = stringResource(R.string.past_event_badge),
-                    onClick = { },
-                    enabled = false,
-                    backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    fontSize = MaterialTheme.typography.labelSmall.fontSize,
-                    horizontalPadding = 8.dp,
-                    verticalPadding = 4.dp
-                )
-
-                // Delete Button
-                AppIconButton(
-                    style = AppIconButtonStyle.NO_BACKGROUND_ICON_ONLY,
-                    icon = Icons.Default.Delete,
-                    onClick = { showDeleteConfirmation = true },
-                    contentColor = ButtonRed,
-                    contentDescription = stringResource(R.string.cd_delete),
-                    iconSize = 20.dp
-                )
-            }
-        }
-
         // Date and Time Display
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -216,87 +168,71 @@ fun PastEventContent(
         ) {
             if (event.isRecurring) {
                 // Show day of week and time for recurring events
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Repeat,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = event.dayOfWeek?.getDisplayName(
-                            TextStyle.FULL,
-                            Locale.getDefault()
-                        ) ?: "Unknown",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                AppIconButton(
+                    style = AppIconButtonStyle.NO_BACKGROUND_ICON_TEXT,
+                    onClick = { /* No action needed */ },
+                    icon = Icons.Default.Repeat,
+                    text = event.dayOfWeek?.getDisplayName(
+                        TextStyle.FULL,
+                        Locale.getDefault()
+                    ) ?: "Unknown",
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    iconSize = 16.dp,
+                    fontSize = MaterialTheme.typography.bodySmall.fontSize,
+                    horizontalPadding = 0.dp,
+                    verticalPadding = 0.dp,
+                    enabled = false
+                )
             } else {
                 // Show fixed date for regular events
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        Icons.Default.CalendarToday,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = event.date?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
-                            ?: "No date",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                AppIconButton(
+                    style = AppIconButtonStyle.NO_BACKGROUND_ICON_TEXT,
+                    onClick = { /* No action needed */ },
+                    icon = Icons.Default.CalendarToday,
+                    text = event.date?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                        ?: "No date",
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    iconSize = 16.dp,
+                    fontSize = MaterialTheme.typography.bodySmall.fontSize,
+                    horizontalPadding = 0.dp,
+                    verticalPadding = 0.dp,
+                    enabled = false
+                )
             }
 
             // Time
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    Icons.Default.Schedule,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = event.time.format(DateTimeFormatter.ofPattern("HH:mm")),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            AppIconButton(
+                style = AppIconButtonStyle.NO_BACKGROUND_ICON_TEXT,
+                onClick = { /* No action needed */ },
+                icon = Icons.Default.Schedule,
+                text = event.time.format(DateTimeFormatter.ofPattern("HH:mm")),
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                iconSize = 16.dp,
+                fontSize = MaterialTheme.typography.bodySmall.fontSize,
+                horizontalPadding = 0.dp,
+                verticalPadding = 0.dp,
+                enabled = false
+            )
         }
 
         // Contact Groups Display
         if (selectedGroups.isNotEmpty()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    Icons.Default.Group,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = stringResource(
-                        R.string.selected_groups_contacts,
-                        selectedGroups.joinToString(", ") { it.name },
-                        totalContacts
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            AppIconButton(
+                style = AppIconButtonStyle.NO_BACKGROUND_ICON_TEXT,
+                onClick = { /* No action needed */ },
+                icon = Icons.Default.Group,
+                text = stringResource(
+                    R.string.selected_groups_contacts,
+                    selectedGroups.joinToString(", ") { it.name },
+                    totalContacts
+                ),
+                contentColor = MaterialTheme.colorScheme.primary,
+                iconSize = 16.dp,
+                fontSize = MaterialTheme.typography.bodySmall.fontSize,
+                horizontalPadding = 0.dp,
+                verticalPadding = 0.dp,
+                enabled = false
+            )
         }
 
         // View Attendance Button
@@ -309,18 +245,4 @@ fun PastEventContent(
             Text(stringResource(R.string.view_attendance))
         }
     }
-
-    // Delete Confirmation Dialog using AppConfirmDialog
-    AppConfirmDialog(
-        isVisible = showDeleteConfirmation,
-        title = stringResource(R.string.delete_event),
-        message = stringResource(R.string.delete_event_confirmation, event.name),
-        onConfirm = {
-            coroutineScope.launch {
-                repository.removeEvent(event.id)
-            }
-        },
-        onDismiss = { showDeleteConfirmation = false },
-        isDestructive = true
-    )
 }
