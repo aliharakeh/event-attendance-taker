@@ -66,7 +66,6 @@ fun EventHistoryScreen(
     onNavigateToAttendance: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by remember { mutableStateOf("") }
     var fromDate by remember { mutableStateOf<LocalDate?>(null) }
     var toDate by remember { mutableStateOf<LocalDate?>(null) }
 
@@ -78,16 +77,6 @@ fun EventHistoryScreen(
             repository.getPastEvents()
         }
     }.collectAsState(initial = emptyList())
-
-    // Filter past events based on search query
-    val filteredPastEvents = pastEvents.filter { event ->
-        if (searchQuery.isBlank()) {
-            true
-        } else {
-            event.name.contains(searchQuery, ignoreCase = true) ||
-                    event.description.contains(searchQuery, ignoreCase = true)
-        }
-    }
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -115,9 +104,8 @@ fun EventHistoryScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Events List using AppList
             AppList(
-                items = filteredPastEvents,
+                items = pastEvents,
                 onItemToListItem = { event ->
                     AppListItem(
                         id = event.id,
@@ -132,11 +120,8 @@ fun EventHistoryScreen(
                         }
                     )
                 },
-                showSearch = true, // We already have search above
+                showSearch = true,
                 emptyStateMessage = when {
-                    // No results from search query
-                    pastEvents.isNotEmpty() && searchQuery.isNotBlank() ->
-                        stringResource(R.string.no_search_results)
                     // No results from date range filter
                     pastEvents.isEmpty() && fromDate != null && toDate != null ->
                         stringResource(R.string.no_events_in_date_range)
