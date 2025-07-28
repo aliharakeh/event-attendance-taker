@@ -39,6 +39,8 @@ import com.example.attendancetaker.ui.components.AppTimePickerDialog
 import com.example.attendancetaker.ui.components.ActionPresets
 import com.example.attendancetaker.ui.components.AppCheckbox
 import com.example.attendancetaker.ui.components.AppCard
+import com.example.attendancetaker.ui.components.AppIconButton
+import com.example.attendancetaker.ui.components.AppIconButtonStyle
 import com.example.attendancetaker.ui.components.AppList
 import com.example.attendancetaker.ui.components.AppListItem
 import com.example.attendancetaker.ui.components.AppTextField
@@ -183,37 +185,23 @@ fun EventEditScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             // Date selection
-                            AppTextField(
-                                value = eventState.eventDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
-                                onValueChange = { },
-                                label = stringResource(R.string.date),
-                                readOnly = true,
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.CalendarToday,
-                                        contentDescription = null
-                                    )
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { eventState.showDatePicker = true }
+                            AppIconButton(
+                                style = AppIconButtonStyle.ROUNDED_ICON_TEXT,
+                                onClick = { eventState.showDatePicker = true },
+                                icon = Icons.Default.CalendarToday,
+                                text = eventState.eventDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
+                                contentDescription = stringResource(R.string.select_date),
+                                modifier = Modifier.weight(1f)
                             )
 
                             // Time selection
-                            AppTextField(
-                                value = eventState.eventTime.format(DateTimeFormatter.ofPattern("h:mm a")),
-                                onValueChange = { },
-                                label = stringResource(R.string.time),
-                                readOnly = true,
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Schedule,
-                                        contentDescription = null
-                                    )
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { eventState.showTimePicker = true }
+                            AppIconButton(
+                                style = AppIconButtonStyle.ROUNDED_ICON_TEXT,
+                                onClick = { eventState.showTimePicker = true },
+                                icon = Icons.Default.Schedule,
+                                text = eventState.eventTime.format(DateTimeFormatter.ofPattern("h:mm a")),
+                                contentDescription = stringResource(R.string.select_time),
+                                modifier = Modifier.weight(1f)
                             )
                         }
 
