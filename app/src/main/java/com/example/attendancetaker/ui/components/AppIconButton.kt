@@ -160,25 +160,29 @@ fun AppIconButton(
 
     when {
         hasIcon && hasText -> {
-            // Icon and text layout
-            Row(
+            // Icon and text layout - wrapped in Box for proper centering
+            Box(
                 modifier = finalModifier,
-                horizontalArrangement = Arrangement.spacedBy(iconTextSpacing),
-                verticalAlignment = Alignment.CenterVertically
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = icon!!,
-                    contentDescription = null, // Content description is on the whole button
-                    modifier = Modifier.size(iconSize),
-                    tint = actualContentColor.copy(alpha = alpha)
-                )
-                Text(
-                    text = text!!,
-                    color = actualContentColor.copy(alpha = alpha),
-                    fontSize = fontSize,
-                    fontWeight = FontWeight.Medium,
-                    style = MaterialTheme.typography.labelLarge
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(iconTextSpacing),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = icon!!,
+                        contentDescription = null, // Content description is on the whole button
+                        modifier = Modifier.size(iconSize),
+                        tint = actualContentColor.copy(alpha = alpha)
+                    )
+                    Text(
+                        text = text!!,
+                        color = actualContentColor.copy(alpha = alpha),
+                        fontSize = fontSize,
+                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
             }
         }
         hasIcon -> {
