@@ -383,6 +383,50 @@ fun AttendanceItem(
                 }
             }
 
+                        // Contact work and notes information
+            if (contact.workTimeStart != null || contact.workTimeEnd != null || !contact.notes.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Work time display
+                if (contact.workTimeStart != null || contact.workTimeEnd != null) {
+                    Text(
+                        text = "Work Time",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    val workTimeText = buildString {
+                        if (contact.workTimeStart != null) append(contact.workTimeStart)
+                        if (contact.workTimeStart != null && contact.workTimeEnd != null) append(" - ")
+                        if (contact.workTimeEnd != null) append(contact.workTimeEnd)
+                    }
+                    Text(
+                        text = workTimeText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Contact notes display
+                if (!contact.notes.isNullOrBlank()) {
+                    if (contact.workTimeStart != null || contact.workTimeEnd != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                    Text(
+                        text = "Contact Notes",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = contact.notes,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Attendance notes display
             if (!attendanceRecord?.notes.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
