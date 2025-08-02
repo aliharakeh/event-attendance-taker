@@ -24,7 +24,7 @@ import com.example.attendancetaker.utils.Converters
         Event::class,
         AttendanceRecord::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -85,13 +85,22 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add new columns to contacts table for work times and notes
+                database.execSQL("ALTER TABLE contacts ADD COLUMN workTimeStart TEXT")
+                database.execSQL("ALTER TABLE contacts ADD COLUMN workTimeEnd TEXT")
+                database.execSQL("ALTER TABLE contacts ADD COLUMN notes TEXT")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "attendance_database"
-                ).addMigrations(MIGRATION_1_2).build()
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
                 INSTANCE = instance
                 instance
             }

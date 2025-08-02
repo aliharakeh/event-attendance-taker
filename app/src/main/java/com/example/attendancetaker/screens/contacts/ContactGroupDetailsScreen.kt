@@ -2,38 +2,47 @@ package com.example.attendancetaker.screens.contacts
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Whatsapp
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import kotlinx.coroutines.launch
+
 import com.example.attendancetaker.R
 import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.repository.AttendanceRepository
-import com.example.attendancetaker.ui.components.AppIconButton
-import com.example.attendancetaker.ui.components.AppIconButtonStyle
+import com.example.attendancetaker.ui.components.ActionItem
 import com.example.attendancetaker.ui.components.AppList
 import com.example.attendancetaker.ui.components.AppListItem
 import com.example.attendancetaker.ui.components.AppToolbar
+import com.example.attendancetaker.ui.components.AppTextField
+import com.example.attendancetaker.ui.components.AppTimePickerDialog
+import com.example.attendancetaker.ui.components.AppTimeRangePicker
+import com.example.attendancetaker.ui.components.AppNotesDialog
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun ContactGroupDetailsScreen(
@@ -45,6 +54,8 @@ fun ContactGroupDetailsScreen(
     val context = LocalContext.current
     var group by remember { mutableStateOf<ContactGroup?>(null) }
     var contacts by remember { mutableStateOf(emptyList<Contact>()) }
+    var showNotesDialog by remember { mutableStateOf(false) }
+    var selectedContactForNotes by remember { mutableStateOf<Contact?>(null) }
 
     // Load group and contacts data
     LaunchedEffect(groupId) {
@@ -83,58 +94,154 @@ fun ContactGroupDetailsScreen(
                     title = contact.name,
                     subtitle = contact.phoneNumber,
                     content = {
-                        ContactWhatsAppActions(
+                        ContactListItem(
                             contact = contact,
-                            context = context
+                            repository = repository,
+                            context = context,
+                            onContactUpdated = { updatedContact ->
+                                // Update the contact in the local list
+                                contacts = contacts.map {
+                                    if (it.id == updatedContact.id) updatedContact else it
+                                }
+                            }
                         )
                     }
                 )
             },
             showSearch = true,
             emptyStateMessage = stringResource(R.string.no_contacts_in_group),
+            cardActions = { contact ->
+                getContactActions(contact, context) {
+                    selectedContactForNotes = contact
+                    showNotesDialog = true
+                }
+            },
             modifier = Modifier.padding(16.dp)
+        )
+    }
+
+    // Notes dialog
+    selectedContactForNotes?.let { contact ->
+        AppNotesDialog(
+            isVisible = showNotesDialog,
+            title = "Contact Notes",
+            initialNotes = contact.notes ?: "",
+            onSave = { newNotes ->
+                val updatedContact = contact.copy(notes = newNotes.takeIf { it.isNotEmpty() })
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                    repository.updateContact(updatedContact)
+                }
+                // Update the contact in the local list
+                contacts = contacts.map {
+                    if (it.id == updatedContact.id) updatedContact else it
+                }
+                showNotesDialog = false
+                selectedContactForNotes = null
+            },
+            onDismiss = {
+                showNotesDialog = false
+                selectedContactForNotes = null
+            },
+            placeholder = "Add notes about this contact..."
         )
     }
 }
 
 @Composable
-private fun ContactWhatsAppActions(
+private fun ContactListItem(
     contact: Contact,
-    context: Context
+    repository: AttendanceRepository,
+    context: Context,
+    onContactUpdated: (Contact) -> Unit
 ) {
-    Spacer(modifier = Modifier.height(16.dp))
+    var workTimeStart by remember { mutableStateOf(contact.workTimeStart?.let { LocalTime.parse(it) }) }
+    var workTimeEnd by remember { mutableStateOf(contact.workTimeEnd?.let { LocalTime.parse(it) }) }
 
-    // WhatsApp action buttons
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Message button
-        AppIconButton(
-            style = AppIconButtonStyle.ROUNDED_ICON_ONLY,
-            onClick = { openWhatsAppMessage(context, contact.phoneNumber) },
-            modifier = Modifier.weight(1f),
-            icon = Icons.Default.Whatsapp,
-            backgroundColor = Color(0xFF25D366), // WhatsApp green
-            contentColor = Color.White,
-            contentDescription = "Send WhatsApp Message",
-            iconSize = 22.dp,
-            verticalPadding = 0.dp,
+    // Function to save changes automatically
+    fun saveChanges() {
+        val updatedContact = contact.copy(
+            workTimeStart = workTimeStart?.format(DateTimeFormatter.ofPattern("HH:mm")),
+            workTimeEnd = workTimeEnd?.format(DateTimeFormatter.ofPattern("HH:mm"))
         )
-
-        // Call button
-        AppIconButton(
-            style = AppIconButtonStyle.ROUNDED_ICON_ONLY,
-            onClick = { openWhatsAppCall(context, contact.phoneNumber) },
-            modifier = Modifier.weight(1f),
-            icon = Icons.Default.Call,
-            backgroundColor = Color(0xFF0B5D9C),
-            contentColor = Color.White,
-            contentDescription = "WhatsApp Call",
-            iconSize = 22.dp,
-            verticalPadding = 0.dp,
-        )
+        // Update in repository
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            repository.updateContact(updatedContact)
+        }
+        onContactUpdated(updatedContact)
     }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)
+    ) {
+        // Work time section
+        Text(
+            text = "Work",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+
+        AppTimeRangePicker(
+            startTime = workTimeStart,
+            endTime = workTimeEnd,
+            onStartTimeChange = {
+                workTimeStart = it
+                saveChanges()
+            },
+            onEndTimeChange = {
+                workTimeEnd = it
+                saveChanges()
+            },
+            startTimePlaceholder = "Start Time",
+            endTimePlaceholder = "End Time"
+        )
+
+        // Notes section
+        if (contact.notes?.isNotEmpty() == true) {
+            Text(
+                text = "Notes",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+
+            Text(
+                text = contact.notes ?: "",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun getContactActions(
+    contact: Contact,
+    context: Context,
+    onNotesClick: () -> Unit
+): List<ActionItem> {
+    return listOf(
+        ActionItem(
+            icon = Icons.Default.Whatsapp,
+            contentDescription = "Send WhatsApp Message",
+            tint = Color(0xFF25D366), // WhatsApp green
+            onClick = { openWhatsAppMessage(context, contact.phoneNumber) }
+        ),
+        ActionItem(
+            icon = Icons.Default.Call,
+            contentDescription = "WhatsApp Call",
+            tint = Color(0xFF0B5D9C),
+            onClick = { openWhatsAppCall(context, contact.phoneNumber) }
+        ),
+        ActionItem(
+            icon = Icons.AutoMirrored.Filled.Note,
+            contentDescription = "Edit notes",
+            tint = MaterialTheme.colorScheme.primary,
+            onClick = onNotesClick
+        )
+    )
 }
 
 private fun openWhatsAppMessage(context: Context, phoneNumber: String) {

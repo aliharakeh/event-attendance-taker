@@ -61,7 +61,7 @@ data class AppListItem(
  * @param onItemClick Callback for item click (only when not in selectable or editable mode)
  * @param emptyStateMessage Message to display when no items are found
  * @param globalAction Optional list of ActionItem objects to display beside the title
- * @param cardActions Optional list of ActionItem objects to display in each card
+ * @param cardActions Optional function that takes the current item and returns a list of ActionItem objects to display in each card
  * @param deleteConfirmationTitle Title for the delete confirmation dialog
  * @param deleteConfirmationMessage Function to generate the delete confirmation message (receives the item title)
  */
@@ -84,7 +84,7 @@ fun <T> AppList(
     onItemClick: ((T) -> Unit)? = null,
     emptyStateMessage: String = "No items found",
     globalAction: List<ActionItem>? = null,
-    cardActions: List<ActionItem>? = null,
+    cardActions: @Composable ((T) -> List<ActionItem>)? = null,
     deleteConfirmationTitle: String = "Delete Item",
     deleteConfirmationMessage: @Composable (String) -> String = { itemTitle -> "Are you sure you want to delete \"$itemTitle\"?" },
 ) {
@@ -211,7 +211,7 @@ fun <T> AppList(
                         content = {
                             listItem.content?.invoke()
                         },
-                        actions = cardActions ?: emptyList(),
+                        actions = cardActions?.invoke(item) ?: emptyList(),
                         isClickable = isSelectable || isItemClickable,
                         showEditAction = isEditable,
                         showDeleteAction = isDeletable,

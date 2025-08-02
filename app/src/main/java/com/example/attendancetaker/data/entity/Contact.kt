@@ -8,5 +8,8 @@ import java.util.UUID
 data class Contact(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val name: String,
-    val phoneNumber: String
+    val phoneNumber: String,
+    val workTimeStart: String? = null,
+    val workTimeEnd: String? = null,
+    val notes: String? = null
 )
