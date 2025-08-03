@@ -409,9 +409,7 @@ fun AttendanceItem(
 
                 // Contact notes display
                 if (!contact.notes.isNullOrBlank()) {
-                    if (contact.workTimeStart != null || contact.workTimeEnd != null) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Contact Notes",
                         style = MaterialTheme.typography.bodySmall,
@@ -428,9 +426,15 @@ fun AttendanceItem(
 
             // Attendance notes display
             if (!attendanceRecord?.notes.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = stringResource(R.string.notes_prefix) + (attendanceRecord?.notes ?: ""),
+                    text = "Attendance Notes",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = attendanceRecord.notes,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
