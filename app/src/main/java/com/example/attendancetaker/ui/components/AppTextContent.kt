@@ -20,8 +20,7 @@ fun AppTextContent(
     titleColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary,
     contentStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodySmall,
     contentColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    showSpacer: Boolean = true,
-    spacerHeight: androidx.compose.ui.unit.Dp = 4.dp
+    spacerHeight: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     Column(modifier = modifier) {
         Text(
@@ -31,9 +30,7 @@ fun AppTextContent(
             color = titleColor
         )
 
-        if (showSpacer) {
-            Spacer(modifier = Modifier.height(spacerHeight))
-        }
+        Spacer(modifier = Modifier.height(spacerHeight))
 
         Text(
             text = content,

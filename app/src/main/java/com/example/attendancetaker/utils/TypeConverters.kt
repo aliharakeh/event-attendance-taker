@@ -1,6 +1,7 @@
 package com.example.attendancetaker.utils
 
 import androidx.room.TypeConverter
+import com.example.attendancetaker.data.entity.AttendanceStatus
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -49,5 +50,15 @@ class Converters {
     @TypeConverter
     fun toDayOfWeek(dayOfWeekString: String?): DayOfWeek? {
         return dayOfWeekString?.let { DayOfWeek.valueOf(it) }
+    }
+
+    @TypeConverter
+    fun fromAttendanceStatus(status: AttendanceStatus?): String? {
+        return status?.name
+    }
+
+    @TypeConverter
+    fun toAttendanceStatus(statusString: String?): AttendanceStatus? {
+        return statusString?.let { AttendanceStatus.valueOf(it) }
     }
 }

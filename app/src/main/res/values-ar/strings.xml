@@ -14,6 +14,7 @@
     <string name="attendance_tracking">تتبع الحضور</string>
     <string name="present">حاضر</string>
     <string name="absent">غائب</string>
+    <string name="ready">جاهز</string>
     <string name="notes_prefix">ملاحظات: </string>
     <string name="edit_notes">الملاحظات</string>
     <string name="notes_for_contact">ملاحظات لـ %1$s</string>

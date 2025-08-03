@@ -1,13 +1,11 @@
 package com.example.attendancetaker.screens.attendance
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,24 +15,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Whatsapp
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,30 +35,25 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.attendancetaker.R
 import com.example.attendancetaker.data.entity.AttendanceRecord
-import com.example.attendancetaker.data.repository.AttendanceRepository
+import com.example.attendancetaker.data.entity.AttendanceStatus
 import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.entity.Event
-import com.example.attendancetaker.ui.components.AppActionRow
+import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.ui.components.ActionItem
 import com.example.attendancetaker.ui.components.AppCard
-import com.example.attendancetaker.ui.components.AppIconButton
-import com.example.attendancetaker.ui.components.AppIconButtonStyle
 import com.example.attendancetaker.ui.components.AppList
 import com.example.attendancetaker.ui.components.AppListItem
 import com.example.attendancetaker.ui.components.AppNotesDialog
 import com.example.attendancetaker.ui.components.AppTextContent
 import com.example.attendancetaker.ui.components.AppToolbar
-import com.example.attendancetaker.ui.components.ToolbarAction
-import com.example.attendancetaker.ui.theme.ButtonBlue
-import com.example.attendancetaker.ui.theme.ButtonNeutral
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,7 +71,8 @@ fun AttendanceScreen(
     var showNotesDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    val attendanceRecords by repository.getAttendanceForEvent(eventId).collectAsState(initial = emptyList())
+    val attendanceRecords by repository.getAttendanceForEvent(eventId)
+        .collectAsState(initial = emptyList())
 
     // Load event and related data
     LaunchedEffect(eventId) {
@@ -122,6 +111,10 @@ fun AttendanceScreen(
             // Attendance List using AppList
             AppList(
                 items = eventContacts,
+                modifier = Modifier.padding(horizontal = 16.dp),
+                showSearch = true,
+                searchPlaceholder = stringResource(R.string.search_contacts),
+                emptyStateMessage = stringResource(R.string.no_search_results),
                 onItemToListItem = { contact ->
                     val attendanceRecord = attendanceRecords.find { it.contactId == contact.id }
                     var contactGroups by remember { mutableStateOf(emptyList<ContactGroup>()) }
@@ -140,46 +133,75 @@ fun AttendanceScreen(
                             AttendanceItemContent(
                                 contact = contact,
                                 contactGroups = contactGroups,
-                                attendanceRecord = attendanceRecord,
-                                onEditNotes = {
-                                    selectedContact = contact
-                                    showNotesDialog = true
-                                }
+                                attendanceRecord = attendanceRecord
                             )
                         }
                     )
                 },
                 cardActions = { contact ->
                     val attendanceRecord = attendanceRecords.find { it.contactId == contact.id }
+                    val currentStatus = attendanceRecord?.status ?: AttendanceStatus.ABSENT
+                    val context = LocalContext.current
+
                     listOf(
                         ActionItem(
-                            icon = Icons.Default.Alarm, // Placeholder icon, won't be used
-                            contentDescription = "Toggle Attendance",
+                            icon = Icons.Default.Whatsapp,
+                            contentDescription = "Send WhatsApp Message",
+                            tint = Color(0xFF25D366), // WhatsApp green
+                            onClick = { openWhatsAppMessage(context, contact.phoneNumber) }
+                        ),
+                        ActionItem(
+                            icon = Icons.Default.Call,
+                            contentDescription = "WhatsApp Call",
+                            tint = Color(0xFF0B5D9C),
+                            onClick = { openWhatsAppCall(context, contact.phoneNumber) }
+                        ),
+                        ActionItem(
+                            icon = Icons.AutoMirrored.Filled.Note,
+                            contentDescription = "Edit notes",
                             tint = MaterialTheme.colorScheme.primary,
-                            onClick = { /* Handled by template */ },
+                            onClick = {
+                                selectedContact = contact
+                                showNotesDialog = true
+                            }
+                        ),
+                        ActionItem(
+                            contentDescription = "Toggle Attendance Status",
                             template = {
-                                Switch(
-                                    checked = attendanceRecord?.isPresent ?: false,
-                                    onCheckedChange = { isPresent ->
-                                        coroutineScope.launch {
-                                            val record = attendanceRecord?.copy(isPresent = isPresent)
-                                                ?: AttendanceRecord(
-                                                    contactId = contact.id,
-                                                    eventId = eventId,
-                                                    isPresent = isPresent
-                                                )
-                                            repository.updateAttendanceRecord(record)
-                                        }
-                                    }
-                                )
+                                Box(
+                                    modifier = modifier
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            when (currentStatus) {
+                                                AttendanceStatus.ABSENT -> Color(0xFFFD0000)
+                                                AttendanceStatus.READY -> Color(0xFFFF9800)
+                                                AttendanceStatus.PRESENT -> Color(0xFF02BB0B)
+                                            }
+                                        )
+                                        .clickable {
+                                            coroutineScope.launch {
+                                                val nextStatus = when (currentStatus) {
+                                                    AttendanceStatus.ABSENT -> AttendanceStatus.READY
+                                                    AttendanceStatus.READY -> AttendanceStatus.PRESENT
+                                                    AttendanceStatus.PRESENT -> AttendanceStatus.ABSENT
+                                                }
+                                                val record =
+                                                    attendanceRecord?.copy(status = nextStatus)
+                                                        ?: AttendanceRecord(
+                                                            contactId = contact.id,
+                                                            eventId = eventId,
+                                                            status = nextStatus
+                                                        )
+                                                repository.updateAttendanceRecord(record)
+                                            }
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {}
                             }
                         )
                     )
                 },
-                modifier = Modifier.padding(horizontal = 16.dp),
-                showSearch = true,
-                searchPlaceholder = stringResource(R.string.search_contacts),
-                emptyStateMessage = stringResource(R.string.no_search_results)
             )
         }
     }
@@ -218,7 +240,6 @@ fun AttendanceItemContent(
     contact: Contact,
     contactGroups: List<ContactGroup>,
     attendanceRecord: AttendanceRecord?,
-    onEditNotes: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -238,12 +259,13 @@ fun AttendanceItemContent(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = stringResource(R.string.groups_list, contactGroups.joinToString(", ") { it.name }),
+                    text = stringResource(
+                        R.string.groups_list,
+                        contactGroups.joinToString(", ") { it.name }),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
         }
 
         // Contact work and notes information
@@ -255,6 +277,9 @@ fun AttendanceItemContent(
                     if (contact.workTimeStart != null && contact.workTimeEnd != null) append(" - ")
                     if (contact.workTimeEnd != null) append(contact.workTimeEnd)
                 }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 AppTextContent(
                     title = "Work Time",
                     content = workTimeText
@@ -263,6 +288,8 @@ fun AttendanceItemContent(
 
             // Contact notes display
             if (!contact.notes.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+
                 AppTextContent(
                     title = "Contact Notes",
                     content = contact.notes
@@ -272,59 +299,11 @@ fun AttendanceItemContent(
 
         // Attendance notes display
         if (!attendanceRecord?.notes.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+
             AppTextContent(
                 title = "Attendance Notes",
                 content = attendanceRecord.notes,
-                spacerHeight = 8.dp
-            )
-        }
-
-        // Attendance status
-        Text(
-            text = if (attendanceRecord?.isPresent == true) stringResource(R.string.present) else stringResource(
-                R.string.absent
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Action buttons using AppIconButton
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // WhatsApp message button
-            AppIconButton(
-                style = AppIconButtonStyle.ROUNDED_ICON_ONLY,
-                onClick = { openWhatsAppMessage(context, contact.phoneNumber) },
-                icon = Icons.Default.Whatsapp,
-                backgroundColor = Color(0xFF25D366),
-                contentColor = Color.White,
-                modifier = Modifier.weight(1f),
-                contentDescription = "WhatsApp Message"
-            )
-
-            // Call button
-            AppIconButton(
-                style = AppIconButtonStyle.ROUNDED_ICON_ONLY,
-                onClick = { openWhatsAppCall(context, contact.phoneNumber) },
-                icon = Icons.Default.Call,
-                backgroundColor = Color(0xFF0B5D9C),
-                contentColor = Color.White,
-                modifier = Modifier.weight(1f),
-                contentDescription = "Call"
-            )
-
-            // Edit notes button
-            AppIconButton(
-                style = AppIconButtonStyle.NO_BACKGROUND_ICON_TEXT,
-                onClick = onEditNotes,
-                icon = Icons.Default.Edit,
-                text = stringResource(R.string.edit_notes),
-                contentColor = MaterialTheme.colorScheme.primary,
-                contentDescription = stringResource(R.string.edit_notes)
             )
         }
     }

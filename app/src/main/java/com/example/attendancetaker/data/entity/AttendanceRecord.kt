@@ -2,6 +2,12 @@ package com.example.attendancetaker.data.entity
 
 import androidx.room.Entity
 
+enum class AttendanceStatus {
+    ABSENT,
+    READY,
+    PRESENT
+}
+
 @Entity(
     tableName = "attendance_records",
     primaryKeys = ["eventId", "contactId"]
@@ -9,6 +15,6 @@ import androidx.room.Entity
 data class AttendanceRecord(
     val contactId: String,
     val eventId: String,
-    val isPresent: Boolean = false,
+    val status: AttendanceStatus = AttendanceStatus.ABSENT,
     val notes: String = ""
 )

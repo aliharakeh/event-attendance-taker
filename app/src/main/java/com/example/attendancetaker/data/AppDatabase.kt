@@ -24,7 +24,7 @@ import com.example.attendancetaker.utils.Converters
         Event::class,
         AttendanceRecord::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -94,13 +94,34 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Replace isPresent boolean with status enum in attendance_records table
+                // First, add the new status column
+                database.execSQL("ALTER TABLE attendance_records ADD COLUMN status TEXT NOT NULL DEFAULT 'ABSENT'")
+
+                // Update existing records: convert isPresent boolean to status enum
+                // true -> 'PRESENT', false -> 'ABSENT'
+                database.execSQL("""
+                    UPDATE attendance_records
+                    SET status = CASE
+                        WHEN isPresent = 1 THEN 'PRESENT'
+                        ELSE 'ABSENT'
+                    END
+                """)
+
+                // Remove the old isPresent column
+                database.execSQL("ALTER TABLE attendance_records DROP COLUMN isPresent")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "attendance_database"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
                 INSTANCE = instance
                 instance
             }

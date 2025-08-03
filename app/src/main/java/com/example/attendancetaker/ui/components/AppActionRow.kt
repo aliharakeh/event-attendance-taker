@@ -1,7 +1,10 @@
 package com.example.attendancetaker.ui.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -22,10 +25,10 @@ import com.example.attendancetaker.ui.theme.EditIconBlue
  * Data class representing a configurable action with its properties
  */
 data class ActionItem(
-    val icon: ImageVector,
-    val contentDescription: String,
-    val tint: Color,
-    val onClick: () -> Unit,
+    val icon: ImageVector? = null,
+    val contentDescription: String? = null,
+    val tint: Color = Color.Unspecified,
+    val onClick: (() -> Unit)? = null,
     val enabled: Boolean = true,
     val template: (@Composable () -> Unit)? = null
 )
@@ -45,7 +48,6 @@ data class ActionItem(
 fun AppActionRow(
     modifier: Modifier = Modifier,
     actions: List<ActionItem> = emptyList(),
-    arrangement: Arrangement.Horizontal = Arrangement.spacedBy(4.dp),
     showEditAction: Boolean = true,
     showDeleteAction: Boolean = true,
     onEdit: (() -> Unit)? = null,
@@ -53,17 +55,17 @@ fun AppActionRow(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = arrangement,
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Render custom actions first
         actions.forEach { action ->
             if (action.template != null) {
                 // Render the custom template
+                Spacer(modifier = Modifier.width(8.dp))
                 action.template.invoke()
-            } else {
+            } else if (action.icon != null){
                 IconButton(
-                    onClick = action.onClick,
+                    onClick = { action.onClick?.invoke() },
                     enabled = action.enabled
                 ) {
                     // Render the default icon

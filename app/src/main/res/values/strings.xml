@@ -13,6 +13,7 @@
     <string name="attendance_tracking">Attendance Tracking</string>
     <string name="present">Present</string>
     <string name="absent">Absent</string>
+    <string name="ready">Ready</string>
     <string name="notes_prefix">Notes: </string>
     <string name="edit_notes">Notes</string>
     <string name="notes_for_contact">Notes for %1$s</string>
