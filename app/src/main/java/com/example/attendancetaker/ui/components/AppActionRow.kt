@@ -26,7 +26,8 @@ data class ActionItem(
     val contentDescription: String,
     val tint: Color,
     val onClick: () -> Unit,
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val template: (@Composable () -> Unit)? = null
 )
 
 /**
@@ -57,15 +58,21 @@ fun AppActionRow(
     ) {
         // Render custom actions first
         actions.forEach { action ->
-            IconButton(
-                onClick = action.onClick,
-                enabled = action.enabled
-            ) {
-                Icon(
-                    imageVector = action.icon,
-                    contentDescription = action.contentDescription,
-                    tint = if (action.enabled) action.tint else action.tint.copy(alpha = 0.38f)
-                )
+            if (action.template != null) {
+                // Render the custom template
+                action.template.invoke()
+            } else {
+                IconButton(
+                    onClick = action.onClick,
+                    enabled = action.enabled
+                ) {
+                    // Render the default icon
+                    Icon(
+                        imageVector = action.icon,
+                        contentDescription = action.contentDescription,
+                        tint = if (action.enabled) action.tint else action.tint.copy(alpha = 0.38f)
+                    )
+                }
             }
         }
 

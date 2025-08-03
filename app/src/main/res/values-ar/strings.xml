@@ -21,6 +21,12 @@
     <string name="attendance_notes_placeholder">أضف أي ملاحظات حول حضور هذا الشخص…</string>
     <string name="no_contact_groups_selected">لم يتم اختيار أي مجموعات اتصال لهذا الحدث. يرجى تعديل الحدث لإضافة مجموعات اتصال.</string>
     <string name="groups_list">المجموعات: %1$s</string>
+    <string name="lexicon_alarm">منبه المعجم</string>
+    <string name="lexicon_alarm_description">قم بإعداد منبهات قائمة على المعجم لمراقبة أنماط الحضور والحصول على إشعارات حول الأحداث المهمة.</string>
+    <string name="lexicon_alarm_features">الميزات</string>
+    <string name="lexicon_alarm_feature_1">مراقبة أنماط الحضور والاتجاهات</string>
+    <string name="lexicon_alarm_feature_2">الحصول على إشعارات حول الغائبين</string>
+    <string name="lexicon_alarm_feature_3">تتبع إحصائيات الحضور مع مرور الوقت</string>
 
     <!-- EventsScreen -->
     <string name="events">الأحداث</string>

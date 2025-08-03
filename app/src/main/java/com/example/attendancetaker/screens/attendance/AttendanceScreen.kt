@@ -6,9 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,39 +17,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Summarize
 import androidx.compose.material.icons.filled.Whatsapp
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -72,14 +53,20 @@ import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.entity.Event
+import com.example.attendancetaker.ui.components.AppActionRow
+import com.example.attendancetaker.ui.components.ActionItem
+import com.example.attendancetaker.ui.components.AppCard
+import com.example.attendancetaker.ui.components.AppIconButton
+import com.example.attendancetaker.ui.components.AppIconButtonStyle
+import com.example.attendancetaker.ui.components.AppList
+import com.example.attendancetaker.ui.components.AppListItem
+import com.example.attendancetaker.ui.components.AppNotesDialog
+import com.example.attendancetaker.ui.components.AppTextContent
+import com.example.attendancetaker.ui.components.AppToolbar
+import com.example.attendancetaker.ui.components.ToolbarAction
 import com.example.attendancetaker.ui.theme.ButtonBlue
 import com.example.attendancetaker.ui.theme.ButtonNeutral
 import kotlinx.coroutines.launch
-
-enum class SummaryLanguage(val displayName: String, val code: String) {
-    ENGLISH("English", "en"),
-    ARABIC("العربية", "ar")
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,25 +80,10 @@ fun AttendanceScreen(
     var selectedContact by remember { mutableStateOf<Contact?>(null) }
     var eventContacts by remember { mutableStateOf(emptyList<Contact>()) }
     var selectedGroups by remember { mutableStateOf(emptyList<ContactGroup>()) }
-    var searchQuery by remember { mutableStateOf("") }
-    var showSummaryDialog by remember { mutableStateOf(false) }
+    var showNotesDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     val attendanceRecords by repository.getAttendanceForEvent(eventId).collectAsState(initial = emptyList())
-
-    // Filter contacts based on search query
-    val filteredContacts by remember {
-        derivedStateOf {
-            if (searchQuery.isBlank()) {
-                eventContacts
-            } else {
-                eventContacts.filter { contact ->
-                    contact.name.contains(searchQuery, ignoreCase = true) ||
-                    contact.phoneNumber.contains(searchQuery, ignoreCase = true)
-                }
-            }
-        }
-    }
 
     // Load event and related data
     LaunchedEffect(eventId) {
@@ -132,130 +104,25 @@ fun AttendanceScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = event!!.name,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = stringResource(R.string.attendance_tracking),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (selectedGroups.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.Group,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "${selectedGroups.joinToString(", ") { it.name }} (${eventContacts.size} contacts)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-            IconButton(onClick = { showSummaryDialog = true }) {
-                Icon(
-                    Icons.Default.Summarize,
-                    contentDescription = stringResource(R.string.summary),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
+        // Header using AppToolbar
+        AppToolbar(
+            title = event!!.name,
+            subtitle = stringResource(R.string.attendance_tracking),
+            onNavigationClick = onNavigateBack
+        )
 
         // Show message if no contact groups are selected
         if (selectedGroups.isEmpty()) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Text(
-                    text = stringResource(R.string.no_contact_groups_selected),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-        } else {
-            // Search Field
-            TextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = { Text(stringResource(R.string.search_contacts_placeholder)) },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Search,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(
-                                Icons.Default.Clear,
-                                contentDescription = stringResource(R.string.clear_search),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                    disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
-                ),
-                shape = RoundedCornerShape(28.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 8.dp),
-                singleLine = true
+            AppCard(
+                modifier = Modifier.padding(16.dp),
+                title = stringResource(R.string.no_contact_groups_selected),
+                content = {}
             )
-
-            // Results count
-            if (searchQuery.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.search_results_count, filteredContacts.size, eventContacts.size),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                )
-            }
-
-            // Attendance List
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(filteredContacts) { contact ->
+        } else {
+            // Attendance List using AppList
+            AppList(
+                items = eventContacts,
+                onItemToListItem = { contact ->
                     val attendanceRecord = attendanceRecords.find { it.contactId == contact.id }
                     var contactGroups by remember { mutableStateOf(emptyList<ContactGroup>()) }
 
@@ -265,45 +132,65 @@ fun AttendanceScreen(
                             .filter { group -> event!!.contactGroupIds.contains(group.id) }
                     }
 
-                    AttendanceItem(
-                        contact = contact,
-                        contactGroups = contactGroups,
-                        attendanceRecord = attendanceRecord,
-                        onAttendanceChange = { isPresent ->
-                            coroutineScope.launch {
-                                val record = attendanceRecord?.copy(isPresent = isPresent)
-                                    ?: AttendanceRecord(
-                                        contactId = contact.id,
-                                        eventId = eventId,
-                                        isPresent = isPresent
-                                    )
-                                repository.updateAttendanceRecord(record)
-                            }
-                        },
-                        onEditNotes = { selectedContact = contact }
+                    AppListItem(
+                        id = contact.id,
+                        title = contact.name,
+                        subtitle = contact.phoneNumber,
+                        content = {
+                            AttendanceItemContent(
+                                contact = contact,
+                                contactGroups = contactGroups,
+                                attendanceRecord = attendanceRecord,
+                                onEditNotes = {
+                                    selectedContact = contact
+                                    showNotesDialog = true
+                                }
+                            )
+                        }
                     )
-                }
-            }
+                },
+                cardActions = { contact ->
+                    val attendanceRecord = attendanceRecords.find { it.contactId == contact.id }
+                    listOf(
+                        ActionItem(
+                            icon = Icons.Default.Alarm, // Placeholder icon, won't be used
+                            contentDescription = "Toggle Attendance",
+                            tint = MaterialTheme.colorScheme.primary,
+                            onClick = { /* Handled by template */ },
+                            template = {
+                                Switch(
+                                    checked = attendanceRecord?.isPresent ?: false,
+                                    onCheckedChange = { isPresent ->
+                                        coroutineScope.launch {
+                                            val record = attendanceRecord?.copy(isPresent = isPresent)
+                                                ?: AttendanceRecord(
+                                                    contactId = contact.id,
+                                                    eventId = eventId,
+                                                    isPresent = isPresent
+                                                )
+                                            repository.updateAttendanceRecord(record)
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    )
+                },
+                modifier = Modifier.padding(horizontal = 16.dp),
+                showSearch = true,
+                searchPlaceholder = stringResource(R.string.search_contacts),
+                emptyStateMessage = stringResource(R.string.no_search_results)
+            )
         }
     }
 
-    // Summary Dialog
-    if (showSummaryDialog) {
-        AttendanceSummaryDialog(
-            eventName = event!!.name,
-            contacts = eventContacts,
-            attendanceRecords = attendanceRecords,
-            onDismiss = { showSummaryDialog = false }
-        )
-    }
-
-    // Notes Dialog
+    // Notes Dialog using AppNotesDialog
     selectedContact?.let { contact ->
         val attendanceRecord = attendanceRecords.find { it.contactId == contact.id }
-        NotesDialog(
-            contact = contact,
-            currentNotes = attendanceRecord?.notes ?: "",
-            onDismiss = { selectedContact = null },
+        AppNotesDialog(
+            isVisible = showNotesDialog,
+            title = stringResource(R.string.notes_for_contact, contact.name),
+            initialNotes = attendanceRecord?.notes ?: "",
             onSave = { notes ->
                 coroutineScope.launch {
                     val record = attendanceRecord?.copy(notes = notes)
@@ -314,184 +201,131 @@ fun AttendanceScreen(
                         )
                     repository.updateAttendanceRecord(record)
                     selectedContact = null
+                    showNotesDialog = false
                 }
-            }
+            },
+            onDismiss = {
+                selectedContact = null
+                showNotesDialog = false
+            },
+            placeholder = stringResource(R.string.attendance_notes_placeholder)
         )
     }
 }
 
 @Composable
-fun AttendanceItem(
+fun AttendanceItemContent(
     contact: Contact,
     contactGroups: List<ContactGroup>,
     attendanceRecord: AttendanceRecord?,
-    onAttendanceChange: (Boolean) -> Unit,
     onEditNotes: () -> Unit
 ) {
     val context = LocalContext.current
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        )
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        // Groups information
+        if (contactGroups.isNotEmpty()) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = contact.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = contact.phoneNumber,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (contactGroups.isNotEmpty()) {
-                        Text(
-                            text = stringResource(R.string.groups_list, contactGroups.joinToString(", ") { it.name }),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = if (attendanceRecord?.isPresent == true) stringResource(R.string.present) else stringResource(
-                            R.string.absent
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Switch(
-                        checked = attendanceRecord?.isPresent ?: false,
-                        onCheckedChange = onAttendanceChange
-                    )
-                }
-            }
-
-                        // Contact work and notes information
-            if (contact.workTimeStart != null || contact.workTimeEnd != null || !contact.notes.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Work time display
-                if (contact.workTimeStart != null || contact.workTimeEnd != null) {
-                    Text(
-                        text = "Work Time",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    val workTimeText = buildString {
-                        if (contact.workTimeStart != null) append(contact.workTimeStart)
-                        if (contact.workTimeStart != null && contact.workTimeEnd != null) append(" - ")
-                        if (contact.workTimeEnd != null) append(contact.workTimeEnd)
-                    }
-                    Text(
-                        text = workTimeText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Contact notes display
-                if (!contact.notes.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Contact Notes",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = contact.notes,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Attendance notes display
-            if (!attendanceRecord?.notes.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Icon(
+                    Icons.Default.Group,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "Attendance Notes",
+                    text = stringResource(R.string.groups_list, contactGroups.joinToString(", ") { it.name }),
                     style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Text(
-                    text = attendanceRecord.notes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // Contact work and notes information
+        if (contact.workTimeStart != null || contact.workTimeEnd != null || !contact.notes.isNullOrBlank()) {
+            // Work time display
+            if (contact.workTimeStart != null || contact.workTimeEnd != null) {
+                val workTimeText = buildString {
+                    if (contact.workTimeStart != null) append(contact.workTimeStart)
+                    if (contact.workTimeStart != null && contact.workTimeEnd != null) append(" - ")
+                    if (contact.workTimeEnd != null) append(contact.workTimeEnd)
+                }
+                AppTextContent(
+                    title = "Work Time",
+                    content = workTimeText
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // WhatsApp buttons (reusing from ContactGroupDetailsScreen)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Message button
-                Button(
-                    onClick = { openWhatsAppMessage(context, contact.phoneNumber) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF25D366) // WhatsApp green
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Whatsapp,
-                        contentDescription = null,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-
-                // Call button
-                Button(
-                    onClick = { openWhatsAppCall(context, contact.phoneNumber) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF0B5D9C)
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Call,
-                        contentDescription = null,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-
-                // Edit notes button
-                TextButton(onClick = onEditNotes) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        stringResource(R.string.edit_notes),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+            // Contact notes display
+            if (!contact.notes.isNullOrBlank()) {
+                AppTextContent(
+                    title = "Contact Notes",
+                    content = contact.notes
+                )
             }
+        }
+
+        // Attendance notes display
+        if (!attendanceRecord?.notes.isNullOrBlank()) {
+            AppTextContent(
+                title = "Attendance Notes",
+                content = attendanceRecord.notes,
+                spacerHeight = 8.dp
+            )
+        }
+
+        // Attendance status
+        Text(
+            text = if (attendanceRecord?.isPresent == true) stringResource(R.string.present) else stringResource(
+                R.string.absent
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Action buttons using AppIconButton
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // WhatsApp message button
+            AppIconButton(
+                style = AppIconButtonStyle.ROUNDED_ICON_ONLY,
+                onClick = { openWhatsAppMessage(context, contact.phoneNumber) },
+                icon = Icons.Default.Whatsapp,
+                backgroundColor = Color(0xFF25D366),
+                contentColor = Color.White,
+                modifier = Modifier.weight(1f),
+                contentDescription = "WhatsApp Message"
+            )
+
+            // Call button
+            AppIconButton(
+                style = AppIconButtonStyle.ROUNDED_ICON_ONLY,
+                onClick = { openWhatsAppCall(context, contact.phoneNumber) },
+                icon = Icons.Default.Call,
+                backgroundColor = Color(0xFF0B5D9C),
+                contentColor = Color.White,
+                modifier = Modifier.weight(1f),
+                contentDescription = "Call"
+            )
+
+            // Edit notes button
+            AppIconButton(
+                style = AppIconButtonStyle.NO_BACKGROUND_ICON_TEXT,
+                onClick = onEditNotes,
+                icon = Icons.Default.Edit,
+                text = stringResource(R.string.edit_notes),
+                contentColor = MaterialTheme.colorScheme.primary,
+                contentDescription = stringResource(R.string.edit_notes)
+            )
         }
     }
 }
@@ -565,381 +399,4 @@ private fun openWhatsAppCall(context: Context, phoneNumber: String) {
             ex.printStackTrace()
         }
     }
-}
-
-@Composable
-fun AttendanceSummaryDialog(
-    eventName: String,
-    contacts: List<Contact>,
-    attendanceRecords: List<AttendanceRecord>,
-    onDismiss: () -> Unit
-) {
-    var showPresent by remember { mutableStateOf(true) }
-    var showAbsent by remember { mutableStateOf(true) }
-    var summaryLanguage by remember { mutableStateOf(SummaryLanguage.ENGLISH) }
-    var showLanguageDropdown by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    // Separate contacts into present and absent lists
-    val presentContacts = contacts.filter { contact ->
-        attendanceRecords.find { it.contactId == contact.id }?.isPresent == true
-    }
-    val absentContacts = contacts.filter { contact ->
-        val record = attendanceRecords.find { it.contactId == contact.id }
-        record?.isPresent != true
-    }
-
-    // Generate summary text based on current filter settings
-    val summaryText = remember(showPresent, showAbsent, presentContacts, absentContacts, summaryLanguage) {
-        generateSummaryText(eventName, presentContacts, absentContacts, showPresent, showAbsent, summaryLanguage)
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(stringResource(R.string.attendance_summary))
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Filter checkboxes
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = showPresent,
-                            onCheckedChange = { showPresent = it }
-                        )
-                        Text(
-                            text = stringResource(R.string.show_present),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = showAbsent,
-                            onCheckedChange = { showAbsent = it }
-                        )
-                        Text(
-                            text = stringResource(R.string.show_absent),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Language selector
-                Text(
-                    text = stringResource(R.string.summary_language),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { showLanguageDropdown = true },
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = summaryLanguage.displayName,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Icon(
-                            Icons.Default.ArrowDropDown,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = showLanguageDropdown,
-                        onDismissRequest = { showLanguageDropdown = false }
-                    ) {
-                        SummaryLanguage.values().forEach { language ->
-                            DropdownMenuItem(
-                                text = { Text(language.displayName) },
-                                onClick = {
-                                    summaryLanguage = language
-                                    showLanguageDropdown = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Summary content
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp)
-                    ) {
-                        Text(
-                            text = eventName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = getTotalAttendeesText(contacts.size, summaryLanguage),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        if (showPresent && presentContacts.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = getPresentAttendeesText(presentContacts.size, summaryLanguage),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            presentContacts.forEach { contact ->
-                                Text(
-                                    text = "• ${contact.name}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.padding(start = 8.dp, top = 2.dp)
-                                )
-                            }
-                        }
-
-                        if (showAbsent && absentContacts.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = getAbsentAttendeesText(absentContacts.size, summaryLanguage),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            absentContacts.forEach { contact ->
-                                Text(
-                                    text = "• ${contact.name}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.padding(start = 8.dp, top = 2.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Copy button
-                TextButton(
-                    onClick = {
-                        copyToClipboard(context, summaryText)
-                        Toast.makeText(context, context.getString(R.string.summary_copied), Toast.LENGTH_SHORT).show()
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.ContentCopy,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.copy_summary))
-                }
-
-                // Share button
-                TextButton(
-                    onClick = {
-                        shareText(context, summaryText)
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Share,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.share_summary))
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonNeutral
-                )
-            ) {
-                Text(stringResource(R.string.close))
-            }
-        }
-    )
-}
-
-private fun generateSummaryText(
-    eventName: String,
-    presentContacts: List<Contact>,
-    absentContacts: List<Contact>,
-    showPresent: Boolean,
-    showAbsent: Boolean,
-    language: SummaryLanguage
-): String {
-    val builder = StringBuilder()
-
-    // Use hardcoded strings based on selected language
-    when (language) {
-        SummaryLanguage.ENGLISH -> {
-            builder.appendLine("Attendance Summary")
-            builder.appendLine(eventName)
-            builder.appendLine()
-            builder.appendLine("Total: ${presentContacts.size + absentContacts.size}")
-            builder.appendLine()
-
-            if (showPresent && presentContacts.isNotEmpty()) {
-                builder.appendLine("Present (${presentContacts.size})")
-                presentContacts.forEach { contact ->
-                    builder.appendLine("• ${contact.name}")
-                }
-                builder.appendLine()
-            }
-
-            if (showAbsent && absentContacts.isNotEmpty()) {
-                builder.appendLine("Absent (${absentContacts.size})")
-                absentContacts.forEach { contact ->
-                    builder.appendLine("• ${contact.name}")
-                }
-            }
-        }
-        SummaryLanguage.ARABIC -> {
-            builder.appendLine("ملخص الحضور")
-            builder.appendLine(eventName)
-            builder.appendLine()
-            builder.appendLine("المجموع: ${presentContacts.size + absentContacts.size}")
-            builder.appendLine()
-
-            if (showPresent && presentContacts.isNotEmpty()) {
-                builder.appendLine("الحاضرون (${presentContacts.size})")
-                presentContacts.forEach { contact ->
-                    builder.appendLine("• ${contact.name}")
-                }
-                builder.appendLine()
-            }
-
-            if (showAbsent && absentContacts.isNotEmpty()) {
-                builder.appendLine("الغائبون (${absentContacts.size})")
-                absentContacts.forEach { contact ->
-                    builder.appendLine("• ${contact.name}")
-                }
-            }
-        }
-    }
-
-    return builder.toString().trim()
-}
-
-private fun copyToClipboard(context: Context, text: String) {
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val clip = ClipData.newPlainText("Attendance Summary", text)
-    clipboard.setPrimaryClip(clip)
-}
-
-private fun shareText(context: Context, text: String) {
-    val shareIntent = Intent().apply {
-        action = Intent.ACTION_SEND
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, text)
-    }
-    context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_summary)))
-}
-
-private fun getTotalAttendeesText(count: Int, language: SummaryLanguage): String {
-    return when (language) {
-        SummaryLanguage.ENGLISH -> "Total: $count"
-        SummaryLanguage.ARABIC -> "المجموع: $count"
-    }
-}
-
-private fun getPresentAttendeesText(count: Int, language: SummaryLanguage): String {
-    return when (language) {
-        SummaryLanguage.ENGLISH -> "Present ($count)"
-        SummaryLanguage.ARABIC -> "الحاضرون ($count)"
-    }
-}
-
-private fun getAbsentAttendeesText(count: Int, language: SummaryLanguage): String {
-    return when (language) {
-        SummaryLanguage.ENGLISH -> "Absent ($count)"
-        SummaryLanguage.ARABIC -> "الغائبون ($count)"
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun NotesDialog(
-    contact: Contact,
-    currentNotes: String,
-    onDismiss: () -> Unit,
-    onSave: (String) -> Unit
-) {
-    var notes by remember { mutableStateOf(currentNotes) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(stringResource(R.string.notes_for_contact, contact.name))
-        },
-        text = {
-            OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                label = { Text(stringResource(R.string.attendance_notes)) },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3,
-                placeholder = { Text(stringResource(R.string.attendance_notes_placeholder)) }
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onSave(notes.trim()) },
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonBlue
-                )
-            ) {
-                Text(stringResource(R.string.save))
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = ButtonNeutral
-                )
-            ) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
-    )
 }

@@ -20,6 +20,12 @@
     <string name="attendance_notes_placeholder">Add any notes about this person\'s attendance…</string>
     <string name="no_contact_groups_selected">No contact groups selected for this event. Please edit the event to add contact groups.</string>
     <string name="groups_list">Groups: %1$s</string>
+    <string name="lexicon_alarm">Lexicon Alarm</string>
+    <string name="lexicon_alarm_description">Set up lexicon-based alarms to monitor attendance patterns and get notified about important events.</string>
+    <string name="lexicon_alarm_features">Features</string>
+    <string name="lexicon_alarm_feature_1">Monitor attendance patterns and trends</string>
+    <string name="lexicon_alarm_feature_2">Get notified about missing attendees</string>
+    <string name="lexicon_alarm_feature_3">Track attendance statistics over time</string>
 
     <!-- EventsScreen -->
     <string name="events">Events</string>
