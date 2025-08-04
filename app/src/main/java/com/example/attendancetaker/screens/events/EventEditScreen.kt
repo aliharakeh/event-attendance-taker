@@ -64,6 +64,10 @@ fun EventEditScreen(
     var contactsForGroups by remember { mutableStateOf(mapOf<String, List<Contact>>()) }
     var event: Event? by remember { mutableStateOf(null) }
 
+    // Recurring event option - only show for new events or recurring templates
+    val shouldShowRecurringSettings = eventId == null || eventState.isRecurring
+
+
     // Load event data
     LaunchedEffect(eventId) {
         if (eventId != null) {
@@ -191,7 +195,8 @@ fun EventEditScreen(
                                 icon = Icons.Default.CalendarToday,
                                 text = eventState.eventDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
                                 contentDescription = stringResource(R.string.select_date),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                enabled = shouldShowRecurringSettings
                             )
 
                             // Time selection
@@ -201,12 +206,10 @@ fun EventEditScreen(
                                 icon = Icons.Default.Schedule,
                                 text = eventState.eventTime.format(DateTimeFormatter.ofPattern("h:mm a")),
                                 contentDescription = stringResource(R.string.select_time),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                enabled = shouldShowRecurringSettings
                             )
                         }
-
-                        // Recurring event option - only show for new events or recurring templates
-                        val shouldShowRecurringSettings = eventId == null || eventState.isRecurring
 
                         if (shouldShowRecurringSettings) {
                             AppCheckbox(
