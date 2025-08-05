@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,6 +49,7 @@ import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.entity.Event
 import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.ui.components.ActionItem
+import com.example.attendancetaker.ui.components.AppActionRow
 import com.example.attendancetaker.ui.components.AppCard
 import com.example.attendancetaker.ui.components.AppList
 import com.example.attendancetaker.ui.components.AppListItem
@@ -133,7 +135,11 @@ fun AttendanceScreen(
                             AttendanceItemContent(
                                 contact = contact,
                                 contactGroups = contactGroups,
-                                attendanceRecord = attendanceRecord
+                                attendanceRecord = attendanceRecord,
+                                onNotesClick = {
+                                    selectedContact = contact
+                                    showNotesDialog = true
+                                }
                             )
                         }
                     )
@@ -141,30 +147,8 @@ fun AttendanceScreen(
                 cardActions = { contact ->
                     val attendanceRecord = attendanceRecords.find { it.contactId == contact.id }
                     val currentStatus = attendanceRecord?.status ?: AttendanceStatus.ABSENT
-                    val context = LocalContext.current
 
                     listOf(
-                        ActionItem(
-                            icon = Icons.Default.Whatsapp,
-                            contentDescription = "Send WhatsApp Message",
-                            tint = Color(0xFF25D366), // WhatsApp green
-                            onClick = { openWhatsAppMessage(context, contact.phoneNumber) }
-                        ),
-                        ActionItem(
-                            icon = Icons.Default.Call,
-                            contentDescription = "WhatsApp Call",
-                            tint = Color(0xFF0B5D9C),
-                            onClick = { openWhatsAppCall(context, contact.phoneNumber) }
-                        ),
-                        ActionItem(
-                            icon = Icons.AutoMirrored.Filled.Note,
-                            contentDescription = "Edit notes",
-                            tint = MaterialTheme.colorScheme.primary,
-                            onClick = {
-                                selectedContact = contact
-                                showNotesDialog = true
-                            }
-                        ),
                         ActionItem(
                             contentDescription = "Toggle Attendance Status",
                             template = {
@@ -240,9 +224,8 @@ fun AttendanceItemContent(
     contact: Contact,
     contactGroups: List<ContactGroup>,
     attendanceRecord: AttendanceRecord?,
+    onNotesClick: (Contact) -> Unit,
 ) {
-    val context = LocalContext.current
-
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -306,7 +289,51 @@ fun AttendanceItemContent(
                 content = attendanceRecord.notes,
             )
         }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            AppActionRow(
+                actions = getContactActions(
+                    contact,
+                    onNotesClick
+                )
+            )
+        }
     }
+}
+
+@Composable
+private fun getContactActions(
+    contact: Contact,
+    onNotesClick: (Contact) -> Unit,
+): List<ActionItem> {
+    val context = LocalContext.current
+
+    return listOf(
+        ActionItem(
+            icon = Icons.Default.Whatsapp,
+            contentDescription = "Send WhatsApp Message",
+            tint = Color(0xFF25D366), // WhatsApp green
+            onClick = { openWhatsAppMessage(context, contact.phoneNumber) }
+        ),
+        ActionItem(
+            icon = Icons.Default.Call,
+            contentDescription = "WhatsApp Call",
+            tint = Color(0xFF0B5D9C),
+            onClick = { openWhatsAppCall(context, contact.phoneNumber) }
+        ),
+        ActionItem(
+            icon = Icons.AutoMirrored.Filled.Note,
+            contentDescription = "Edit notes",
+            tint = MaterialTheme.colorScheme.primary,
+            onClick = {
+                onNotesClick(contact)
+            }
+        )
+    )
 }
 
 // WhatsApp functions reused from ContactGroupDetailsScreen

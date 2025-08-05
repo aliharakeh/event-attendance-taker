@@ -2,7 +2,9 @@ package com.example.attendancetaker.screens.contacts
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,20 +29,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import kotlinx.coroutines.launch
-
 import com.example.attendancetaker.R
 import com.example.attendancetaker.data.entity.Contact
 import com.example.attendancetaker.data.entity.ContactGroup
 import com.example.attendancetaker.data.repository.AttendanceRepository
 import com.example.attendancetaker.ui.components.ActionItem
+import com.example.attendancetaker.ui.components.AppActionRow
 import com.example.attendancetaker.ui.components.AppList
 import com.example.attendancetaker.ui.components.AppListItem
-import com.example.attendancetaker.ui.components.AppToolbar
-import com.example.attendancetaker.ui.components.AppTextField
-import com.example.attendancetaker.ui.components.AppTimePickerDialog
-import com.example.attendancetaker.ui.components.AppTimeRangePicker
 import com.example.attendancetaker.ui.components.AppNotesDialog
+import com.example.attendancetaker.ui.components.AppTimeRangePicker
+import com.example.attendancetaker.ui.components.AppToolbar
+import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -103,6 +103,10 @@ fun ContactGroupDetailsScreen(
                                 contacts = contacts.map {
                                     if (it.id == updatedContact.id) updatedContact else it
                                 }
+                            },
+                            onNotesClick = { contact ->
+                                selectedContactForNotes = contact
+                                showNotesDialog = true
                             }
                         )
                     }
@@ -110,12 +114,6 @@ fun ContactGroupDetailsScreen(
             },
             showSearch = true,
             emptyStateMessage = stringResource(R.string.no_contacts_in_group),
-            cardActions = { contact ->
-                getContactActions(contact, context) {
-                    selectedContactForNotes = contact
-                    showNotesDialog = true
-                }
-            },
             modifier = Modifier.padding(16.dp)
         )
     }
@@ -152,7 +150,8 @@ private fun ContactListItem(
     contact: Contact,
     repository: AttendanceRepository,
     context: Context,
-    onContactUpdated: (Contact) -> Unit
+    onContactUpdated: (Contact) -> Unit,
+    onNotesClick: (Contact) -> Unit
 ) {
     var workTimeStart by remember { mutableStateOf(contact.workTimeStart?.let { LocalTime.parse(it) }) }
     var workTimeEnd by remember { mutableStateOf(contact.workTimeEnd?.let { LocalTime.parse(it) }) }
@@ -208,10 +207,22 @@ private fun ContactListItem(
             )
 
             Text(
-                text = contact.notes ?: "",
+                text = contact.notes,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        } else {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            AppActionRow(actions = getContactActions(contact, context) {
+                onNotesClick(contact)
+            })
         }
     }
 }
